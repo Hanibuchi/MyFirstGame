@@ -9,12 +9,12 @@ namespace MyGame
     [CreateAssetMenu]
     public class BaseTile : RuleTile, IResourceHandler
     {
-        public ResourceManager.TileID ID;
-        ResourceManager.TileObjID TileObjID = ResourceManager.TileObjID.DefaultTile;
+        public string ID { get; set; }
+        string TileObjID = ResourceManager.TileObjID.DefaultTileObj.ToString();
 
-        public void OnGet(int id)
+        public void OnGet(string id)
         {
-            ID = (ResourceManager.TileID)id;
+            ID = id;
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace MyGame
             // Debug.Log($"Application.isPlaying: {Application.isPlaying}, GetPool() != null{GetPool()}, StartUP was called");
             if (Application.isPlaying)
             {
-                GameObject tile = ResourceManager.Get(TileObjID);
+                GameObject tile = ResourceManager.GetOther(TileObjID);
                 if (tile != null && tile.TryGetComponent(out TileObjManager GM))
                     GM.Init(position);
             }

@@ -25,7 +25,7 @@ public class TestClass : MonoBehaviour
     public void Test_Message()
     {
         string message = "aaaaaaaaaaaaa";
-        var messageUI = ResourceManager.Get(ResourceManager.UIID.MessageUI).GetComponent<MessageUI>();
+        var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
         messageUI.Open(message, () =>
 UIManager.Instance.Open(UIManager.UIType.SaveMenu));
     }
@@ -62,21 +62,22 @@ UIManager.Instance.Open(UIManager.UIType.SaveMenu));
         Instance = this;
     }
 
-    private IEnumerator Start()
-    {
-        yield return new WaitUntil(() => ResourceManager.IsLoaded);
-    }
-    [SerializeField] ResourceManager.ItemID itemID = ResourceManager.ItemID.PurpleFurball;
+    [SerializeField] string itemID = ResourceManager.ItemID.PurpleFurball.ToString();
     public void SpawnItem()
     {
-        ResourceManager.Get(itemID);
+        ResourceManager.GetItem(itemID);
     }
-    [SerializeField] ResourceManager.MobID mobID = ResourceManager.MobID.Enemy;
+    [SerializeField] string mobID = ResourceManager.MobID.Enemy.ToString();
+    [SerializeField] string otherID;
     public void SpawnMob()
     {
-        var enemy = ResourceManager.Get(mobID);
+        var enemy = ResourceManager.GetMob(mobID);
         if (enemy != null)
             enemy.transform.position = Vector2.zero;
+    }
+    public void SpawnOther()
+    {
+        ResourceManager.GetOther(otherID);
     }
     public Party party;
     public NPCManager nextLeader;

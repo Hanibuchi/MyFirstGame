@@ -259,7 +259,7 @@ namespace MyGame
             }
         }
 
-        public override void OnGet(int id)
+        public override void OnGet(string id)
         {
             base.OnGet(id);
             ResetItemSlots();
@@ -487,7 +487,7 @@ namespace MyGame
                 // ここにアイテムが追加できなかったときの演出を書く。
                 return;
             }
-            item.OnPickedUp(this);
+            item.OnChangeOwner(this);
             Items[index] = item;
         }
 
@@ -598,9 +598,9 @@ namespace MyGame
             }
         }
 
-        protected override void Release()
+        public override void Release()
         {
-            ResourceManager.Release((ResourceManager.MobID)ID, gameObject);
+            ResourceManager.ReleaseMob(this);
         }
 
         public MobData MakeMobData()
@@ -611,7 +611,7 @@ namespace MyGame
         protected MobData FillMobData(MobData mobData)
         {
             base.FillObjectData(mobData);
-            mobData.MobID = (ResourceManager.MobID)ID;
+            mobData.MobID = ID;
             mobData.BaseTargetLayer = BaseTargetLayer;
             mobData.CurrentTargetLayer = CurrentTargetLayer;
             mobData.BaseMaxMP = BaseMaxMP;
@@ -667,7 +667,7 @@ namespace MyGame
             for (int i = 0; i < mobData.ItemCapacity; i++)
             {
                 var itemData = mobData.Items[i];
-                var itemObj = ResourceManager.Get(itemData.ItemID);
+                var itemObj = ResourceManager.GetItem(itemData.ItemID);
                 if (itemObj != null && itemObj.TryGetComponent(out ObjectManager itemMng))
                 {
                     itemMng.ApplyObjectData(itemData);
@@ -680,7 +680,7 @@ namespace MyGame
         }
         public static void SpawnMob(MobData mob)
         {
-            var mobObj = ResourceManager.Get(mob.MobID);
+            var mobObj = ResourceManager.GetMob(mob.MobID);
             if (mobObj == null) { Debug.LogWarning("mob is null"); return; }
             if (mobObj.TryGetComponent(out MobManager mobManager))
             {

@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Dynamic;
 using UnityEngine;
 
-public class UI : MonoBehaviour, IResourceHandler
+public class UI : MonoBehaviour, IPoolable
 {
-    public ResourceManager.UIID ID { get; private set; }
+    public string ID { get; private set; }
 
-    public void OnGet(int id)
+    public void OnGet(string id)
     {
-        ID = (ResourceManager.UIID)id;
+        ID = id;
     }
 
     public virtual void OnRelease() { }
 
     public void Release()
     {
-        ResourceManager.Release(ID, gameObject);
+        ResourceManager.ReleaseOther(ID, gameObject);
     }
 }

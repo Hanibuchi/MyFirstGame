@@ -25,7 +25,7 @@ public class MessageUI : MonoBehaviour
     }
     void Close()
     {
-        ResourceManager.Release(ResourceManager.UIID.MessageUI, gameObject);
+        ResourceManager.ReleaseOther(ResourceManager.UIID.MessageUI.ToString(), gameObject);
         callback?.Invoke();
     }
 }

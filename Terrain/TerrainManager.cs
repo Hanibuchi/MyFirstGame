@@ -93,11 +93,11 @@ namespace MyGame
             {
                 Instance = this;
             }
-            var TerrainObj = ResourceManager.Get(ResourceManager.OtherID.TerrainGrid);
+            var TerrainObj = ResourceManager.GetOther(ResourceManager.OtherID.TerrainGrid.ToString());
             Grid = TerrainObj.GetComponent<Grid>();
             TerrainTilemap = TerrainObj.GetComponentInChildren<Tilemap>();
 
-            Areas[AreaIDs.DefaultArea] = ResourceManager.Get(ResourceManager.AreaID.DefaultArea).GetComponent<AreaManager>();
+            Areas[AreaIDs.DefaultArea] = ResourceManager.GetOther(ResourceManager.AreaID.DefaultArea.ToString()).GetComponent<AreaManager>();
             foreach (var keyValue in Areas)
             {
                 keyValue.Value.Init(this);

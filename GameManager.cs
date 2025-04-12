@@ -188,7 +188,7 @@ public class GameManager : MonoBehaviour
         UIManager.Instance.Close(UIManager.UIType.PlayerStatusUI);
         UIManager.Instance.Close(UIManager.UIType.InventoryUI);
 
-        ResourceManager.Get(ResourceManager.UIID.GameOverUI).GetComponent<GameOverUI>().Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
+        ResourceManager.GetOther(ResourceManager.UIID.GameOverUI.ToString()).GetComponent<GameOverUI>().Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
     }
 
     public void OnReturnToTitle()

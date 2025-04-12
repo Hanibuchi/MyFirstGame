@@ -11,7 +11,7 @@ public class ChunkManagerEditor : Editor
         ChunkManager chunk = (ChunkManager)target;
         if (GUILayout.Button("実行"))
         {
-            chunk.CreateChunkDataAsset();
+            chunk.CreateChunkAsset();
         }
     }
 }

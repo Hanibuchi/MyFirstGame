@@ -23,7 +23,7 @@ public class SaveMenuUI : BackableMenuUI
         int childCount = saveSlotFrame.transform.childCount;
         for (int i = 0; i < childCount - 1; i++)
         {
-            ResourceManager.Release(ResourceManager.UIID.SaveSlotUI, saveSlotFrame.transform.GetChild(i).gameObject);
+            ResourceManager.ReleaseOther(ResourceManager.UIID.SaveSlotUI.ToString(), saveSlotFrame.transform.GetChild(i).gameObject);
         }
         slotNumber = 1;
         // Debug.Log($"SaveMenu Open");
@@ -53,7 +53,7 @@ public class SaveMenuUI : BackableMenuUI
 
     void MakeSaveSlotUI(SaveHeaderData saveHeaderData, string saveSlotName)
     {
-        SaveSlotUI saveSlotUI = ResourceManager.Get(ResourceManager.UIID.SaveSlotUI).GetComponent<SaveSlotUI>();
+        SaveSlotUI saveSlotUI = ResourceManager.GetOther(ResourceManager.UIID.SaveSlotUI.ToString()).GetComponent<SaveSlotUI>();
         saveSlotUI.transform.SetParent(saveSlotFrame);
         saveSlotUI.transform.SetSiblingIndex(transform.childCount - 1);
         saveSlotUI.Init(this, saveHeaderData, saveSlotName);
@@ -70,7 +70,7 @@ public class SaveMenuUI : BackableMenuUI
     {
         Close(() =>
         {
-            NewGameUI newGameUI = ResourceManager.Get(ResourceManager.UIID.NewGameUI).GetComponent<NewGameUI>();
+            NewGameUI newGameUI = ResourceManager.GetOther(ResourceManager.UIID.NewGameUI.ToString()).GetComponent<NewGameUI>();
             newGameUI.Open();
             newGameUI.SetSaveSlotName(GetSaveSlotName(slotNumber));
         }

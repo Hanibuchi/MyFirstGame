@@ -9,7 +9,7 @@ using UnityEngine;
 [SerializeField]
 public class ObjectData
 {
-    public ResourceManager.ItemID ItemID;
+    public string ItemID;
     public float BaseMaxHP;
     public float CurrentMaxHP;
     public float CurrentHP;

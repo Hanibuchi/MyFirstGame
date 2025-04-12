@@ -294,7 +294,7 @@ public class ApplicationManager : MonoBehaviour
             }
             string message = saveSlotName + "was deleted";
             Debug.Log(message);
-            var messageUI = ResourceManager.Get(ResourceManager.UIID.MessageUI).GetComponent<MessageUI>();
+            var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
             messageUI.Open(message, () =>
     UIManager.Instance.Open(UIManager.UIType.SaveMenu));
         }

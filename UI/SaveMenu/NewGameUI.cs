@@ -66,6 +66,6 @@ public class NewGameUI : BackableMenuUI
     }
     protected override void OnCloseCompleted()
     {
-        ResourceManager.Release(ResourceManager.UIID.NewGameUI, gameObject);
+        ResourceManager.ReleaseOther(ResourceManager.UIID.NewGameUI.ToString(), gameObject);
     }
 }

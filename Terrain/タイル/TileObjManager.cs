@@ -3,11 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using MyGame;
 using Unity.Mathematics;
+using UnityEditor.iOS;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 // このオブジェクトをDestroyするとRuleTileはそのまま残る。DestroyしてからRuleTile.SetTile(pos,null)するとエラー出る。RuleTileを消したいときは必ずこのオブジェクトより先に消さないといけない。
-public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IResourceHandler
+public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolable
 {
     [SerializeField] ChunkManager bossChunkManager;
     /// <summary>
@@ -20,7 +21,7 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IResour
     protected MobManager lastDamageTaker;
 
     [SerializeField] TileObjData Data;
-    public ResourceManager.TileObjID ID { get; private set; }
+    public string ID { get; private set; }
 
     // 基本ステータス
     [SerializeField] float maxHP;
@@ -160,8 +161,12 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IResour
         BossChunkManager?.DeleteTile(this);
     }
 
-    public void OnGet(int id)
+    public void OnGet(string id)
     {
-        ID = (ResourceManager.TileObjID)id;
+        ID = id;
+    }
+    public void Release()
+    {
+        ResourceManager.ReleaseOther(this);
     }
 }

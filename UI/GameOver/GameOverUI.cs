@@ -31,7 +31,7 @@ public class GameOverUI : UI
     void OK()
     {
         Close();
-        GameOverInfoUI gameOverInfoUI = ResourceManager.Get(ResourceManager.UIID.GameOverInfoUI).GetComponent<GameOverInfoUI>();
+        GameOverInfoUI gameOverInfoUI = ResourceManager.GetOther(ResourceManager.UIID.GameOverInfoUI.ToString()).GetComponent<GameOverInfoUI>();
         gameOverInfoUI.Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
     }
 

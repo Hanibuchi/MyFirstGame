@@ -13,7 +13,7 @@ public class PlayerParty : Party
     public void NewGame()
     {
         Init();
-        NPCManager player = ResourceManager.Get(ResourceManager.MobID.NPC).GetComponent<NPCManager>();
+        NPCManager player = ResourceManager.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<NPCManager>();
         AddMember(player);
     }
 

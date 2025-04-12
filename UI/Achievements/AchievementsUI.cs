@@ -54,7 +54,7 @@ public class AchievementsUI : BackableMenuUI
         foreach (var na in nameAndAchievementDatas)
         {
             (string name, AchievementData data) = na;
-            AchievementEntryUI entryUI = ResourceManager.Get(ResourceManager.UIID.AchievementEntryUI).GetComponent<AchievementEntryUI>();
+            AchievementEntryUI entryUI = ResourceManager.GetOther(ResourceManager.UIID.AchievementEntryUI.ToString()).GetComponent<AchievementEntryUI>();
             entryUI.Set(name, data);
             entryUI.transform.SetParent(achievementsFrame);
         }

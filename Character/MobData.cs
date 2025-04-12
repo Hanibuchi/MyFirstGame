@@ -11,7 +11,7 @@ using UnityEngine;
 [Serializable]
 public class MobData : ObjectData
 {
-    public ResourceManager.MobID MobID;
+    public string MobID;
 
     public LayerMask BaseTargetLayer;
     public LayerMask CurrentTargetLayer;

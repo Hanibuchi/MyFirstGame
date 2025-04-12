@@ -9,9 +9,9 @@ using UnityEngine;
 
 public class AreaManager : MonoBehaviour, IResourceHandler
 {
-    public string AreaDirectoryPath => Path.Combine(bossTerrainManager.TerrainDataDirectoryPath, ID.ToString());
-    string AreaDataPath => Path.Combine(AreaDirectoryPath, ID.ToString());
-    public ResourceManager.AreaID ID { get; private set; }
+    public string AreaDirectoryPath => Path.Combine(bossTerrainManager.TerrainDataDirectoryPath, ID);
+    string AreaDataPath => Path.Combine(AreaDirectoryPath, ID);
+    public string ID { get; private set; }
     [SerializeField] TerrainManager bossTerrainManager;
 
     public TerrainManager BossTerrainManager { get => bossTerrainManager; private set => bossTerrainManager = value; }
@@ -93,7 +93,7 @@ public class AreaManager : MonoBehaviour, IResourceHandler
     /// <returns></returns>
     ChunkManager GetChunk(Vector2Int pos)
     {
-        ChunkManager chunkManager = ResourceManager.Get(GetChunkID(pos)).GetComponent<ChunkManager>();
+        ChunkManager chunkManager = ResourceManager.GetOther(GetChunkID(pos).ToString()).GetComponent<ChunkManager>();
 
         chunkManager?.Init(this);
         return chunkManager;
@@ -117,15 +117,15 @@ public class AreaManager : MonoBehaviour, IResourceHandler
         foreach (var kv in ChunkManagers)
         {
             kv.Value.Reset();
-            ResourceManager.Release(GetChunkID(kv.Key), kv.Value.gameObject);
+            ResourceManager.ReleaseOther(GetChunkID(kv.Key).ToString(), kv.Value.gameObject);
         }
         ChunkManagers.Clear();
 
         ChunkDatas.Clear();
     }
 
-    public void OnGet(int id)
+    public void OnGet(string id)
     {
-        ID = (ResourceManager.AreaID)id;
+        ID = id;
     }
 }

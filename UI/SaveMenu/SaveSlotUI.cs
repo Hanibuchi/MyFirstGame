@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SaveSlotUI : MonoBehaviour, IResourceHandler
+public class SaveSlotUI : UI
 {
     SaveMenuUI saveMenuUI;
     string saveSlotName;
@@ -41,18 +41,19 @@ public class SaveSlotUI : MonoBehaviour, IResourceHandler
     public void ConfirmDelete()
     {
         saveMenuUI.Close();
-        DeleteCautionUI deleteCautionUI = ResourceManager.Get(ResourceManager.UIID.DeleteCautionUI).GetComponent<DeleteCautionUI>();
+        DeleteCautionUI deleteCautionUI = ResourceManager.GetOther(ResourceManager.UIID.DeleteCautionUI.ToString()).GetComponent<DeleteCautionUI>();
         deleteCautionUI.Open(this, saveSlotName, saveHeaderData);
     }
 
     public void Delete()
     {
         ApplicationManager.Instance.DeleteSaveSlot(saveSlotName);
-        ResourceManager.Release(ResourceManager.UIID.SaveSlotUI, gameObject);
+        ResourceManager.ReleaseOther(ResourceManager.UIID.SaveSlotUI.ToString(), gameObject);
     }
 
-    public void OnRelease()
+    public override void OnRelease()
     {
+        base.OnRelease();
         transform.SetParent(null);
     }
 }

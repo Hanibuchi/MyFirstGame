@@ -69,37 +69,37 @@ public class UIManager : MonoBehaviour
 
 			case UIType.TitleUI:
 				if (titleUI == null)
-					titleUI = ResourceManager.Get(ResourceManager.UIID.TitleUI).GetComponent<TitleUI>();
+					titleUI = ResourceManager.GetOther(ResourceManager.UIID.TitleUI.ToString()).GetComponent<TitleUI>();
 				titleUI.Open();
 				break;
 
 			case UIType.PauseUI:
 				if (pauseUI == null)
-					pauseUI = ResourceManager.Get(ResourceManager.UIID.PauseUI).GetComponent<PauseUI>();
+					pauseUI = ResourceManager.GetOther(ResourceManager.UIID.PauseUI.ToString()).GetComponent<PauseUI>();
 				pauseUI.Open();
 				break;
 
 			case UIType.SaveMenu:
 				if (saveMenuUI == null)
-					saveMenuUI = ResourceManager.Get(ResourceManager.UIID.SaveMenuUI).GetComponent<SaveMenuUI>();
+					saveMenuUI = ResourceManager.GetOther(ResourceManager.UIID.SaveMenuUI.ToString()).GetComponent<SaveMenuUI>();
 				saveMenuUI.Open();
 				break;
 
 			case UIType.AchievementsUI:
 				if (achievementsUI == null)
-					achievementsUI = ResourceManager.Get(ResourceManager.UIID.AchievementsUI).GetComponent<AchievementsUI>();
+					achievementsUI = ResourceManager.GetOther(ResourceManager.UIID.AchievementsUI.ToString()).GetComponent<AchievementsUI>();
 				achievementsUI.Open();
 				break;
 
 			case UIType.SettingsUI:
 				if (settingsUI == null)
-					settingsUI = ResourceManager.Get(ResourceManager.UIID.SettingsUI).GetComponent<SettingsUI>();
+					settingsUI = ResourceManager.GetOther(ResourceManager.UIID.SettingsUI.ToString()).GetComponent<SettingsUI>();
 				settingsUI.Open();
 				break;
 
 			case UIType.StatisticsUI:
 				if (statisticsUI == null)
-					statisticsUI = ResourceManager.Get(ResourceManager.UIID.StatisticsUI).GetComponent<StatisticsUI>();
+					statisticsUI = ResourceManager.GetOther(ResourceManager.UIID.StatisticsUI.ToString()).GetComponent<StatisticsUI>();
 				statisticsUI.Open();
 				break;
 		}

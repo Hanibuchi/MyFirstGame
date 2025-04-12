@@ -7,13 +7,14 @@ using System.IO;
 using System;
 using Newtonsoft.Json;
 using UnityEditor.iOS;
+using UnityEditor;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
-public class ChunkManager : MonoBehaviour, IResourceHandler
+public class ChunkManager : MonoBehaviour, IPoolable
 {
     string ChunkDataPath => GetChunkDataPath(bossAreaManager.AreaDirectoryPath, ChunkPos);
-    public ResourceManager.ChunkID ID { get; private set; }
+    public string ID { get; private set; }
     [SerializeField] AreaManager bossAreaManager;
     public AreaManager BossAreaManager { get => bossAreaManager; private set => bossAreaManager = value; }
 
@@ -92,7 +93,7 @@ public class ChunkManager : MonoBehaviour, IResourceHandler
 
     public ChunkData Deactivate()
     {
-        ResourceManager.Release(ID, gameObject);
+        ResourceManager.ReleaseOther(ID, gameObject);
 
         new List<IChunkHandler>(Handlers).ForEach(a => a.OnChunkDeactivate());
 
@@ -149,7 +150,7 @@ public class ChunkManager : MonoBehaviour, IResourceHandler
     /// <param name="gm"></param>
     public void DeleteTile(TileObjManager gm)
     {
-        ResourceManager.Release(gm.ID, gm.gameObject);
+        ResourceManager.ReleaseOther(gm.ID, gm.gameObject);
         TerrainManager.Instance.TerrainTilemap.SetTile(gm.Position, null);
         Handlers.Remove(gm);
     }
@@ -179,7 +180,7 @@ public class ChunkManager : MonoBehaviour, IResourceHandler
         Vector3Int pos = new((int)(ChunkSize.x * (ChunkPos.x - 0.5f)), (int)(ChunkSize.y * (ChunkPos.y - 0.5f)), 0);
 
         var tiles = TerrainManager.Instance.TerrainTilemap?.GetTilesBlock(new(pos, ChunkSize));
-        ResourceManager.TileID[] tileIDs = new ResourceManager.TileID[tiles.Length];
+        string[] tileIDs = new string[tiles.Length];
         for (int i = 0; i < tiles.Length; i++)
         {
             var tile = tiles[i];
@@ -198,23 +199,23 @@ public class ChunkManager : MonoBehaviour, IResourceHandler
                 if (npc.Party != null)
                 {
                     if (npc.IsLeader)
-                        chunkData.Partys.Add(npc.Party.MakePartyData());
+                        chunkData.partys.Add(npc.Party.MakePartyData());
                 }
                 else
                 {
-                    chunkData.NPCs.Add(npc.MakeNPCData());
+                    chunkData.npcs.Add(npc.MakeNPCData());
                 }
             }
             else if (handler is MobManager mob)
             {
-                chunkData.Mobs.Add(mob.MakeMobData());
+                chunkData.mobs.Add(mob.MakeMobData());
             }
             else if (handler is ObjectManager item)
             {
-                chunkData.Items.Add(item.MakeObjectData());
+                chunkData.items.Add(item.MakeObjectData());
             }
         }
-        chunkData.TileIDs = tileIDs;
+        chunkData.tileIDs = tileIDs;
         return chunkData;
     }
 
@@ -240,31 +241,27 @@ public class ChunkManager : MonoBehaviour, IResourceHandler
             return;
         }
         // Debug.Log("ChunkData was generated");
-        var tileIDs = chunkData.TileIDs;
+        var tileIDs = chunkData.tileIDs;
         BaseTile[] tiles = new BaseTile[tileIDs.Length];
         for (int i = 0; i < tileIDs.Length; i++)
         {
-            var tileID = tileIDs[i];
-            if (tileID != ResourceManager.TileID.None)
-            {
-                tiles[i] = ResourceManager.GetTile(tileID);
-            }
+            tiles[i] = ResourceManager.GetTile(tileIDs[i]);
         }
         TerrainManager.Instance.TerrainTilemap.SetTilesBlock(GetBoundsInt(), tiles);
 
-        foreach (var party in chunkData.Partys)
+        foreach (var party in chunkData.partys)
         {
             Party.SpawnParty(party);
         }
-        foreach (var npc in chunkData.NPCs)
+        foreach (var npc in chunkData.npcs)
         {
             NPCManager.SpawnNPC(npc);
         }
-        foreach (var mob in chunkData.Mobs)
+        foreach (var mob in chunkData.mobs)
         {
             MobManager.SpawnMob(mob);
         }
-        foreach (var item in chunkData.Items)
+        foreach (var item in chunkData.items)
         {
             ObjectManager.SpawnItem(item);
         }
@@ -317,25 +314,40 @@ public class ChunkManager : MonoBehaviour, IResourceHandler
         Handlers.Remove(handler);
     }
 
-    [SerializeField] string createChunkDataDirectoryPath;
-    [SerializeField] string chunkDataName;
+    [SerializeField] string chunkAssetsDirectoryPath = "Assets/ChunkAssets";
+    [SerializeField] string chunkAssetName = "ChunkAssetName.asset";
     /// <summary>
     /// マップ作製用メソッド。子オブジェクトをChunkDataに記録しjsonファイルを作る。
     /// </summary>
-    public void CreateChunkDataAsset()
+    public void CreateChunkAsset()
     {
         Handlers = GetComponentsInChildren<IChunkHandler>().ToList();
-        string path = Path.Combine(createChunkDataDirectoryPath, chunkDataName);
-        ApplicationManager.SaveCompressedJson(path, MakeChunkData());
+        if (!chunkAssetName.EndsWith(".asset"))
+            chunkAssetName += ".asset";
+        string path = Path.Combine(chunkAssetsDirectoryPath, chunkAssetName);
+
+        var asset = ScriptableObject.CreateInstance<ChunkAsset>();
+        AssetDatabase.CreateAsset(asset, path);
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        EditorUtility.FocusProjectWindow();
+        Selection.activeObject = asset;
     }
 
-    public void OnGet(int id)
+    public void OnGet(string id)
     {
-        ID = (ResourceManager.ChunkID)id;
+        ID = id;
     }
     public void OnRelease()
     {
         Handlers.Clear();
+    }
+
+	public void Release()
+	{
+        ResourceManager.ReleaseOther(ID, gameObject);
     }
 }
 

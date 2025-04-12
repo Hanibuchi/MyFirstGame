@@ -111,7 +111,7 @@ public class NPCManager : MobManager
 			// EquipmentMenu = null;
 		}
 
-		GameObject equipmentMenuInstance = ResourceManager.Get(ResourceManager.UIID.NPCEquipmentMenu);
+		GameObject equipmentMenuInstance = ResourceManager.GetOther(ResourceManager.UIID.NPCEquipmentMenu.ToString());
 		EquipmentMenu = equipmentMenuInstance.GetComponent<NPCEquipmentMenu>();
 		if (index == -1)
 			UIManager.Instance.EquipmentMenuManager.InsertMember(EquipmentMenu);
@@ -205,7 +205,7 @@ public class NPCManager : MobManager
 		if (EquipmentMenu == null)
 			return;
 
-		ResourceManager.Release(ResourceManager.UIID.NPCEquipmentMenu, EquipmentMenu.gameObject);
+		ResourceManager.ReleaseOther(ResourceManager.UIID.NPCEquipmentMenu.ToString(), EquipmentMenu.gameObject);
 		EquipmentMenu = null;
 	}
 
@@ -284,7 +284,7 @@ public class NPCManager : MobManager
 
 	public static NPCManager SpawnNPC(NPCData npc)
 	{
-		var npcObj = ResourceManager.Get(npc.MobID);
+		var npcObj = ResourceManager.GetMob(npc.MobID);
 		if (npcObj == null) { Debug.LogWarning("npc is null"); return null; }
 		if (npcObj.TryGetComponent(out NPCManager npcManager))
 		{

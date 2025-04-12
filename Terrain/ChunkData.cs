@@ -10,9 +10,9 @@ using UnityEngine.Tilemaps;
 [Serializable]
 public class ChunkData
 {
-    public ResourceManager.TileID[] TileIDs;
-    public List<PartyData> Partys = new();
-    public List<NPCData> NPCs = new();
-    public List<MobData> Mobs = new();
-    public List<ObjectData> Items = new();
+    public string[] tileIDs;
+    public List<PartyData> partys = new();
+    public List<NPCData> npcs = new();
+    public List<MobData> mobs = new();
+    public List<ObjectData> items = new();
 }

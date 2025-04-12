@@ -13,13 +13,13 @@ using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 namespace MyGame
 {
     [RequireComponent(typeof(Rigidbody2D))]
-    public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IResourceHandler, IStatusAffectable
+    public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolable, IStatusAffectable
     {
         public BaseObjectData Data;
         /// <summary>
         /// このオブジェクトのPoolの識別子。PrefabManagerで設定される。←生成時に設定されるようにする可能性←やっぱりProjectileManagerで設定。
         /// </summary>
-        public int ID { get; private set; }
+        public string ID { get; private set; }
         [SerializeField] bool isDead;
         public bool IsDead { get => isDead; private set => isDead = value; } // 死んだかどうか。
 
@@ -105,10 +105,10 @@ namespace MyGame
         /// IDをセット。ResourceManagerで生成時に実行される。
         /// </summary>
         /// <param name="id"></param>
-        public virtual void OnGet(int id)
+        public virtual void OnGet(string id)
         {
-            ResetToGeneratedStatus();
             ID = id;
+            ResetToGeneratedStatus();
         }
 
         /// <summary>
@@ -246,9 +246,13 @@ namespace MyGame
             // Release();
         }
 
-        protected virtual void Release()
+        public virtual void Release()
         {
-            ResourceManager.Release((ResourceManager.ItemID)ID, gameObject);
+            ResourceManager.ReleaseItem(this);
+        }
+
+        public void OnRelease()
+        {
             List<Status> statuses = new(StatusList);
             foreach (var status in statuses)
             {
@@ -286,7 +290,7 @@ namespace MyGame
         /// <returns></returns>
         protected virtual ObjectData FillObjectData(ObjectData objectData)
         {
-            objectData.ItemID = (ResourceManager.ItemID)ID;
+            objectData.ItemID = ID;
             objectData.BaseMaxHP = BaseMaxHP;
             objectData.CurrentMaxHP = CurrentMaxHP;
             objectData.CurrentHP = CurrentHP;
@@ -328,7 +332,7 @@ namespace MyGame
         }
         public static void SpawnItem(ObjectData item)
         {
-            var itemObj = ResourceManager.Get(item.ItemID);
+            var itemObj = ResourceManager.GetItem(item.ItemID);
             if (itemObj == null) { Debug.LogWarning("item is null"); return; }
             if (itemObj.TryGetComponent(out ObjectManager objectManager))
             {

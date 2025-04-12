@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class KeyBindingKeyUI : UI, IResourceHandler
+public class KeyBindingKeyUI : UI
 {
     public KeyBindingEntryUI BossKeyBindingEntryUI { get; private set; }
     public int Index { get; private set; }

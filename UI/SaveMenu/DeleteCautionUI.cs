@@ -36,6 +36,6 @@ public class DeleteCautionUI : MonoBehaviour
 
     void Close()
     {
-        ResourceManager.Release(ResourceManager.UIID.DeleteCautionUI, gameObject);
+        ResourceManager.ReleaseOther(ResourceManager.UIID.DeleteCautionUI.ToString(), gameObject);
     }
 }

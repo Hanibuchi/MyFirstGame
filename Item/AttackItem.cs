@@ -13,7 +13,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class AttackItem : Item
 {
-	[SerializeField] ResourceManager.ProjectileID ProjectileID;
+	[SerializeField] string projectileID;
 
 	// 音声ファイル
 	public AudioClip LaunchSound;
@@ -35,8 +35,8 @@ public class AttackItem : Item
 	protected override void Init()
 	{
 		base.Init();
-		if (Data is AttackItemData attackItemData)
-			ProjectileID = attackItemData.ProjectileID;
+		if (itemData is AttackItemData attackItemData)
+			projectileID = attackItemData.projectileID;
 		else
 			Debug.LogWarning("Data should be AttackItemData!!!");
 	}
@@ -146,7 +146,7 @@ ProjectileModifier（放射物を後から編集し，Fire直後に処理を終�
 		Transform referenceTransform = referenceObject.transform;
 		float aimingErrorAngle = GameManager.Randoms[GameManager.RandomNames.Diffusion].NormalDistribution() * shot.Diffusion;
 
-		GameObject nextProjectileObj = ResourceManager.Get(ProjectileID);
+		GameObject nextProjectileObj = ResourceManager.GetProjectile(projectileID);
 		nextProjectileObj.transform.SetPositionAndRotation(referenceTransform.position, referenceTransform.rotation * Quaternion.Euler(0, 0, aimingErrorAngle));
 		// Debug.Log("projectile thrown");
 		if (nextProjectileObj.TryGetComponent(out Rigidbody2D rb))

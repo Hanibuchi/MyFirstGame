@@ -271,7 +271,7 @@ namespace MyGame
         {
             if (PartnerSlotSpacing == null)
             {
-                PartnerSlotSpacing = ResourceManager.Get(ResourceManager.UIID.SlotSpacing).transform;
+                PartnerSlotSpacing = ResourceManager.GetOther(ResourceManager.UIID.SlotSpacing.ToString()).transform;
                 if (PartnerSlotSpacing.TryGetComponent(out SlotSpacing slotSpacing))
                     slotSpacing.PartnerItemSlot = transform;
                 else

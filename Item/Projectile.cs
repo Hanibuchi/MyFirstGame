@@ -4,10 +4,10 @@ using MyGame;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class Projectile : MonoBehaviour, IResourceHandler
+public class Projectile : MonoBehaviour, IPoolable
 {
-    [SerializeField] ResourceManager.ProjectileID ID;
-    [SerializeField] Shot Shot;
+    public string ID { get; private set; }
+    [SerializeField] Shot shot;
     [SerializeField] float lifeTime;
 
     /// <summary>
@@ -17,8 +17,8 @@ public class Projectile : MonoBehaviour, IResourceHandler
     /// <param name="pool"></param>
     public void Launch(Shot shot)
     {
-        Shot = shot;
-        lifeTime = Shot.Duration;
+        this.shot = shot;
+        lifeTime = this.shot.Duration;
     }
 
     private void Update()
@@ -38,25 +38,30 @@ public class Projectile : MonoBehaviour, IResourceHandler
     {
         if (objectManager is MonoBehaviour damageableObj)
         {
-            if ((Shot.TargetLayer & (1 << damageableObj.gameObject.layer)) == 0)
+            if ((shot.TargetLayer & (1 << damageableObj.gameObject.layer)) == 0)
             {
                 Debug.Log("layer do not match");
                 return;
             }
 
             Vector2 direction = damageableObj.transform.position - transform.position;
-            objectManager.TakeDamage(Shot.Damage, Shot.User, direction);
+            objectManager.TakeDamage(shot.Damage, shot.User, direction);
             Destroyed();
         }
     }
 
     public void Destroyed()
     {
-        ResourceManager.Release(ID, gameObject);
+        ResourceManager.ReleaseProjectile(this);
     }
 
-    public void OnGet(int id)
+    public void OnGet(string id)
     {
-        ID = (ResourceManager.ProjectileID)id;
+        ID = id;
+    }
+
+    public void Release()
+    {
+        ResourceManager.ReleaseProjectile(this);
     }
 }

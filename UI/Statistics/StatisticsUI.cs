@@ -10,7 +10,7 @@ public class StatisticsUI : BackableMenuUI
         foreach (StatisticsManager.StatType stat in Enum.GetValues(typeof(StatisticsManager.StatType)))
         {
             object value = StatisticsManager.Instance.Get(stat.ToString());
-            var entryUI = ResourceManager.Get(ResourceManager.UIID.StatisticsEntryUI).GetComponent<StatisticsEntryUI>();
+            var entryUI = ResourceManager.GetOther(ResourceManager.UIID.StatisticsEntryUI.ToString()).GetComponent<StatisticsEntryUI>();
             entryUI.Set(stat.ToString(), value.ToString());
             entryUI.transform.SetParent(statEntryFrame);
         }
@@ -20,7 +20,7 @@ public class StatisticsUI : BackableMenuUI
         base.OnCloseCompleted();
         foreach (Transform child in statEntryFrame)
         {
-            ResourceManager.Release(ResourceManager.UIID.StatisticsEntryUI, child.gameObject);
+            ResourceManager.ReleaseOther(ResourceManager.UIID.StatisticsEntryUI.ToString(), child.gameObject);
         }
     }
 }
