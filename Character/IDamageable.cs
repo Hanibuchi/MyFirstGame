@@ -17,50 +17,50 @@ public interface IDamageable
         Damage calculatedDamage = damage.CalculateDamageWithDamageRates(DamageRate);
         // Debug.Log($"damage: {calculatedDamage}");
         float HP5per = CurrentHP * 0.05f;
-        if (calculatedDamage.Ice > HP5per)
+        if (calculatedDamage.ice > HP5per)
         {
             // 凍り付く処理
         }
-        if (calculatedDamage.Fire > HP5per)
+        if (calculatedDamage.fire > HP5per)
         {
             //燃える処理
         }
-        if (calculatedDamage.Water > HP5per)
+        if (calculatedDamage.water > HP5per)
         {
             // 水による処理
         }
-        if (calculatedDamage.Electric > HP5per)
+        if (calculatedDamage.electric > HP5per)
         {
             // 電撃による処理
         }
-        if (calculatedDamage.Wind > HP5per)
+        if (calculatedDamage.wind > HP5per)
         {
             // 風による処理
         }
-        if (calculatedDamage.Ice > HP5per)
+        if (calculatedDamage.ice > HP5per)
         {
             // 氷による処理
         }
-        if (calculatedDamage.Poison > HP5per)
+        if (calculatedDamage.poison > HP5per)
         {
             // 毒による処理
         }
-        if (calculatedDamage.Physical > HP5per)
+        if (calculatedDamage.physical > HP5per)
         {
             // 物理ダメージによる処理
         }
-        if (calculatedDamage.Caterpillar > HP5per)
+        if (calculatedDamage.caterpillar > HP5per)
         {
             // 毛虫による処理
         }
-        if (calculatedDamage.Heal > HP5per)
+        if (calculatedDamage.heal > HP5per)
         {
             // 回復に関する処理
         }
 
-        IncreaseCurrentHP(-calculatedDamage.TotalDamageRate * calculatedDamage.GetTotalDamage());
-        ApplyKnockback(calculatedDamage.Knockback, direction);
-        if (GameManager.Randoms[GameManager.RandomNames.InstantDeath].Value() < calculatedDamage.InstantDeathRate)
+        IncreaseCurrentHP(-calculatedDamage.totalDamageRate * calculatedDamage.GetTotalDamage());
+        ApplyKnockback(calculatedDamage.knockback, direction);
+        if (GameManager.Randoms[GameManager.RandomNames.InstantDeath].Value() < calculatedDamage.instantDeathRate)
         {
             Die();
         }

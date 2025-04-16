@@ -9,21 +9,21 @@ using UnityEngine;
 [Serializable]
 public struct Damage
 {
-    public float CriticalRate;
-    public float InstantDeathRate;
-    public float TotalDamageRate;
-    public float Knockback;
-    public float Destruction;
+    public float criticalRate;
+    public float instantDeathRate;
+    public float totalDamageRate;
+    public float knockback;
+    public float destruction;
 
-    public float Fire;
-    public float Water;
-    public float Electric;
-    public float Wind;
-    public float Ice;
-    public float Poison;
-    public float Physical;
-    public float Caterpillar;
-    public float Heal;
+    public float fire;
+    public float water;
+    public float electric;
+    public float wind;
+    public float ice;
+    public float poison;
+    public float physical;
+    public float caterpillar;
+    public float heal;
 
     // public float CriticalRate
     // {
@@ -119,21 +119,21 @@ public struct Damage
     /// <returns></returns>
     public Damage Add(Damage damage)
     {
-        CriticalRate += damage.CriticalRate;
-        InstantDeathRate += damage.InstantDeathRate;
-        TotalDamageRate += damage.TotalDamageRate;
-        Knockback += damage.Knockback;
-        Destruction += damage.Destruction;
+        criticalRate += damage.criticalRate;
+        instantDeathRate += damage.instantDeathRate;
+        totalDamageRate += damage.totalDamageRate;
+        knockback += damage.knockback;
+        destruction += damage.destruction;
 
-        Fire += damage.Fire;
-        Ice += damage.Ice;
-        Physical += damage.Physical;
-        Electric += damage.Electric;
-        Caterpillar += damage.Caterpillar;
-        Poison += damage.Poison;
-        Water += damage.Water;
-        Wind += damage.Wind;
-        Heal += damage.Heal;
+        fire += damage.fire;
+        ice += damage.ice;
+        physical += damage.physical;
+        electric += damage.electric;
+        caterpillar += damage.caterpillar;
+        poison += damage.poison;
+        water += damage.water;
+        wind += damage.wind;
+        heal += damage.heal;
         return this;
     }
 
@@ -146,23 +146,23 @@ public struct Damage
     {
         Damage result = new()
         {
-            CriticalRate = CriticalRate + DamageRate.CriticalRate,
-            InstantDeathRate = InstantDeathRate + DamageRate.InstantDeathRate,
-            TotalDamageRate = this.TotalDamageRate + DamageRate.TotalDamageRate,
+            criticalRate = criticalRate + DamageRate.criticalRate,
+            instantDeathRate = instantDeathRate + DamageRate.instantDeathRate,
+            totalDamageRate = this.totalDamageRate + DamageRate.totalDamageRate,
 
-            Destruction = Destruction + DamageRate.Destruction, // これだけ特別に引き算
+            destruction = destruction + DamageRate.destruction, // これだけ特別に引き算
 
-            Knockback = Knockback * DamageRate.Knockback,
+            knockback = knockback * DamageRate.knockback,
 
-            Fire = Fire * DamageRate.Fire,
-            Ice = Ice * DamageRate.Ice,
-            Physical = Physical * DamageRate.Physical,
-            Electric = Electric * DamageRate.Electric,
-            Caterpillar = Caterpillar * DamageRate.Caterpillar,
-            Poison = Poison * DamageRate.Poison,
-            Water = Water * DamageRate.Water,
-            Wind = Wind * DamageRate.Wind,
-            Heal = Heal * DamageRate.Heal,
+            fire = fire * DamageRate.fire,
+            ice = ice * DamageRate.ice,
+            physical = physical * DamageRate.physical,
+            electric = electric * DamageRate.electric,
+            caterpillar = caterpillar * DamageRate.caterpillar,
+            poison = poison * DamageRate.poison,
+            water = water * DamageRate.water,
+            wind = wind * DamageRate.wind,
+            heal = heal * DamageRate.heal,
         };
 
         return result;
@@ -172,40 +172,59 @@ public struct Damage
     /// 属性ダメージの合計を返す
     /// </summary>
     /// <returns></returns>
-    public float GetTotalDamage()
+    public readonly float GetTotalDamage()
     {
         float totalDamage = 0;
-        totalDamage += Destruction;
-        totalDamage += Fire;
-        totalDamage += Ice;
-        totalDamage += Physical;
-        totalDamage += Electric;
-        totalDamage += Caterpillar;
-        totalDamage += Poison;
-        totalDamage += Water;
-        totalDamage += Wind;
-        totalDamage += Electric;
-        totalDamage -= Heal;
+        totalDamage += destruction;
+        totalDamage += fire;
+        totalDamage += ice;
+        totalDamage += physical;
+        totalDamage += electric;
+        totalDamage += caterpillar;
+        totalDamage += poison;
+        totalDamage += water;
+        totalDamage += wind;
+        totalDamage += electric;
+        totalDamage -= heal;
         return totalDamage;
     }
 
     public static Damage DefaultDamageRate => new()
     {
-        CriticalRate = 0,
-        InstantDeathRate = 0,
-        TotalDamageRate = 1,
-        Knockback = 1,
-        Destruction = 0,
+        criticalRate = 0,
+        instantDeathRate = 0,
+        totalDamageRate = 1,
+        knockback = 1,
+        destruction = 0,
 
-        Fire = 1,
-        Water = 1,
-        Electric = 1,
-        Wind = 1,
-        Ice = 1,
-        Poison = 1,
-        Physical = 1,
-        Caterpillar = 1,
-        Heal = 1,
+        fire = 1,
+        water = 1,
+        electric = 1,
+        wind = 1,
+        ice = 1,
+        poison = 1,
+        physical = 1,
+        caterpillar = 1,
+        heal = 1,
+    };
+
+    public static Damage Zero => new()
+    {
+        criticalRate = 0,
+        instantDeathRate = 0,
+        totalDamageRate = 0,
+        knockback = 0,
+        destruction = 0,
+
+        fire = 0,
+        water = 0,
+        electric = 0,
+        wind = 0,
+        ice = 0,
+        poison = 0,
+        physical = 0,
+        caterpillar = 0,
+        heal = 0,
     };
 
     public override string ToString()

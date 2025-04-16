@@ -14,11 +14,10 @@ public class Projectile : MonoBehaviour, IPoolable
     /// 発射されたとき実行されるメソッド。
     /// </summary>
     /// <param name="shot"></param>
-    /// <param name="pool"></param>
     public void Launch(Shot shot)
     {
         this.shot = shot;
-        lifeTime = this.shot.Duration;
+        lifeTime = this.shot.duration;
     }
 
     private void Update()
@@ -38,15 +37,17 @@ public class Projectile : MonoBehaviour, IPoolable
     {
         if (objectManager is MonoBehaviour damageableObj)
         {
-            if ((shot.TargetLayer & (1 << damageableObj.gameObject.layer)) == 0)
+            if ((shot.targetLayer & (1 << damageableObj.gameObject.layer)) == 0)
             {
                 Debug.Log("layer do not match");
                 return;
             }
 
             Vector2 direction = damageableObj.transform.position - transform.position;
-            objectManager.TakeDamage(shot.Damage, shot.User, direction);
+            objectManager.TakeDamage(shot.damage.CalculateDamageWithDamageRates(shot.userDamageRate), shot.user, direction);
             Destroyed();
+            shot.referenceObject = gameObject;
+            shot.NextAttack?.Invoke(shot);
         }
     }
 

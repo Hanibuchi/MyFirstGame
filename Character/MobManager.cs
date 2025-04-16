@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MyGame;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -399,7 +400,11 @@ namespace MyGame
             if (Items[SelectedSlotNumber] != null)
             {
                 SetItemPosition(Items[SelectedSlotNumber].gameObject, target - (Vector2)transform.position);
-                Shot shot = new(this, Items[SelectedSlotNumber], Items[SelectedSlotNumber].gameObject, target);
+
+                Shot shot = new();
+                shot.SetCore(this, Items[SelectedSlotNumber].gameObject, target, CurrentTargetLayer, CurrentDamage);
+                // shot.SetExtra(CurrentTargetLayer, Damage.Zero, 0, 0, 0, 0, 0, 0);
+
                 Items[SelectedSlotNumber].FirstFire(shot);
             }
             else
@@ -409,6 +414,7 @@ namespace MyGame
             }
         }
 
+
         // Mobごとのデフォルトの攻撃。例えば素手で殴るなど
         protected void DefaultFire(Vector2 target)
         {
@@ -417,9 +423,9 @@ namespace MyGame
 
         public void ApplyRecoil(Shot shot)
         {
-            Vector2 direction = shot.Target - (Vector2)transform.position;
+            Vector2 direction = shot.target - (Vector2)transform.position;
             // Debug.Log($"direction: {direction} = shot.Target: {shot.Target} - user.transform.position: {transform.position}");
-            Vector3 recoilForce = (-1) * shot.Recoil * direction.normalized;
+            Vector3 recoilForce = (-1) * shot.recoil * direction.normalized;
             GetComponent<Rigidbody2D>().AddForce(recoilForce, ForceMode2D.Impulse);
         }
 
@@ -510,10 +516,10 @@ namespace MyGame
 
                 Shot shot = new()
                 {
-                    Projectiles = new List<GameObject>() { item.gameObject },
-                    TargetLayer = CurrentTargetLayer,
-                    Target = target,
-                    Speed = (target - (Vector2)transform.position).magnitude
+                    projectiles = new List<GameObject>() { item.gameObject },
+                    targetLayer = CurrentTargetLayer,
+                    target = target,
+                    speed = (target - (Vector2)transform.position).magnitude
                 };
                 // Debug.Log($"Projectiles: {shot.Projectiles}");
                 // Debug.Log($"TargetLayer: {shot.TargetLayer}");
@@ -693,7 +699,7 @@ namespace MyGame
             base.OnStatusPowerBoost(status);
             Damage damage = new()
             {
-                Physical = 5,
+                physical = 5,
             };
             CurrentDamage = CurrentDamage.Add(damage);
             status.RegisterExpireAction(OnStatusPowerBoostExpired);
@@ -704,7 +710,7 @@ namespace MyGame
             Debug.Log("PowerBoost was expired");
             Damage damage = new()
             {
-                Physical = -5,
+                physical = -5,
             };
             CurrentDamage = CurrentDamage.Add(damage);
         }
