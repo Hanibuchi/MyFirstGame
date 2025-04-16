@@ -113,7 +113,7 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolab
 
     public virtual void TakeDamage(Damage damage, MobManager user, Vector2 direction)
     {
-        if (DamageRate.Destruction > damage.Destruction)
+        if (DamageRate.destruction > damage.destruction)
         {
             return;
         }

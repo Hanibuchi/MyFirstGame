@@ -15,6 +15,7 @@ public class ResourceManager : MonoBehaviour
 
     static readonly Dictionary<string, ChunkData> chunkDatas = new();
     static readonly Dictionary<string, BaseTile> baseTiles = new();
+    static readonly ShotPool shotPool = new(30, 50);
     public enum AssetType
     {
         Item,
@@ -90,7 +91,7 @@ public class ResourceManager : MonoBehaviour
     {
         TerrainGrid,
     }
-    
+
     public enum ChunkID
     {
         DefaultChunk,
@@ -438,5 +439,14 @@ public class ResourceManager : MonoBehaviour
             return;
         }
         dictionary[id].Clear();
+    }
+
+    public static Shot GetShot()
+    {
+        return shotPool.Get();
+    }
+    public static void ReleaseShot(Shot shot)
+    {
+        shotPool.Release(shot);
     }
 }

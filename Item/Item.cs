@@ -18,7 +18,7 @@ using MyGame;
 [RequireComponent(typeof(ObjectManager))]
 [RequireComponent(typeof(Rigidbody2D))]
 // Itemの動作を統括するコンポーネント。ItemはItemに統合された。
-public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPoolable
+public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPoolable, IItem
 {
 	public string ID { get; private set; }
 	[SerializeField] protected ItemData itemData;
@@ -210,14 +210,54 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		speed = itemData.speed;
 		duration = itemData.duration;
 		recoil = itemData.recoil;
-		additionalSize = itemData.additionalSize;
-		additionalAmount = itemData.additionalAmount;
+		additionalSize = itemData.size;
+		additionalAmount = itemData.amount;
 		slotID = itemData.slotID.ToString();
 	}
 
 	public void Release()
 	{
 		ResourceManager.ReleaseItem(this);
+	}
+
+	/// <summary>
+	/// NextItemsを走査して必要なメソッドをShotに登録する。
+	/// </summary>
+	/// <param name="shot"></param>
+	public void RegisterNextItemsToShot(Shot shot)
+	{
+		foreach (Item nextItem in NextItems)
+		{
+			if (nextItem is IParameterModifierItem parameterModifierItem)
+			{
+				shot.EditParameters += parameterModifierItem.EditParameters;
+			}
+			if (nextItem is IProjectileModifierItem projectileModifierItem)
+			{
+				shot.EditProjectiles += projectileModifierItem.EditProjectiles;
+			}
+			if (nextItem is IAttackItem attackItem)
+			{
+				shot.NextAttackMethods.Add(attackItem.Attack);
+			}
+		}
+	}
+	/// <summary>
+	/// このアイテム固有のExtrasをセットする。
+	/// </summary>
+	/// <param name="shot"></param>
+	public void SetBaseExtras(Shot shot)
+	{
+		shot.SetExtras(
+				shot.baseTargetLayer,
+				Damage,
+				Diffusion,
+				Speed,
+				Duration,
+				AdditionalSize,
+				AdditionalAmount,
+				Recoil
+				);
 	}
 
 	void Update()
@@ -287,12 +327,12 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <param name="shot"></param>
 	protected void ProcessReloadAndMP(Shot shot)
 	{
-		if (shot.User == null)
+		if (shot.user == null)
 			return;
 
-		if (MP <= shot.User.CurrentMP)
+		if (MP <= shot.user.CurrentMP)
 		{
-			shot.User.IncreaseCurrentMP(-MP);
+			shot.user.IncreaseCurrentMP(-MP);
 			IsMPSufficient = true;
 		}
 		else
@@ -316,66 +356,30 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		}
 	}
 
-	/** アイテムを使用するメソッド。
-	1. ParameterModifier（単にパラメータを編集するだけで，Fire直後に処理を終了するもの）を使用する。
-	2. NextItemsのAttackのみをshot.NextItemsに写す。
-	3. アタックなら発射したオブジェクトのリストをshot.Projectilesに代入する。
-	4. ProjectileModifier（放射物を後から編集し，Fire直後に処理を終了するもの）を使用する。（ProjectileModifierのFire内ではshot.NextItemsを編集してはいけない）。
-	5. 任意のタイミングでNextItemsを使用する。**/
-	/**
-	・Itemの種類によって次のItemに引き継ぐshotの部分が異なる。注:パラメータ(Damage, Speed等)
-	種類, 引き継がないといけないメンバ, 引き継いではいけないメンバ, どっちでもいいメンバ
-	ParameterModifier, パラメータとProjectilesとTargetとNextItems, ,　
-	ProjectileModifier, パラメータとProjectilesとTargetとNextItems, , 
-	Attack, Target, パラメータとProjectiles, NextItems
-	・Attackの場合，放射物を発射するときに渡したshotのNextItemsは，その直後実行されるProjectileModifier.Fireによって変えられてしまう。
-	→ProjectileModifierはNextItemsを使用する必要がない。したがってProjectileModifierはNextItemsを使用してはならないことにする。同様に，基本必要なければ与えられたshot.NextItemsは変更してはならない。
-	・Modifierの中にAttackが入っていた場合の処理を考える。
-	→暫定的な採用案：ParameterModifierは同じParameterModifierしか入れられないようにし，ProjectileModifierは種類に応じてAttackなども入れられるようにする。
-	**/
+	// /** アイテムを使用するメソッド。
+	// 1. ParameterModifier（単にパラメータを編集するだけで，Fire直後に処理を終了するもの）を使用する。
+	// 2. NextItemsのAttackのみをshot.NextItemsに写す。
+	// 3. アタックなら発射したオブジェクトのリストをshot.Projectilesに代入する。
+	// 4. ProjectileModifier（放射物を後から編集し，Fire直後に処理を終了するもの）を使用する。（ProjectileModifierのFire内ではshot.NextItemsを編集してはいけない）。
+	// 5. 任意のタイミングでNextItemsを使用する。**/
+	// /**
+	// ・Itemの種類によって次のItemに引き継ぐshotの部分が異なる。注:パラメータ(Damage, Speed等)
+	// 種類, 引き継がないといけないメンバ, 引き継いではいけないメンバ, どっちでもいいメンバ
+	// ParameterModifier, パラメータとProjectilesとTargetとNextItems, ,　
+	// ProjectileModifier, パラメータとProjectilesとTargetとNextItems, , 
+	// Attack, Target, パラメータとProjectiles, NextItems
+	// ・Attackの場合，放射物を発射するときに渡したshotのNextItemsは，その直後実行されるProjectileModifier.Fireによって変えられてしまう。
+	// →ProjectileModifierはNextItemsを使用する必要がない。したがってProjectileModifierはNextItemsを使用してはならないことにする。同様に，基本必要なければ与えられたshot.NextItemsは変更してはならない。
+	// ・Modifierの中にAttackが入っていた場合の処理を考える。
+	// →暫定的な採用案：ParameterModifierは同じParameterModifierしか入れられないようにし，ProjectileModifierは種類に応じてAttackなども入れられるようにする。
+	// **/
+
+	/// <summary>
+	/// このアイテムが使用されたときに呼び出されるメソッド。AttackItemならAttack，それ以外はそのうち決める（投げるとか面白いかも）。
+	/// </summary>
+	/// <param name="shot"></param>
 	public virtual void Fire(Shot shot)
 	{
-	}
-
-
-	/// <summary>
-	/// パラメータの編集しShot.NextItemsをリセットして次に実行するAttackItemを集める。
-	/// </summary>
-	/// <param name="shot"></param>
-	protected void ModifyParams(Shot shot)
-	{
-		foreach (Item nextItem in NextItems)
-		{
-			if (nextItem is IParameterModifier parameterModifierItem)
-			{
-				parameterModifierItem.EditParameters(shot);
-			}
-		}
-	}
-
-	/// <summary>
-	/// NextItemsをセットする。
-	/// </summary>
-	/// <param name="shot"></param>
-	protected void SetNextItems(Shot shot)
-	{
-		shot.NextItems = NextItems.OfType<AttackItem>().Cast<Item>().ToList();
-	}
-
-	/// <summary>
-	/// ProjectileModifierを実行。shot.Projectilesが編集される。
-	/// </summary>
-	/// <param name="shot"></param>
-	protected void ModifyProjectiles(Shot shot)
-	{
-		// ProjectileModifierを実行
-		foreach (Item nextItem in NextItems)
-		{
-			if (nextItem is IProjectileModifier projectileModifier)
-			{
-				projectileModifier.EditProjectile(shot);
-			}
-		}
 	}
 
 	/// <summary>
@@ -391,19 +395,19 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			return;
 		}
 
-		ThrowTarget = shot.TargetLayer;
+		ThrowTarget = shot.targetLayer;
 		// 参照オブジェクトの位置と回転を取得
-		if (shot.Projectiles != null && shot.Projectiles.Count > 0)
+		if (shot.projectiles != null && shot.projectiles.Count > 0)
 		{
-			gameObject.transform.position = shot.Projectiles[0].transform.position;
-			gameObject.transform.rotation = shot.Projectiles[0].transform.rotation;
+			gameObject.transform.position = shot.projectiles[0].transform.position;
+			gameObject.transform.rotation = shot.projectiles[0].transform.rotation;
 		}
 
 		ShowItemAndHideUI();
 
 		IsThrown = true;
 		timeSinceThrown = throwDuration;
-		rb.AddForce(gameObject.transform.up.normalized * shot.Speed, ForceMode2D.Impulse);
+		rb.AddForce(gameObject.transform.up.normalized * shot.speed, ForceMode2D.Impulse);
 	}
 
 	/// <summary>
@@ -416,7 +420,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		{
 			Damage collisionDamage = new Damage()
 			{
-				Physical = math.pow(rb.velocity.magnitude, 2) * rb.mass / 2
+				physical = math.pow(rb.velocity.magnitude, 2) * rb.mass / 2
 			};
 			objectManager.TakeDamage(collisionDamage, null, rb.velocity);
 		}

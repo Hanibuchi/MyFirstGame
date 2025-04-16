@@ -10,10 +10,10 @@ public class ItemData : ScriptableObject
     public float mp;
     public Damage damage;
     public float diffusion;
-    public float speed;
-    public float duration;
+    public float speed = 20;
+    public float duration = 3;
     public float recoil;
-    public float additionalSize;
-    public float additionalAmount;
+    public float size = 1;
+    public float amount;
     public ResourceManager.ItemSlotID slotID = ResourceManager.ItemSlotID.DefaultSlot;
 }
