@@ -34,9 +34,7 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private PlayerParty playerParty;
     public PlayerParty PlayerParty => playerParty;
-
-    [SerializeField] private Inventory inventory;
-    public Inventory Inventory => inventory;
+    
     /// <summary>
     /// ドラッグ中のItemSlotの親
     /// </summary>
@@ -210,7 +208,6 @@ public class GameManager : MonoBehaviour
         StatisticsManager.Save();
         EventFlagManager.Save();
         PlayerParty.Save();
-        Inventory.Save();
     }
 
     public void PauseGame()

@@ -57,6 +57,8 @@ public class ResourceManager : MonoBehaviour
     public enum ItemSlotID
     {
         DefaultSlot,
+        InventorySlot,
+        EquipmentSlot
     }
     public enum UIID
     {

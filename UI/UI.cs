@@ -7,7 +7,11 @@ public class UI : MonoBehaviour, IPoolable
 {
     public string ID { get; private set; }
 
-    public void OnGet(string id)
+    /// <summary>
+    /// Getされたとき呼び出される。必ずbase.OnGetを呼ぶこと。
+    /// </summary>
+    /// <param name="id"></param>
+    public virtual void OnGet(string id)
     {
         ID = id;
     }

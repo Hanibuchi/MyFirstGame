@@ -9,10 +9,9 @@ using MyGame;
 // MobManagerとの違いはPartyを持つかどうか。
 public class NPCManager : MobManager
 {
-	public bool IsPlayer => Party != null && Party.IsPlayerParty && IsLeader;
+	public bool IsPlayer => OwnerParty != null && OwnerParty.IsPlayerParty && IsLeader;
 
 	public bool IsLeader;
-	public Party Party;
 	[SerializeField] Jobs job;
 	public Jobs Job
 	{
@@ -40,11 +39,20 @@ public class NPCManager : MobManager
 	public event Action<Sprite> OnNPCImageChanged;
 
 
-	[SerializeField] NPCEquipmentMenu equipmentMenu;
+	[SerializeField] NPCEquipmentMenu m_equipmentMenu;
 	public NPCEquipmentMenu EquipmentMenu
 	{
-		get => equipmentMenu;
-		private set => equipmentMenu = value;
+		get
+		{
+			if (m_equipmentMenu == null)
+			{
+				m_equipmentMenu = ResourceManager.GetOther(ResourceManager.UIID.NPCEquipmentMenu.ToString()).GetComponent<NPCEquipmentMenu>();
+				m_equipmentMenu.SetItemParent(this);
+				m_equipmentMenu.RegisterStatus(this);
+			}
+			return m_equipmentMenu;
+		}
+		private set => m_equipmentMenu = value;
 	}
 
 	string causeOfdeath;
@@ -60,12 +68,12 @@ public class NPCManager : MobManager
 
 	public void OnJoinParty(Party party, int index)
 	{
-		Party = party;
+		OwnerParty = party;
 		transform.SetParent(party.transform);
 
 		if (party.IsPlayerParty)
 		{
-			GenerateNPCEquipmentMenu(index);
+			MoveEquipmentMenuUI(index);
 		}
 	}
 
@@ -73,7 +81,7 @@ public class NPCManager : MobManager
 	{
 		IsLeader = true;
 		// Debug.Log($"{IsPlayer}");
-		if (Party.IsPlayerParty)
+		if (OwnerParty.IsPlayerParty)
 		{
 			if (GetComponent<PlayerController>() == null)
 			{
@@ -93,35 +101,25 @@ public class NPCManager : MobManager
 
 	public void OnLeaveParty()
 	{
-		Party = null;
+		OwnerParty = null;
 		transform.SetParent(null);
 	}
 
 	/// <summary>
-	/// NPCEquipmentMenu(UI)を作成。PartyMemberを追加するとき呼び出す。追加するのがリーダーの場合はメインの画面にステータスが出るようにする。
+	/// NPCEquipmentMenuを移動させる。
 	/// </summary>
 	/// <param name="index">NPCEquipmentMenuを追加する位置</param>
 	/// <returns></returns>
-	public void GenerateNPCEquipmentMenu(int index)
+	public void MoveEquipmentMenuUI(int index)
 	{
-		if (EquipmentMenu != null)
-		{
-			return;
-			// ResourceManager.Release(ResourceManager.UIIDs.NPCEquipmentMenu, EquipmentMenu.gameObject);
-			// EquipmentMenu = null;
-		}
-
-		GameObject equipmentMenuInstance = ResourceManager.GetOther(ResourceManager.UIID.NPCEquipmentMenu.ToString());
-		EquipmentMenu = equipmentMenuInstance.GetComponent<NPCEquipmentMenu>();
 		if (index == -1)
 			UIManager.Instance.EquipmentMenuManager.InsertMember(EquipmentMenu);
 		else
 			UIManager.Instance.EquipmentMenuManager.InsertMember(EquipmentMenu, index);
 
 		// NPCの画像を取得
-		NPCImage = GetImage();
+		// NPCImage = GetImage();
 		// Debug.Log($"NPCImage: {NPCImage}");
-		EquipmentMenu.RegisterStatus(this);
 	}
 
 	Sprite GetImage()
@@ -154,16 +152,57 @@ public class NPCManager : MobManager
 			{
 				if (IsPlayer && itemComponent.CanBePickedUp()) // プレイヤーの場合はインベントリへ。
 				{
-					itemComponent.AddToInventory();
+					Debug.Log($"Item: {itemComponent}");
+					OwnerParty.AddItem(itemComponent);
 				}
 				else
 				{
-					AddItemToEmptySlot(itemComponent);
+					AddItem(itemComponent);
 				}
 				return;
 			}
 		}
 	}
+
+
+
+
+
+
+
+
+	public override void RefreshItemSlotUIs()
+	{
+		EquipmentMenu.DetachChildrenUI();
+
+		for (int i = 0; i < Items.Count; i++)
+		{
+			ItemSlot itemSlot = null;
+			if (Items[i] != null)
+			{
+				itemSlot = Items[i].GetItemSlotUI();
+				if (itemSlot == null)
+				{
+					Items[i].RefreshItemSlotUIs();
+					itemSlot = Items[i].GetItemSlotUI();
+				}
+			}
+			EquipmentMenu.SetItemSlot(itemSlot, i);
+		}
+	}
+	public override void AddItemSlot()
+	{
+		base.AddItemSlot();
+		EquipmentMenu.AddSlot();
+	}
+
+
+
+
+
+
+
+
 
 	protected override void ResetToBase()
 	{
@@ -176,18 +215,18 @@ public class NPCManager : MobManager
 	{
 		base.Die();
 		GetComponent<Rigidbody2D>().freezeRotation = false;
-		if (Party != null)
+		if (OwnerParty != null)
 		{
 			if (IsLeader)
-				Party.GameOver(causeOfdeath);
+				OwnerParty.GameOver(causeOfdeath);
 			else
-				Party.RemoveMember(this);
+				OwnerParty.RemoveMember(this);
 		}
 	}
 	public void Surrender()
 	{
 		gameObject.layer = LayerMask.NameToLayer(GameManager.Layer.Ally.ToString());
-		Party = null;
+		OwnerParty = null;
 	}
 
 	/// <summary>
@@ -223,7 +262,7 @@ public class NPCManager : MobManager
 			if (collider.TryGetComponent(out NPCManager opponentNPCManager))
 			{
 				// ここを変更
-				Party.AddMember(opponentNPCManager);
+				OwnerParty.AddMember(opponentNPCManager);
 				return;
 			}
 		}

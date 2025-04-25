@@ -1,102 +1,46 @@
-using JetBrains.Annotations;
-using Unity.VisualScripting;
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
-using UnityEngine.InputSystem;
 using System;
-using UnityEngine.UI;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine.EventSystems;
-using UnityEngine.Animations;
-using UnityEngine.iOS;
 using MyGame;
 
 [RequireComponent(typeof(ObjectManager))]
 [RequireComponent(typeof(Rigidbody2D))]
 // Itemの動作を統括するコンポーネント。ItemはItemに統合された。
-public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPoolable, IItem
+public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPoolable, IItem, IItemParent
 {
 	public string ID { get; private set; }
-	[SerializeField] protected ItemData itemData;
-	[SerializeField] MobManager owner;
-	public MobManager Owner // このアイテムの持ち主
-	{
-		get { return owner; }
-		set
-		{
-			if (value != null)
-				OnItemOwned();
-			else
-				OnItemDropped();
-			// Ownerに現在とは異なる値が代入された場合，次のアイテム達にもそれを伝える。
-			if (value != owner)
-			{
-				owner = value;
-				foreach (Item item in NextItems)
-					if (item != null)
-						item.Owner = value;
-			}
-		}
-	}
+	[SerializeField] protected ItemData m_itemData;
+	private ItemSlot m_itemSlotUI;
 
-	[SerializeField] ItemSlot itemSlot;
-	public ItemSlot ItemSlot
-	{
-		get => itemSlot;
-		private set => itemSlot = value;
-	}
 
-	[SerializeField] Item prevItem;
-	public Item PrevItem
-	{
-		get => prevItem;
-		private set => prevItem = value;
-	}
 
-	[SerializeField] List<Item> nextItems;
-	/// <summary>
-	/// 次に使用するアイテム
-	/// </summary>
-	public List<Item> NextItems
-	{
-		get => nextItems;
-		private set => nextItems = value;
-	}
-
-	[SerializeField] int itemCapacity;
-	/// <summary>
-	/// 中に入れられるアイテムの最大値
-	/// </summary>
-	public int ItemCapacity => itemCapacity;
-
-	[SerializeField] float reloadTime;
+	[SerializeField] float m_reloadTime;
 	/// <summary>
 	/// このアイテムのリロード時間。負の数もOK
 	/// </summary>
-	public float ReloadTime => reloadTime;
+	public float ReloadTime => m_reloadTime;
 
-	[SerializeField] float coolDownTime;
+	[SerializeField] float m_coolDownTime;
 	/// <summary>
 	/// 何秒で打てるようになるか外部に示すプロパティ。毎フレーム更新されて常に正確な時間を表す。読み取り専用
 	/// </summary>
 	public float CoolDownTime
 	{
-		get => coolDownTime;
+		get => m_coolDownTime;
 		private set
 		{
-			coolDownTime = Math.Max(value, 0);
+			m_coolDownTime = Math.Max(value, 0);
 		}
 	}
 
-	[SerializeField] LayerMask targetLayer;
+	[SerializeField] LayerMask m_targetLayer;
 	/// <summary>
 	/// アイテム自身が持つターゲット
 	/// </summary>
-	public LayerMask TargetLayer => targetLayer;
+	public LayerMask TargetLayer => m_targetLayer;
 
 	/// <summary>
 	/// MP。負の数もOK
@@ -177,7 +121,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// 使用するアイテムスロットのPoolID。アイテムスロットの種類はここで変える。
 	/// </summary>
 	/// <returns></returns>
-	protected string slotID;
+	protected string m_slotID;
 
 	ObjectManager manager;
 
@@ -186,6 +130,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		TryGetComponent(out rb);
 		gravity = rb.gravityScale;
 		TryGetComponent(out manager);
+		InitItems();
 	}
 
 	public virtual void OnGet(string id)
@@ -195,24 +140,24 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	}
 	protected virtual void Init()
 	{
-		if (itemData == null)
+		if (m_itemData == null)
 		{
 			Debug.LogWarning("Data is null!!!");
 			return;
 		}
 
-		itemCapacity = itemData.itemCapacity;
-		reloadTime = itemData.reloadTime;
-		targetLayer = itemData.targetLayer;
-		mp = itemData.mp;
-		damage = itemData.damage;
-		diffusion = itemData.diffusion;
-		speed = itemData.speed;
-		duration = itemData.duration;
-		recoil = itemData.recoil;
-		additionalSize = itemData.size;
-		additionalAmount = itemData.amount;
-		slotID = itemData.slotID.ToString();
+		m_itemCapacity = m_itemData.itemCapacity;
+		m_reloadTime = m_itemData.reloadTime;
+		m_targetLayer = m_itemData.targetLayer;
+		mp = m_itemData.mp;
+		damage = m_itemData.damage;
+		diffusion = m_itemData.diffusion;
+		speed = m_itemData.speed;
+		duration = m_itemData.duration;
+		recoil = m_itemData.recoil;
+		additionalSize = m_itemData.size;
+		additionalAmount = m_itemData.amount;
+		m_slotID = m_itemData.slotID.ToString();
 	}
 
 	public void Release()
@@ -226,7 +171,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <param name="shot"></param>
 	public void RegisterNextItemsToShot(Shot shot)
 	{
-		foreach (Item nextItem in NextItems)
+		foreach (Item nextItem in Items)
 		{
 			if (nextItem is IParameterModifierItem parameterModifierItem)
 			{
@@ -270,21 +215,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			CoolDownTime -= Time.deltaTime;
 	}
 
-	/// <summary>
-	/// Ownerがnullでなくなった時実行される
-	/// </summary>
-	protected virtual void OnItemOwned()
-	{
-
-	}
-
-	/// <summary>
-	/// Ownerがnullになったとき実行される
-	/// </summary>
-	protected virtual void OnItemDropped()
-	{
-
-	}
 
 	/// <summary>
 	/// 投げられてる判定を返す。速度がしきい値以下になるか，投げられてから一定時間経ったらIsThrownをfalseにする
@@ -341,7 +271,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			return;
 		}
 
-		foreach (var item in NextItems)
+		foreach (var item in Items)
 		{
 			item.ProcessReloadAndMP(shot);
 		}
@@ -350,7 +280,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			CoolDownTime = ReloadTime;
 		else
 			CoolDownTime = 0;
-		foreach (var item in NextItems)
+		foreach (var item in Items)
 		{
 			CoolDownTime += item.CoolDownTime;
 		}
@@ -431,24 +361,255 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		return !manager.IsDead;
 	}
 
-	/// <summary>
-	/// UIを作成してInventoryに格納する。
-	/// </summary>
-	/// <returns></returns>
-	public void AddToInventory()
+
+
+
+
+	// ここからnew
+	// 以下のメンバたちは終わったら上に移動させる
+	[SerializeField] Party m_party;
+	public Party OwnerParty
 	{
-		Transform emptySlotTransform = UIManager.Instance.Inventory?.GetEmptySlotTransform();
-		// 空いてるスロットがあるかどうか
-		if (emptySlotTransform != null)
+		get { return m_party; }
+		set
 		{
-			HideItemAndShowUI();
-			ItemSlot.transform.SetParent(emptySlotTransform);
-		}
-		else
-		{
-			Debug.Log("Inventory Slot is full");
+			// Partyに現在とは異なる値が代入された場合，次のアイテム達にもそれを伝える。
+			if (value != m_party)
+			{
+				m_party?.UnregisterItemAsParty(this);
+				value?.RegisterItemAsParty(Owner, this);
+				m_party = value;
+
+				foreach (Item item in Items)
+					if (item != null)
+						item.OwnerParty = value;
+			}
 		}
 	}
+	[SerializeField] IItemOwner m_owner;
+	/// <summary>
+	/// このアイテムの持ち主。自動でPartyも設定される。
+	/// </summary>
+	public IItemOwner Owner
+	{
+		get { return m_owner; }
+		set
+		{
+			// Ownerに現在とは異なる値が代入された場合，次のアイテム達にもそれを伝える。
+			if (value != m_owner)
+			{
+				m_owner?.UnregisterItem(this);
+				value?.RegisterItem(this);
+				m_owner = value;
+
+				foreach (Item item in Items)
+					if (item != null)
+						item.Owner = value;
+			}
+			OwnerParty = value?.OwnerParty;
+		}
+	}
+	[SerializeField] IItemParent m_parent;
+	public IItemParent Parent
+	{
+		get => m_parent;
+		private set
+		{
+			if (m_parent != null && m_parent.OwnerParty is PlayerParty)
+			{
+				m_parent.RefreshItemSlotUIs();
+			}
+			if (value != null && value.OwnerParty is PlayerParty)
+			{
+				value.RefreshItemSlotUIs();
+			}
+			m_parent = value;
+		}
+	}
+	[SerializeField] List<Item> m_items = new();
+	/// <summary>
+	/// 次に使用するアイテム
+	/// </summary>
+	public List<Item> Items
+	{
+		get => m_items;
+		private set => m_items = value;
+	}
+
+	[SerializeField] protected int m_itemCapacity;
+	[SerializeField] int m_attackItemCapacity;
+	[SerializeField] int m_parameterModifierItemCapacity;
+	[SerializeField] int m_projectileModifierItemCapacity;
+
+	public virtual void InitItems()
+	{
+		Items.Clear();
+	}
+	// アイテムを追加できるか判定する。継承してアイテムの種類ごとに判定を変える。
+	public virtual bool CanAddItem(Item item)
+	{
+		if (CanAddItem(Items.Count, item))
+			return true;
+		else
+		{
+			foreach (var nextItem in Items)
+			{
+				if (nextItem is BagItem bag)
+				{
+					if (bag.CanAddItem(item))
+						return true;
+				}
+			}
+		}
+		return false;
+	}
+	public virtual bool CanAddItem(int index, Item item)
+	{
+		if (item != null && index <= m_items.Count)
+		{
+			return IsWithinItemLimits(item);
+		}
+		else
+			return false;
+	}
+	protected bool IsWithinItemLimits(Item item)
+	{
+		if (Items.Count >= m_itemCapacity)
+			return false;
+		if (item is IAttackItem && Items.Count(a => a is IAttackItem) >= m_attackItemCapacity)
+			return false;
+		if (item is IParameterModifierItem && Items.Count(a => a is IParameterModifierItem) >= m_parameterModifierItemCapacity)
+			return false;
+		if (item is IProjectileModifierItem && Items.Count(a => a is IProjectileModifierItem) >= m_projectileModifierItemCapacity)
+			return false;
+		return true;
+	}
+	public virtual void AddItem(Item item)
+	{
+		if (CanAddItem(Items.Count, item))
+		{
+			AddItem(Items.Count, item);
+			return;
+		}
+		else if (CanAddItem(item))
+		{
+			foreach (var nextItem in Items)
+			{
+				if (nextItem is BagItem bag && bag.CanAddItem(item))
+				{
+					bag.AddItem(item);
+					return;
+				}
+			}
+		}
+	}
+	public virtual void AddItem(int index, Item item)
+	{
+		if (CanAddItem(index, item))
+		{
+			// Debug.Log($"item: {gameObject.name}");
+			item.RemovePrevRelation();
+			Items.Insert(index, item);
+			item.OnAdded(this);
+		}
+		else
+			Debug.Log("item cannot be added");
+	}
+	public void OnAdded(IItemParent itemParent)
+	{
+		Owner = itemParent.Owner;
+		Parent = itemParent;
+	}
+
+	/// <summary>
+	/// これまで持っていた持ち主アイテムや持ち主（Owner）との関係を断ち切る。
+	/// </summary>
+	public void RemovePrevRelation()
+	{
+		Parent?.RemoveItem(this);
+	}
+	public virtual void RemoveItem(Item item)
+	{
+		if (Items.Contains(item))
+		{
+			Items.Remove(item);
+			item.OnRemoved();
+		}
+		else
+			Debug.LogWarning("item is not in Items");
+	}
+	public void OnRemoved()
+	{
+		Owner = null;
+		Parent = null;
+	}
+
+	/// <summary>
+	/// 直下のItemsのUIをリフレッシュする。
+	/// </summary>
+	public void RefreshItemSlotUIs()
+	{
+		if (m_itemSlotUI != null)
+		{
+			Debug.LogWarning("ItemSlotUI is not null.");
+			return;
+		}
+		InitItemSlotUI();
+		m_itemSlotUI.DetachChildrenUI();
+		Debug.Log($"Owner: {Owner}, OwnerParty: {OwnerParty}");
+
+		for (int i = 0; i < Items.Count; i++)
+		{
+			ItemSlot itemSlot = null;
+			Debug.Log($"Items[{i}]: {Items[i]}");
+			if (Items[i] != null)
+			{
+				itemSlot = Items[i].GetItemSlotUI();
+				Debug.Log($"itemSlot: {itemSlot}");
+				if (itemSlot == null)
+				{
+					Items[i].RefreshItemSlotUIs();
+					itemSlot = Items[i].GetItemSlotUI();
+				}
+			}
+			m_itemSlotUI.SetItemSlot(itemSlot, i);
+		}
+	}
+	/// <summary>
+	/// m_itemSlotUIを返す。nullのときもそのまま返す。
+	/// </summary>
+	/// <returns></returns>
+	public ItemSlot GetItemSlotUI()
+	{
+		return m_itemSlotUI;
+	}
+	/// <summary>
+	/// m_itemSlotUIを生成して取得する。すでにあるなら無視される。
+	/// </summary>
+	/// <returns></returns>
+	ItemSlot InitItemSlotUI()
+	{
+		if (m_itemSlotUI == null)
+		{
+			m_itemSlotUI = ResourceManager.GetOther(m_slotID).GetComponent<ItemSlot>();
+			m_itemSlotUI.Init(this, gameObject.GetComponentInChildren<SpriteRenderer>().sprite);
+			m_itemSlotUI.SetItemParent(this);
+		}
+		return m_itemSlotUI;
+	}
+
+	/// <summary>
+	/// ItemSlotUIがリリースされるときに呼び出される。
+	/// </summary>
+	public void OnReleaseItemSlotUI()
+	{
+		m_itemSlotUI = null;
+	}
+	// ここまでnew
+
+
+
+
 
 	/// <summary>
 	/// このアイテムをアクティブにしUIをリリースする。
@@ -456,9 +617,9 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	public void ShowItemAndHideUI()
 	{
 		EnableComponentsOnCollected(true);
-		if (ItemSlot != null)
-			ItemSlot.Release();
-		ItemSlot = null;
+		if (m_itemSlotUI != null)
+			m_itemSlotUI.Release();
+		m_itemSlotUI = null;
 	}
 
 
@@ -467,9 +628,9 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// </summary>
 	public ItemSlot HideItemAndShowUI()
 	{
-		PrepareUI();
+		// SetUIToParent();
 		EnableComponentsOnCollected(false);
-		return ItemSlot;
+		return m_itemSlotUI;
 	}
 
 	/// <summary>
@@ -485,119 +646,20 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		GetComponent<Rigidbody2D>().simulated = isEnable;
 	}
 
-	/// <summary>
-	/// アイテムスロット（UI）を準備する。アイテムを非表示にはしない。
-	/// </summary>
-	public void PrepareUI()
-	{
-		ItemSlot = ResourceManager.GetOther(slotID).GetComponent<ItemSlot>();
-		Sprite itemImage = gameObject.GetComponentInChildren<SpriteRenderer>().sprite;
-		ItemSlot.Init(this, itemImage);
-		foreach (Item nextItem in NextItems)
-		{
-			nextItem.PrepareUI();
-			nextItem.ItemSlot.Move(ItemSlot.transform, NextItems.Count - 1);
-		}
-	}
 
-	/// <summary>
-	/// アイテムを追加する。
-	/// </summary>
-	/// <param name="item"></param>
-	/// <returns></returns>
-	public void AddNextItem(Item item)
-	{
-		if (CanAddItem(item))
-		{
-			// Debug.Log($"item: {gameObject.name}");
-			// アイテムをNextItemsに登録する前に，追加するアイテムと元持ち主の関係を断ち切る。
-			item.RemovePrevRelation();
-			NextItems.Add(item);
-			item.Owner = Owner;
-			item.PrevItem = this;
-		}
-		else
-		{
-			Debug.Log("item is full");
-		}
-	}
 
-	/// <summary>
-	/// オーナーが変わるとき必要な処理をする。
-	/// </summary>
-	/// <param name="owner">拾ったmob</param>
-	public void OnChangeOwner(MobManager owner)
-	{
-		RemovePrevItem();
-		EnableComponentsOnCollected(false);
-		Owner = owner;
-	}
 
-	/// <summary>
-	/// これまで持っていた持ち主アイテムや持ち主（Owner）との関係を断ち切る。
-	/// </summary>
-	public void RemovePrevRelation()
-	{
-		RemovePrevItem();
-		RemovePrevOwner();
-	}
 
-	/// <summary>
-	/// PrevItem（このアイテムの持ち主アイテム）との縁を断ち切る。こちらから参照できなくするだけでなく，向こうからもこちらを参照できなくする。
-	/// </summary>
-	void RemovePrevItem()
-	{
-		// Debug.Log($"prevItem:{PrevItem != null}");
-		PrevItem?.RemoveNextItem(this);
-	}
 
-	/// <summary>
-	/// Ownerをリセットする。こちらから参照できなくするだけでなく，向こうからもこちらを参照できなくする。
-	/// </summary>
-	void RemovePrevOwner()
-	{
-		// Debug.Log($"prevOwner:{Owner}");
-		if (Owner != null)
-			Owner.RemoveItem(this);
-	}
 
-	void RemoveNextItem(Item item)
-	{
-		if (NextItems.Contains(item))
-		{
-			NextItems.Remove(item);
-			item.PrevItem = null;
-		}
-		else
-		{
-			Debug.LogWarning("item is not in NextItems");
-		}
-	}
 
-	// アイテムを追加できるか判定する。継承してアイテムの種類ごとに判定を変える。
-	public bool CanAddItem(Item item)
-	{
-		if (item != null && NextItems.Count < ItemCapacity)
-			return true;
-		else
-			return false;
-	}
+
 
 	public void OnPointerDown(PointerEventData eventData)
 	{
 		// マウスとオブジェクトの距離を計算
 		DragOffset = transform.position - Camera.main.ScreenToWorldPoint(eventData.position);
 	}
-
-	// // ドラッグ開始時に呼ばれる
-	// public void OnBeginDrag(PointerEventData eventData)
-	// {
-	// 	GameManager.Instance.CurrentlyDraggedItem = gameObject;
-	// 	transform.position = eventData.position;
-	// 	BeginDrag();
-
-	// 	eventData.Use();
-	// }
 
 	/// <summary>
 	/// ドラッグ開始時に呼ばれる
@@ -622,16 +684,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		// SetAtMousePos();
 	}
 
-	// public void BeginDrag()
-	// {
-	// 	IsUIDragging = false;
-	// 	gravity = rb.gravityScale;
-	// 	rb.gravityScale = 0;
-	// 	rb.velocity = Vector2.zero;
-	// 	SetAtMousePos();
-	// 	gameObject.SetActive(true);
-	// }
-
 	/// <summary>
 	/// 必要なくても，Dragを使うにはBegin, Drag, Endの3つを必ず継承しないといけないみたい。
 	/// </summary>
@@ -639,27 +691,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	public void OnDrag(PointerEventData eventData)
 	{
 	}
-
-	// ドラッグ中に呼ばれる
-	// public void OnDrag(PointerEventData eventData)
-	// {
-	// 	Debug.Log($"IsUIDragging: {IsUIDragging}");
-
-	// 	if (IsUIDragging == false)
-	// 	{
-	// 		MoveItem();
-	// 		if (eventData.pointerDrag != gameObject)
-	// 			eventData.pointerDrag = gameObject;
-	// 	}
-	// 	else
-	// 	{
-	// 		ItemSlot.SetAtMousePos();
-	// 		if (eventData.pointerDrag != ItemSlot.gameObject)
-	// 			eventData.pointerDrag = ItemSlot.gameObject;
-	// 	}
-
-	// 	eventData.Use();
-	// }
 
 	/// <summary>
 	/// Itemの位置をマウスの位置にする。

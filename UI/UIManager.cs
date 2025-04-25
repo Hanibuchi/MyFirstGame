@@ -17,8 +17,8 @@ public class UIManager : MonoBehaviour
 	/// </summary>
 	public PlayerStatusUI PlayerStatusUI => playerStatusUI;
 
-	Inventory inventory;
-	public Inventory Inventory => inventory;
+	InventoryUI inventory;
+	public InventoryUI InventoryUI => inventory;
 
 	TitleUI titleUI;
 	PauseUI pauseUI;
@@ -53,7 +53,7 @@ public class UIManager : MonoBehaviour
 	{
 		this.playerStatusUI = playerStatusUI;
 	}
-	public void SetInventory(Inventory inventory)
+	public void SetInventory(InventoryUI inventory)
 	{
 		this.inventory = inventory;
 	}
@@ -65,7 +65,7 @@ public class UIManager : MonoBehaviour
 		{
 			case UIType.PlayerStatusUI: PlayerStatusUI.Open(); break;
 			case UIType.EquipmentMenu: EquipmentMenuManager.Open(); break;
-			case UIType.InventoryUI: Inventory.Open(); break;
+			case UIType.InventoryUI: InventoryUI.Open(); break;
 
 			case UIType.TitleUI:
 				if (titleUI == null)
@@ -110,7 +110,7 @@ public class UIManager : MonoBehaviour
 		{
 			case UIType.PlayerStatusUI: PlayerStatusUI?.Close(); break;
 			case UIType.EquipmentMenu: EquipmentMenuManager?.Close(); break;
-			case UIType.InventoryUI: Inventory?.Close(); break;
+			case UIType.InventoryUI: InventoryUI?.Close(); break;
 			case UIType.SaveMenu: saveMenuUI?.Close(); break;
 			case UIType.TitleUI: titleUI?.Close(); break;
 			case UIType.PauseUI: pauseUI?.Close(); break;

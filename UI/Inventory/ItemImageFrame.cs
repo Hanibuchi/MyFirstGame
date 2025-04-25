@@ -3,32 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace MyGame
+public class ItemImageFrame : MonoBehaviour, IDropHandler//, IPointerEnterHandler
 {
-    public class ItemImageFrame : MonoBehaviour, IPointerEnterHandler
-    {
-        private void Start()
-        {
-            if (transform.parent.TryGetComponent(out ItemSlot) == false)
-                Debug.LogWarning("Item Slot Prefab is wrong");
-        }
-        public ItemSlot ItemSlot;
+	[SerializeField] ItemSlot m_itemSlot;
 
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            ItemSlot.PointerEnter(eventData);
-        }
+	public void OnDrop(PointerEventData eventData)
+	{
+		m_itemSlot.OnDrop(eventData);
+	}
 
-        // これら2つはItemSlotの方に担当してもらう。
-        // public void OnPointerExit(PointerEventData eventData)
-        // {
-        //     ItemSlot.PointerExit(eventData);
-        // }
+	// これら2つはItemSlotの方に担当してもらう。
+	// public void OnPointerExit(PointerEventData eventData)
+	// {
+	//     ItemSlot.PointerExit(eventData);
+	// }
 
-        // // OnPointerEnterで既にCanAddItemで入れられるか判定しているため，ここでは判定しない。 
-        // public void OnDrop(PointerEventData eventData)
-        // {
-        //     ItemSlot.Drop(eventData);
-        // }
-    }
+	// // OnPointerEnterで既にCanAddItemで入れられるか判定しているため，ここでは判定しない。 
+	// public void OnDrop(PointerEventData eventData)
+	// {
+	//     ItemSlot.Drop(eventData);
+	// }
 }
+

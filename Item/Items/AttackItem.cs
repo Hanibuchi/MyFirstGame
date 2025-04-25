@@ -8,22 +8,12 @@ public class TestAttackItem : Item, IAttackItem
 {
 	[SerializeField] protected string projectileID;
 
-	protected override void OnItemOwned()
-	{
-		base.OnItemOwned();
-		// LoadProjectile();
-	}
 
-	protected override void OnItemDropped()
-	{
-		base.OnItemDropped();
-		// ReleaseAsset();
-	}
 
 	protected override void Init()
 	{
 		base.Init();
-		if (itemData is AttackItemData attackItemData)
+		if (m_itemData is AttackItemData attackItemData)
 			projectileID = attackItemData.projectileID;
 		else
 			Debug.LogWarning("Data should be AttackItemData!!!");

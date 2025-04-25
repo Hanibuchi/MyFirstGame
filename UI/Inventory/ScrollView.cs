@@ -13,20 +13,20 @@ namespace MyGame
         {
 
             GameObject itemSlotObject = eventData.pointerDrag;
-            if (itemSlotObject != null && itemSlotObject.TryGetComponent(out ItemSlot itemSlot) && itemSlot.Item != null)
+            if (itemSlotObject != null && itemSlotObject.TryGetComponent(out ItemSlot itemSlot) && itemSlot.ItemParent != null)
             {
-                Item item = itemSlot.Item;
-                MobManager owner = item.Owner;
+                Item item = (Item)itemSlot.ItemParent;
+                var owner = item.Owner;
                 if (owner == null)
                     owner = GameManager.Instance.PlayerNPCManager;
 
-                if (owner != null)
+                if (owner is MobManager mobManager)
                 {
                     // 投げ飛ばす場合，ItemSlotがSetActive(false)されてOnEndDragが呼び出されないため，手動で呼び出す。
                    DragSystem.Instance.EndDrag();
 
                     Vector2 target = Camera.main.ScreenToWorldPoint(Pointer.current.position.ReadValue());
-                    owner.ThrowItem(item, target);
+                    mobManager.ThrowItem(item, target);
 
                     // // itemSlotがSetActive(false)されてOnEndDragが呼び出されないため手動で呼び出す。
                     // if (GameManager.Instance.CurrentlyDraggedItem != null)

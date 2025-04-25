@@ -10,7 +10,7 @@ using UnityEngine;
 
 // Partyの概要
 // このPartyコンポネントがくっついた空オブジェクトをメンバーの親オブジェクトにする。こうすることでリーダーの変更の度にPartyを消さなくて済むし，実際のPartyの感じに似ていて把握しやすい。
-public class Party : MonoBehaviour
+public class Party : MonoBehaviour, IItemOwner
 {
     [SerializeField] List<NPCManager> m_members = new();
     public List<NPCManager> Members => m_members;
@@ -35,8 +35,13 @@ public class Party : MonoBehaviour
     //     }
     // }
 
-
-    public void Init()
+    private void Awake()
+    {
+        OwnerParty = this;
+        Owner = this;
+        InitItems();
+    }
+    public virtual void Init()
     {
     }
 
@@ -167,6 +172,124 @@ public class Party : MonoBehaviour
 
         return true;
     }
+
+
+
+
+    // ここからアイテム管理関連の改良版
+    public Party OwnerParty { get; set; }
+    public IItemOwner Owner { get; set; }
+    public List<Item> Items { get; } = new();
+    public int ItemCapacity { get; set; } = 1;
+    public void InitItems()
+    {
+        ((IItemOwner)this).ResetItems();
+    }
+    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
+    public bool CanAddItem(Item item)
+    {
+        if (Items.Count(x => x == null) >= 1)
+            return true;
+        else
+        {
+            foreach (var nextItem in Items)
+            {
+                if (nextItem is BagItem bag)
+                {
+                    if (bag.CanAddItem(item))
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
+    public bool CanAddItem(int index, Item item)
+    {
+        if (0 <= index && index < Items.Count && Items[index] == null)
+            return true;
+        else
+            return false;
+    }
+    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
+    public void AddItem(Item item)
+    {
+        if (CanAddItem(item))
+        {
+            for (int i = 0; i < Items.Count; i++)
+            {
+                if (Items[i] == null && CanAddItem(i, item))
+                {
+                    AddItem(i, item);
+                    return;
+                }
+            }
+            foreach (var nextItem in Items)
+            {
+                if (nextItem is BagItem bag && bag.CanAddItem(item))
+                {
+                    bag.AddItem(item);
+                    return;
+                }
+            }
+        }
+    }
+    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
+    public void AddItem(int index, Item item)
+    {
+        if (CanAddItem(index, item))
+        {
+            Debug.Log($"Party, AddItem: {item} to {index}");
+            item.RemovePrevRelation();
+            Items[index] = item;
+            item.OnAdded(this);
+        }
+        else
+            Debug.LogWarning("item cannot be added");
+    }
+    public void RemoveItem(Item item)
+    {
+        if (Items.Contains(item))
+        {
+            int index = Items.IndexOf(item);
+            Items[index] = null;
+            item.OnRemoved();
+        }
+        else
+            Debug.LogWarning("Item is not in this party.");
+    }
+    public virtual void RefreshItemSlotUIs()
+    {
+    }
+
+    public void RegisterItem(Item item)
+    {
+        Debug.Log("Party, RegisterItem was called");
+    }
+    public void UnregisterItem(Item item)
+    {
+        Debug.Log("Party, UnregisterItem was called");
+    }
+    public virtual void RegisterItemAsParty(IItemOwner owner, Item item)
+    {
+        Debug.Log("Party, RegisterItemAsParty was called");
+    }
+    public virtual void UnregisterItemAsParty(Item item)
+    {
+        Debug.Log("Party, UnregisterItemAsParty was called");
+    }
+    public virtual void AddItemSlot()
+    {
+        ItemCapacity++;
+        Items.Add(null);
+    }
+
+    // ここまでアイテム管理関連の改良版
+
+
+
+
+
 
     // ゲームオーバーの処理。publicメソッドAreAllAlliesDeadを実行してPartyMembersが全員死んでいたら実行される。
     public virtual void GameOver(string causeOfdeath)

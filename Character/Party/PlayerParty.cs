@@ -10,16 +10,24 @@ public class PlayerParty : Party
     public static string PlayerPartyPath => Path.Combine(GameManager.PlayerDataPath, "PlayerParty");
     public override bool IsPlayerParty => true;
     NPCManager PlayerManager => Leader;
+
+    // 以下2つをいつか統合したい
     public void NewGame()
     {
-        Init();
         NPCManager player = ResourceManager.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<NPCManager>();
         AddMember(player);
+        Init();
     }
-
     public void LoadWorld(PlayerPartyData playerPartyData)
     {
         LoadPartyData(playerPartyData);
+        Init();
+    }
+
+    public override void Init()
+    {
+        UIManager.Instance.InventoryUI.SetItemParent(this);
+        UIManager.Instance.InventoryUI.InitSlots(ItemCapacity);
     }
 
     public override void GameOver(string causeOfdeath)
@@ -102,5 +110,48 @@ public class PlayerParty : Party
     {
         FillPartyData(playerPartyData);
         return playerPartyData;
+    }
+
+
+
+
+
+
+    public override void RefreshItemSlotUIs()
+    {
+        base.RefreshItemSlotUIs();
+        var inventory = UIManager.Instance.InventoryUI;
+        inventory.DetachChildrenUI();
+
+        for (int i = 0; i < Items.Count; i++)
+        {
+            ItemSlot itemSlot = null;
+            Debug.Log($"Items[{i}]: {Items[i]}");
+            if (Items[i] != null)
+            {
+                itemSlot = Items[i].GetItemSlotUI();
+                Debug.Log($"itemSlot: {itemSlot}");
+                if (itemSlot == null)
+                {
+                    Items[i].RefreshItemSlotUIs();
+                    itemSlot = Items[i].GetItemSlotUI();
+                }
+            }
+            inventory.SetItemSlot(itemSlot, i);
+        }
+    }
+    public override void RegisterItemAsParty(IItemOwner owner, Item item)
+    {
+        base.RegisterItemAsParty(owner, item);
+    }
+    public override void UnregisterItemAsParty(Item item)
+    {
+        base.UnregisterItemAsParty(item);
+    }
+
+    public override void AddItemSlot()
+    {
+        base.AddItemSlot();
+        UIManager.Instance.InventoryUI.AddSlot();
     }
 }

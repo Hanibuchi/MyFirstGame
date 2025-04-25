@@ -196,10 +196,10 @@ public class ChunkManager : MonoBehaviour, IPoolable
         {
             if (handler is NPCManager npc)
             {
-                if (npc.Party != null)
+                if (npc.OwnerParty != null)
                 {
                     if (npc.IsLeader)
-                        chunkData.partys.Add(npc.Party.MakePartyData());
+                        chunkData.partys.Add(npc.OwnerParty.MakePartyData());
                 }
                 else
                 {
