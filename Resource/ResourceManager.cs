@@ -379,7 +379,7 @@ public class ResourceManager : MonoBehaviour
     {
         if (!chunkDatas.ContainsKey(id) || chunkDatas[id] == null)
         {
-            Debug.LogWarning("this key is not contained");
+            Debug.LogWarning($"this key({id}) is not contained");
             return null;
         }
         var chunkData = chunkDatas[id];
@@ -394,7 +394,7 @@ public class ResourceManager : MonoBehaviour
     {
         if (!baseTiles.ContainsKey(id) || baseTiles[id] == null)
         {
-            Debug.LogWarning("this key is not contained");
+            Debug.LogWarning($"this key({id}) is not contained");
             return null;
         }
         var baseTile = baseTiles[id];
@@ -409,7 +409,7 @@ public class ResourceManager : MonoBehaviour
     {
         if (!dictionary.ContainsKey(id) || dictionary[id] == null)
         {
-            Debug.LogWarning("this key is not contained");
+            Debug.LogWarning($"this key({id}) is not contained");
             return null;
         }
         var gameObj = dictionary[id].Get();

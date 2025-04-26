@@ -98,24 +98,24 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 	[SerializeField] float timeSinceThrown = 0;
 
-	[SerializeField] LayerMask throwTarget;
+	[SerializeField] LayerMask m_throwTarget;
 	/// <summary>
 	/// 投げられているときのターゲットとなるレイヤーマスク
 	/// </summary>
 	public LayerMask ThrowTarget
 	{
-		get => throwTarget;
-		private set => throwTarget = value;
+		get => m_throwTarget;
+		private set => m_throwTarget = value;
 	}
 
-	Rigidbody2D rb;
+	Rigidbody2D m_rb;
 
-	Vector2 DragOffset;
+	Vector2 m_dragOffset;
 
 	/// <summary>
 	/// 元の重力を保持する
 	/// </summary>
-	[SerializeField] float gravity;
+	[SerializeField] float m_gravity;
 
 	/// <summary>
 	/// 使用するアイテムスロットのPoolID。アイテムスロットの種類はここで変える。
@@ -123,13 +123,13 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <returns></returns>
 	protected string m_slotID;
 
-	ObjectManager manager;
+	ObjectManager m_manager;
 
 	private void Awake()
 	{
-		TryGetComponent(out rb);
-		gravity = rb.gravityScale;
-		TryGetComponent(out manager);
+		TryGetComponent(out m_rb);
+		m_gravity = m_rb.gravityScale;
+		TryGetComponent(out m_manager);
 		InitItems();
 	}
 
@@ -221,7 +221,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// </summary>
 	void CheckThrownState()
 	{
-		if (rb.velocity.magnitude <= stopThreshold || timeSinceThrown <= 0)
+		if (m_rb.velocity.magnitude <= stopThreshold || timeSinceThrown <= 0)
 		{
 			IsThrown = false;
 		}
@@ -233,7 +233,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <param name="shot"></param>
 	public virtual void FirstFire(Shot shot)
 	{
-		if (CoolDownTime != 0 || manager.IsDead)
+		if (CoolDownTime != 0 || m_manager.IsDead)
 			return;
 
 		ProcessReloadAndMP(shot); // MPとリロードの設定
@@ -333,11 +333,11 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			gameObject.transform.rotation = shot.projectiles[0].transform.rotation;
 		}
 
-		ShowItemAndHideUI();
+		EnableComponentsOnCollected(true);
 
 		IsThrown = true;
 		timeSinceThrown = throwDuration;
-		rb.AddForce(gameObject.transform.up.normalized * shot.speed, ForceMode2D.Impulse);
+		m_rb.AddForce(gameObject.transform.up.normalized * shot.speed, ForceMode2D.Impulse);
 	}
 
 	/// <summary>
@@ -350,15 +350,15 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		{
 			Damage collisionDamage = new Damage()
 			{
-				physical = math.pow(rb.velocity.magnitude, 2) * rb.mass / 2
+				physical = math.pow(m_rb.velocity.magnitude, 2) * m_rb.mass / 2
 			};
-			objectManager.TakeDamage(collisionDamage, null, rb.velocity);
+			objectManager.TakeDamage(collisionDamage, null, m_rb.velocity);
 		}
 	}
 
 	public bool CanBePickedUp()
 	{
-		return !manager.IsDead;
+		return !m_manager.IsDead;
 	}
 
 
@@ -519,6 +519,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	{
 		Owner = itemParent.Owner;
 		Parent = itemParent;
+		EnableComponentsOnCollected(false);
 	}
 
 	/// <summary>
@@ -545,7 +546,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	}
 
 	/// <summary>
-	/// 直下のItemsのUIをリフレッシュする。
+	/// 直下のItemsのUIをリフレッシュする。もし直下のItemのItemSlotがnullの場合のみそのItemのUIをrefreshする。
 	/// </summary>
 	public void RefreshItemSlotUIs()
 	{
@@ -612,32 +613,10 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 
 	/// <summary>
-	/// このアイテムをアクティブにしUIをリリースする。
-	/// </summary>
-	public void ShowItemAndHideUI()
-	{
-		EnableComponentsOnCollected(true);
-		if (m_itemSlotUI != null)
-			m_itemSlotUI.Release();
-		m_itemSlotUI = null;
-	}
-
-
-	/// <summary>
-	/// このアイテムを非表示にしUIを生成する。
-	/// </summary>
-	public ItemSlot HideItemAndShowUI()
-	{
-		// SetUIToParent();
-		EnableComponentsOnCollected(false);
-		return m_itemSlotUI;
-	}
-
-	/// <summary>
 	/// アイテムを取得・投棄する際にコンポネントたちを非アクティブにする。SetActiveを使わないことで，Updateなどが呼び出されるようにする。
 	/// </summary>
 	/// <param name="isEnable"></param>
-	void EnableComponentsOnCollected(bool isEnable)
+	public void EnableComponentsOnCollected(bool isEnable)
 	{
 		// Debug.Log("this item was enabled");
 		if (TryGetComponent(out SpriteRenderer sr))
@@ -658,7 +637,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	public void OnPointerDown(PointerEventData eventData)
 	{
 		// マウスとオブジェクトの距離を計算
-		DragOffset = transform.position - Camera.main.ScreenToWorldPoint(eventData.position);
+		m_dragOffset = transform.position - GameManager.Utility.GetMousePos();
 	}
 
 	/// <summary>
@@ -675,13 +654,11 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 	public void BeginDrag()
 	{
-		if (TryGetComponent(out rb))
+		if (TryGetComponent(out m_rb))
 		{
-			gravity = rb.gravityScale;
-			rb.gravityScale = 0;
+			m_gravity = m_rb.gravityScale;
+			m_rb.gravityScale = 0;
 		}
-		// rb.velocity = Vector2.zero;
-		// SetAtMousePos();
 	}
 
 	/// <summary>
@@ -707,35 +684,23 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// </summary>
 	public virtual void MoveItem()
 	{
-		Vector3 mousePos = GameManager.Utility.GetMousePos();
-		rb.AddForce((1 + AdditionalAmount) * (mousePos - transform.position));
+		Vector2 targetPoint = (Vector2)GameManager.Utility.GetMousePos() + m_dragOffset;
+		m_rb.AddForce((1 + AdditionalAmount) * (targetPoint - (Vector2)transform.position));
 		// SetAtMousePos();
 	}
 
 	// ドラッグ終了時に呼ばれる。どんな状況でも呼ばれないといけない。
 	public void OnEndDrag(PointerEventData eventData)
 	{
-		// DragSystem.EndDragを実行
+		Debug.Log("Item OnEndDrag");
 		DragSystem.Instance.EndDrag();
-
-		// Debug.Log("Item OnEndDrag");
-		// GameManager.Instance.CurrentlyDraggedItem = null;
-
-		// EndDrag();
-
-		// // if (IsUIDragging == true)
-		// if (ItemSlot != null)
-		// 	ItemSlot.EndDrag();
-
-		// GameManager.Hide2ActiveFalse(gameObject);
 	}
 
 	public void EndDrag()
 	{
 		// Debug.Log("EndDrag");
 		// 必要に応じてドラッグ終了時の処理をここに追加
-		rb.gravityScale = gravity;
-
-		DragOffset = Vector2.zero;
+		m_rb.gravityScale = m_gravity;
+		m_rb.velocity = Vector2.zero;
 	}
 }

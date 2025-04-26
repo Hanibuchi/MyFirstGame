@@ -35,10 +35,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerParty playerParty;
     public PlayerParty PlayerParty => playerParty;
     
-    /// <summary>
-    /// ドラッグ中のItemSlotの親
-    /// </summary>
-    public GameObject DragContainer;
 
     Vector3 respawnPoint;
 
@@ -225,7 +221,7 @@ public class GameManager : MonoBehaviour
     public class Utility
     {
         /// <summary>
-        /// マウスの位置を取得する。CameraがPerspectiveのため特殊な方法が必要になる。UI以外で使う。
+        /// マウスのグローバル座標を取得する。CameraがPerspectiveのため特殊な方法が必要になる。UI以外で使う。
         /// </summary>
         /// <returns></returns>
         public static Vector3 GetMousePos()

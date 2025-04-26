@@ -11,14 +11,8 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
 {
     Vector2 m_dragOffset;
 
-    /// <summary>
-    /// 他の枠に入ってプレビューを出しているかどうか
-    /// </summary>
-    public bool isFixed;
-
-    [HideInInspector] public Transform parentAfterDrag; // 不要？
     RectTransform m_rt;
-    public Transform PartnerSlotSpacing; // 右側にいるパートナーのスロットスペーシング
+    [SerializeField] Transform m_partnerSlotSpacing; // 右側にいるパートナーのスロットスペーシング
 
     public void Init(Item newItem, Sprite sprite)
     {
@@ -150,12 +144,6 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
         // Debug.Log("Begin drag");
         DragSystem.Instance.ItemSlotBeginDrag(this, (Item)ItemParent);
 
-        // else
-        // {
-        //     eventData.pointerDrag = Item.gameObject;
-        //     Item.OnBeginDrag(eventData);
-        // }
-
         eventData.Use();
     }
 
@@ -164,25 +152,7 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
         SetRayCastTarget(false);
         // ドラッグ開始時にzを前に出して前に描画されるようにする。
         SetZPos(10);
-        DragSetup();
-        gameObject.SetActive(true);
-    }
-
-    /// <summary>
-    /// ドラッグ再開時の諸設定。ドラッグ中の親をScreenView（枠外にドラッグされたことを検知するための背景のUI）にする。ドラッグ開始時とかぶるところがあるためOnBeginDragとは別で作成した。
-    /// </summary>
-    public void DragSetup()
-    {
-
-        // 今までいたスロットとの関係を断つ。
-        if (transform.parent != null && transform.parent.gameObject.TryGetComponent(out ItemSlot itemSlot))
-            itemSlot.RemoveItemSlot(this);
-
-        transform.SetParent(GameManager.Instance.DragContainer.transform);
-
-        isFixed = false;
-
-        // itemSlot.SetAtMousePos(); // こうすることで一瞬ちらつくのを防ぐ
+        transform.SetParent(UIManager.Instance.EquipmentMenuManager.transform);
     }
 
     /// <summary>
@@ -199,25 +169,6 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
         rtPos.z = z;
         m_rt.position = rtPos;
     }
-
-    // public void OnDrag(PointerEventData eventData)
-    // {
-    //     // Debug.Log($"IsItemDragging: {IsItemDragging}");
-    //     if (IsItemDragging == false && isFixed == false)
-    //     {
-    //         SetAtMousePos();
-    //         if (eventData.pointerDrag != gameObject)
-    //             eventData.pointerDrag = gameObject;
-    //     }
-    //     else
-    //     {
-    //         Item.MoveItem();
-    //         if (eventData.pointerDrag != Item.gameObject)
-    //             eventData.pointerDrag = Item.gameObject;
-    //     }
-
-    //     eventData.Use();
-    // }
 
     /// <summary>
     /// ItemSlotの位置をマウスの位置にする
@@ -239,66 +190,18 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        //DragSystem.EndDragを実行
+        Debug.Log("ItemSlot OnEndDrag");
         DragSystem.Instance.EndDrag();
-
-
-        // Debug.Log("ItemSlot OnEndDrag");
-        // GameManager.Instance.CurrentlyDraggedItem = null;
-
-        // // if (IsItemDragging == false)
-        // EndDrag();
-
-        // Item.EndDrag();
     }
 
     public void EndDrag()
     {
         m_dragOffset = Vector2.zero;
 
-        if (transform.parent == GameManager.Instance.DragContainer && parentAfterDrag != null)
-            transform.SetParent(parentAfterDrag);
-
-        if (transform.parent.TryGetComponent(out ItemSlot itemSlot) && itemSlot.ItemParent != null) // 他の2種のSlotでは内部的な処理をOnDropで行うのに対し，ItemSlotではここで行う
-            itemSlot.ItemParent.AddItem((Item)ItemParent);
-
         SetRayCastTarget(true);
-
         // 前に出してたのを戻す。
         SetZPos(0);
     }
-
-    // protected override void ProcessOnPointerEnter(ItemSlot itemSlot)
-    // {
-    //     // OnPointerExit(new PointerEventData(EventSystem.current));
-    //     itemSlot.parentAfterDrag = transform;
-    //     // if (transform.childCount == 1)
-    //     // AddItemSlotAt(1, itemSlot);
-    //     // else
-    //     //     AddItemSlotAt(2, itemSlot.transform);
-    //     itemSlot.isFixed = true;
-    // }
-
-    // public void OnPointerExit(PointerEventData eventData)
-    // {
-    //     PointerExit(eventData);
-    // }
-
-    // // OnPointerEnterで既にCanAddItemで入れられるか判定しているため，ここでは判定しない。 
-    // public void OnDrop(PointerEventData eventData)
-    // {
-    //     Drop(eventData);
-    // }
-
-    // // 継承して何も操作しないために消しちゃダメ。IventtorySlotとEquipmentSlotではOnDropを通じて内部的な処理を行うが，ItemSlotではOnEndDragを通じてそれを行う。
-    // public override void ProcessOnDrop(ItemSlot itemSlot) { }
-
-    // public override bool CanAddItem(ItemSlot item)
-    // {
-    //     if (item != null && Item != null)
-    //         return Item.CanAddItem(item.Item);
-    //     else return false;
-    // }
 
 
     /// <summary>
@@ -307,25 +210,11 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
     /// <param name="itemSlotTransform"></param>
     public void RemoveItemSlot(ItemSlot itemSlot)
     {
-        if (itemSlot != null && itemSlot.PartnerSlotSpacing != null)
+        if (itemSlot != null && itemSlot.m_partnerSlotSpacing != null)
         {
-            Destroy(itemSlot.PartnerSlotSpacing.gameObject);
-            itemSlot.PartnerSlotSpacing = null;
+            Destroy(itemSlot.m_partnerSlotSpacing.gameObject);
+            itemSlot.m_partnerSlotSpacing = null;
         }
     }
-
-
-    // public Transform GetSlotSpacing()
-    // {
-    //     if (PartnerSlotSpacing == null)
-    //     {
-    //         PartnerSlotSpacing = ResourceManager.GetOther(ResourceManager.UIID.SlotSpacing.ToString()).transform;
-    //         if (PartnerSlotSpacing.TryGetComponent(out SlotSpacing slotSpacing))
-    //             slotSpacing.PartnerItemSlot = transform;
-    //         else
-    //             Debug.LogWarning("SlotSpacing is wrong");
-    //     }
-    //     return PartnerSlotSpacing;
-    // }
 }
 

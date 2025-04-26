@@ -75,11 +75,13 @@ public class MyInputSystem : MonoBehaviour
                 return;
             ccgs++;
             GameInputs.UI.Pause.canceled += OnPauseButtonPushed;
+            GameInputs.UI.EquipmentMenu.performed += OnEquipmentMenuButtonPushed;
             Debug.Log("register callback");
         }
         else
         {
             ccgs = Math.Max(0, ccgs - 1);
+            GameInputs.UI.EquipmentMenu.performed -= OnEquipmentMenuButtonPushed;
             GameInputs.UI.Pause.canceled -= OnPauseButtonPushed;
         }
     }
@@ -90,6 +92,22 @@ public class MyInputSystem : MonoBehaviour
         {
             Debug.Log("aaa");
             UIManager.Instance.Open(UIManager.UIType.PauseUI);
+        }
+    }
+
+    void OnEquipmentMenuButtonPushed(InputAction.CallbackContext context)
+    {
+        UIManager.Instance.EquipmentMenuManager.ToggleEquipmentMenu();
+
+        if (UIManager.Instance.EquipmentMenuManager.IsOpen) // 開けるとき
+        {
+            PlayerController.OnEquipmentMenuOpenEventHandler?.Invoke();
+
+            DragSystem.Instance.OnOpenEquipmentMenu();
+        }
+        else // 閉じるとき
+        {
+            DragSystem.Instance.OnCloseEquipmentMenu();
         }
     }
 

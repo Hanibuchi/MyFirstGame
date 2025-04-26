@@ -25,9 +25,12 @@ public class Slot : UI, IDropHandler
     {
         Debug.Log("OnDrop");
         GameObject dropped = eventData.pointerDrag;
-        if (dropped != null && dropped.TryGetComponent(out ItemSlot itemSlot))
+        if (dropped != null)
         {
-            m_itemParentUI?.AddItem(m_id, (Item)itemSlot.ItemParent);
+            if (dropped.TryGetComponent(out ItemSlot itemSlot))
+                m_itemParentUI?.AddItem(m_id, (Item)itemSlot.ItemParent);
+            else if (dropped.TryGetComponent(out Item item))
+                m_itemParentUI?.AddItem(m_id, item);
         }
         eventData.Use();
     }
