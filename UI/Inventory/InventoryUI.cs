@@ -26,17 +26,6 @@ public class InventoryUI : MonoBehaviour, IItemParentUI
 		}
 	}
 
-	public void AddItem(int index, Item item)
-	{
-		if (ItemParent.CanAddItem(index, item))
-			ItemParent.AddItem(index, item);
-		else
-		{
-			Debug.Log("Cannot add item to this slot.");
-			// ここでアイテムが入れられなかった時の処理。
-		}
-	}
-
 	public void DetachChildrenUI()
 	{
 		foreach (Transform slotTrs in m_itemSlotFrame)
@@ -49,20 +38,34 @@ public class InventoryUI : MonoBehaviour, IItemParentUI
 	}
 
 	/// <summary>
-	/// 子供のUIをセットする。nullのときは何もしない。
+	/// 子供のUIをセットする。nullのときはそのUIをなくす。
 	/// </summary>
 	/// <param name="itemSlot"></param>
 	public void SetItemSlot(ItemSlot itemSlot, int index)
 	{
 		var slot = m_itemSlotFrame.GetChild(index).GetComponent<InventorySlot>();
-
-		if (itemSlot == null)
+		if (itemSlot != null)
+		{
+			slot.SetItemSlot(itemSlot);
+		}
+		else
 		{
 			Debug.Log("itemSlot is null");
-			return;
+			slot.DetachChildrenUI();
 		}
-		
-		slot.SetItemSlot(itemSlot);
+	}
+
+
+	public void AddItem(int index, Item item)
+	{
+		if (ItemParent.CanAddItem(index, item))
+			ItemParent.AddItem(index, item);
+		else
+		{
+			Debug.Log("Cannot add item to this slot.");
+			// ここでアイテムが入れられなかった時の処理。
+			item?.OnAddItemFailed();
+		}
 	}
 
 	/// <summary>

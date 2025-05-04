@@ -21,6 +21,7 @@ public class ProjectileModifierItem : Item, IProjectileModifierItem
 
     public override void Fire(Shot shot)
     {
+        Parent.RemoveItem(this);
         shot.user?.ThrowItem(this, shot.target);
     }
 }

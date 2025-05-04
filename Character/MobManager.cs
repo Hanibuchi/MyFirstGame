@@ -384,7 +384,7 @@ public class MobManager : ObjectManager, IItemOwner
     /// <summary>
     /// Colliderと重なったアイテムを手持ちに追加。拾うのは一つだけ。
     /// </summary>
-    public virtual void PickupItem()
+    public void PickupItem()
     {
         List<Collider2D> colliders = DetectNearbyColliders(new ContactFilter2D().NoFilter());
 
@@ -392,12 +392,34 @@ public class MobManager : ObjectManager, IItemOwner
         foreach (Collider2D collider in colliders)
         {
             // Itemクラスの子クラスを持つコンポーネントがあるか確認
-            if (collider.TryGetComponent(out Item itemComponent))
+            if (collider.TryGetComponent(out Item item))
             {
-                // Itemsリストに追加
-                AddItem(itemComponent);
-                return;
+                if (SubPickupItem(item))
+                    return;
             }
+        }
+    }
+
+    /// <summary>
+    /// アイテムを拾うメソッドPickupItemのサブメソッド。追加できたらtrueを返す。
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    protected virtual bool SubPickupItem(Item item)
+    {
+        if (OwnerParty != null && OwnerParty.CanAddItem(item))
+        {
+            OwnerParty.AddItem(item);
+            return true;
+        }
+        else
+        {
+            if (CanAddItem(item))
+            {
+                AddItem(item);
+                return true;
+            }
+            else return false;
         }
     }
 
@@ -448,10 +470,11 @@ public class MobManager : ObjectManager, IItemOwner
         }
     }
     public IItemOwner Owner { get; set; }
+    [SerializeField] List<Item> m_items = new();
     /// <summary>
-    /// 装備アイテム。読み取り専用。Listを使っているが，基本的にAddなどでサイズを変更してはならない。
+    /// 装備アイテム。Listを使っているが，基本的にAddなどでサイズを変更してはならない。
     /// </summary>
-    public List<Item> Items { get; } = new();
+    public List<Item> Items { get => m_items; private set => m_items = value; }
     /// <summary>
     /// 装備できるアイテムの最大値
     /// </summary>
@@ -479,7 +502,7 @@ public class MobManager : ObjectManager, IItemOwner
     }
     public bool CanAddItem(int index, Item item)
     {
-        if (0 <= index && index < Items.Count && Items[index] == null)
+        if (0 <= index && index < Items.Count && item != null && Items[index] == null)
             return true;
         else
             return false;
@@ -526,7 +549,7 @@ public class MobManager : ObjectManager, IItemOwner
             item.OnRemoved();
         }
         else
-            Debug.LogWarning("Item is not in this party.");
+            Debug.LogWarning("Item is not in Items.");
     }
     public virtual void RefreshItemSlotUIs()
     {
@@ -555,41 +578,50 @@ public class MobManager : ObjectManager, IItemOwner
 
 
     /// <summary>
-    /// アイテムを投げる。targetはグローバル座標。
+    /// アイテムを投げる。アイテムは所有している前提（注意）。アイテムは所有していなくてもいい。targetはグローバル座標。
     /// </summary>
-    /// <param name="itemNumber"></param>
-    /// <param name="target"></param>
     public void ThrowItem(Vector2 target)
     {
+        RemoveItem(Items[SelectedSlotNumber]);
         ThrowItem(Items[SelectedSlotNumber], target);
     }
+    /// <summary>
+    /// アイテムを投げる。アイテムはアイテム化してる前提。アイテムは所有していなくてもいい。
+    /// </summary>
+    public virtual void ThrowItem(Item item)
+    {
+        var target = (Vector2)transform.position + Vector2.up;
+        ThrowItem(item, target);
+    }
+    /// <summary>
+    /// アイテムを投げる。アイテムはアイテム化してる前提。アイテムは所有していなくてもいい。targetはグローバル座標。
+    /// </summary>
+    /// <param name="item"></param>
+    /// <param name="target"></param>
     public virtual void ThrowItem(Item item, Vector2 target)
     {
-        int slotNum = Items.IndexOf(item);
-        if ((slotNum != -1 || (GameManager.Instance.PlayerNPCManager == this)) && item != null)
+        if (item == null)
+            Debug.LogWarning("item is null");
+        if (item.Owner != null)
         {
-            if (target == null)
-                target = transform.position;
-
-            Shot shot = new()
-            {
-                projectiles = new List<GameObject>() { item.gameObject },
-                targetLayer = CurrentTargetLayer,
-                target = target,
-                speed = (target - (Vector2)transform.position).magnitude
-            };
-            // Debug.Log($"Projectiles: {shot.Projectiles}");
-            // Debug.Log($"TargetLayer: {shot.TargetLayer}");
-            // Debug.Log($"Target: {shot.Target}");
-            // Debug.Log($"Speed: {shot.Speed}");
-            // Debug.Log($"shot:{shot} ");
-            SetItemPosition(item.gameObject, target - (Vector2)transform.position);
-            item.ThrowItem(shot);
-
-            RemoveItem(item);
+            Debug.LogWarning("item owner is not null");
+            item.Parent.RemoveItem(item);
         }
-        else
-            Debug.LogWarning("items do not contain the item or item is null");
+
+        Shot shot = new()
+        {
+            projectiles = new List<GameObject>() { item.gameObject },
+            targetLayer = CurrentTargetLayer,
+            target = target,
+            speed = (target - (Vector2)transform.position).magnitude
+        };
+        // Debug.Log($"Projectiles: {shot.Projectiles}");
+        // Debug.Log($"TargetLayer: {shot.TargetLayer}");
+        // Debug.Log($"Target: {shot.Target}");
+        // Debug.Log($"Speed: {shot.Speed}");
+        // Debug.Log($"shot:{shot} ");
+        SetItemPosition(item.gameObject, target - (Vector2)transform.position);
+        item.ThrowItem(shot);
     }
 
     /// <summary>

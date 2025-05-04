@@ -179,7 +179,11 @@ public class Party : MonoBehaviour, IItemOwner
     // ここからアイテム管理関連の改良版
     public Party OwnerParty { get; set; }
     public IItemOwner Owner { get; set; }
-    public List<Item> Items { get; } = new();
+    [SerializeField] List<Item> m_items = new();
+    /// <summary>
+    /// アイテム
+    /// </summary>
+    public List<Item> Items { get => m_items; private set => m_items = value; }
     public int ItemCapacity { get; set; } = 1;
     public void InitItems()
     {
@@ -196,6 +200,7 @@ public class Party : MonoBehaviour, IItemOwner
             {
                 if (nextItem is BagItem bag)
                 {
+                    Debug.Log($"bag.CanAddItem(item): {bag.CanAddItem(item)}");
                     if (bag.CanAddItem(item))
                         return true;
                 }
@@ -206,7 +211,7 @@ public class Party : MonoBehaviour, IItemOwner
     // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
     public bool CanAddItem(int index, Item item)
     {
-        if (0 <= index && index < Items.Count && Items[index] == null)
+        if (0 <= index && index < Items.Count && item != null && Items[index] == null)
             return true;
         else
             return false;
@@ -214,6 +219,7 @@ public class Party : MonoBehaviour, IItemOwner
     // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
     public void AddItem(Item item)
     {
+        Debug.Log($"CanAddItem: {CanAddItem(item)}");
         if (CanAddItem(item))
         {
             for (int i = 0; i < Items.Count; i++)

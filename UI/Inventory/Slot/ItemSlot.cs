@@ -19,18 +19,12 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
         ItemParent = newItem;
         gameObject.name = newItem.name + "Slot";
         SetRayCastTarget(true);
-        if (m_itemImage == null)
+        if (m_itemImage != null)
         {
+            m_itemImage.sprite = sprite;
+        }
+        else
             Debug.LogWarning("itemImage is null");
-            return;
-        }
-        m_itemImage.sprite = sprite;
-        if (!m_itemImage.gameObject.TryGetComponent(out AspectRatioFitter fitter))
-        {
-            Debug.LogWarning("fitter is null");
-            return;
-        }
-        fitter.aspectRatio = sprite.bounds.size.x / sprite.bounds.size.y;
     }
 
 
@@ -47,33 +41,25 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
     {
         ItemParent = itemParent;
     }
-
-
     public virtual void InitSlots(int slotCount)
     {
 
     }
-    public void AddItem(int index, Item item)
-    {
-        if (ItemParent.CanAddItem(index, item))
-            ItemParent.AddItem(index, item);
-        else
-        {
-            Debug.Log("Cannot add item to this slot.");
-            // ここでアイテムが入れられなかった時の処理。
-        }
-    }
+
+
+
     /// <summary>
     /// 子供のUIを指定されたindexにセットする。indexは0から始まる。
     /// </summary>
     /// <param name="itemSlot"></param>
     /// <param name="index"></param>
-    public void SetItemSlot(ItemSlot itemSlot, int index)
+    public virtual void SetItemSlot(ItemSlot itemSlot, int index)
     {
         if (0 <= index && index <= m_itemSlotFrame.childCount)
         {
             itemSlot.SetID(index);
             itemSlot.SetItemParentUI(this);
+            // Debug.Log($"itemSLot.ItemSlotParent: {}")
             itemSlot.transform.SetParent(m_itemSlotFrame);
             itemSlot.transform.SetSiblingIndex(index);
 
@@ -85,12 +71,45 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
             Debug.LogWarning("index is weired");
     }
     /// <summary>
-    /// 子供のUIをセットする。
+    /// これは呼ばれるべきでない。InvSlotなら入る場所が1つしかないためindexは必要ないが，ItemSlotは複数あるためどこに入れるか明確に指定されないといけない。
     /// </summary>
     /// <param name="itemSlot"></param>
     public override void SetItemSlot(ItemSlot itemSlot)
     {
-        SetItemSlot(itemSlot, m_itemSlotFrame.childCount);
+        Debug.LogWarning("this should not be called");
+    }
+
+    public void AddItem(int index, Item item)
+    {
+        if (ItemParent.CanAddItem(index, item))
+        {
+            Debug.Log("Can add item to this slot.");
+            ItemParent.AddItem(index, item);
+        }
+        else
+        {
+            Debug.Log("Cannot add item to this slot.");
+            // ここでアイテムが入れられなかった時の処理。
+            item?.OnAddItemFailed();
+        }
+    }
+
+    public override void OnDrop(PointerEventData eventData)
+    {
+        Debug.Log("OnDrop");
+        GameObject dropped = eventData.pointerDrag;
+        if (dropped != null)
+        {
+            Debug.Log("dropped != null");
+            Item item = null;
+            if (dropped.TryGetComponent(out ItemSlot itemSlot))
+                item = (Item)itemSlot.ItemParent;
+            if (item == null)
+                item = dropped.GetComponent<Item>();
+
+            AddItem(m_id, item);
+        }
+        eventData.Use();
     }
 
     public override void OnRelease()
@@ -121,12 +140,10 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
     /// <summary>
     /// UIの当たり判定を設定する
     /// </summary>
-    void SetRayCastTarget(bool isActive)
+    protected virtual void SetRayCastTarget(bool isActive)
     {
         if (TryGetComponent(out Image itemSlotImage))
             itemSlotImage.raycastTarget = isActive;
-        if (transform.GetChild(0).TryGetComponent(out Image itemImageFrameImage))
-            itemImageFrameImage.raycastTarget = isActive;
     }
 
     public void OnPointerDown(PointerEventData eventData)

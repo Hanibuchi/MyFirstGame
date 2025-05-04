@@ -62,8 +62,14 @@ public class DragSystem : MonoBehaviour
     {
         m_currentDragObjectType = DragObjectType.ItemSlot;
         m_draggingItemSlot = itemSlot;
+        Debug.Log($"item: {item}");
         m_draggingItem = item; // ItemSlotはなくてもいいがItemは常になければならない。
         itemSlot.BeginDrag();
+
+        if (!UIManager.Instance.EquipmentMenuManager.IsOpen)
+        {
+            OnCloseEquipmentMenu();
+        }
     }
 
     public void OnOpenEquipmentMenu()
@@ -98,7 +104,7 @@ public class DragSystem : MonoBehaviour
 
         if (m_draggingItemSlot != null)
         {
-            m_draggingItem.Owner?.RemoveItem(m_draggingItem);
+            m_draggingItem.Parent?.RemoveItem(m_draggingItem);
             // ドラッグし始めたオブジェクトがItemSlotの場合，OnEndDragを呼び出すためにはItemSlotがアクティブ状態でないといけない。親オブジェクトのEquipmentMenuManagerはここでは必ず非アクティブであるため，親をnullにしてからアクティブ状態にする。
             m_draggingItemSlot.transform.SetParent(null);
             m_draggingItemSlot.gameObject.SetActive(true);
@@ -115,7 +121,15 @@ public class DragSystem : MonoBehaviour
     }
     public void EndDrag()
     {
+        // Debug.Log($"m_currentDragObjectType: {m_currentDragObjectType.ToString()}");
+        if (m_currentDragObjectType == DragObjectType.None)
+        {
+            Debug.Log("m_currentDragObjectType is already DragObjectType.None");
+            return;
+        }
+
         m_currentDragObjectType = DragObjectType.None;
+        Debug.Log($"m_draggingItem: {m_draggingItem}");
         m_draggingItem.EndDrag();
         m_draggingItem = null;
         if (m_draggingItemSlot != null)

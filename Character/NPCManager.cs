@@ -9,8 +9,6 @@ using MyGame;
 // MobManagerとの違いはPartyを持つかどうか。
 public class NPCManager : MobManager
 {
-	public bool IsPlayer => OwnerParty != null && OwnerParty.IsPlayerParty && IsLeader;
-
 	public bool IsLeader;
 	[SerializeField] Jobs job;
 	public Jobs Job
@@ -136,33 +134,6 @@ public class NPCManager : MobManager
 		}
 	}
 
-	/// <summary>
-	/// Colliderと重なったアイテムを手持ちに追加。拾うのは一つだけ。
-	/// </summary>
-	public override void PickupItem()
-	{
-		List<Collider2D> colliders = DetectNearbyColliders(new ContactFilter2D().NoFilter());
-
-		// 検出されたコライダーの中から，Itemコンポネントを持つものを一つ見つけて手持ちに追加する
-		Item itemComponent;
-		foreach (Collider2D collider in colliders)
-		{
-			// Itemクラスの子クラスを持つコンポーネントがあるか確認
-			if (collider.TryGetComponent(out itemComponent))
-			{
-				if (IsPlayer && itemComponent.CanBePickedUp()) // プレイヤーの場合はインベントリへ。
-				{
-					Debug.Log($"Item: {itemComponent}");
-					OwnerParty.AddItem(itemComponent);
-				}
-				else
-				{
-					AddItem(itemComponent);
-				}
-				return;
-			}
-		}
-	}
 
 
 
@@ -173,6 +144,7 @@ public class NPCManager : MobManager
 
 	public override void RefreshItemSlotUIs()
 	{
+		Debug.Log("RefreshItemSlotUIs");
 		EquipmentMenu.DetachChildrenUI();
 
 		for (int i = 0; i < Items.Count; i++)
@@ -180,6 +152,7 @@ public class NPCManager : MobManager
 			ItemSlot itemSlot = null;
 			if (Items[i] != null)
 			{
+				Debug.Log($"Item: {Items[i]}");
 				itemSlot = Items[i].GetItemSlotUI();
 				if (itemSlot == null)
 				{

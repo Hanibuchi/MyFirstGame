@@ -33,6 +33,7 @@ public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
         {
             Debug.Log("Cannot add item to this slot.");
             // ここでアイテムが入れられなかった時の処理。
+            item?.OnAddItemFailed();
         }
     }
     public void DetachChildrenUI()
@@ -49,9 +50,15 @@ public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
     public void SetItemSlot(ItemSlot itemSlot, int index)
     {
         var slot = m_itemSlotFrame.GetChild(index).GetComponent<InventorySlot>();
-
         if (itemSlot != null)
+        {
             slot.SetItemSlot(itemSlot);
+        }
+        else
+        {
+            Debug.Log("itemSlot is null");
+            slot.DetachChildrenUI();
+        }
     }
     /// <summary>
     /// 装備スロットを追加する。

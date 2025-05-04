@@ -11,7 +11,8 @@ using MyGame;
 // Itemの動作を統括するコンポーネント。ItemはItemに統合された。
 public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPoolable, IItem, IItemParent
 {
-	public string ID { get; private set; }
+	string m_id;
+	public string ID { get => m_id; private set => m_id = value; }
 	[SerializeField] protected ItemData m_itemData;
 	private ItemSlot m_itemSlotUI;
 
@@ -27,14 +28,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <summary>
 	/// 何秒で打てるようになるか外部に示すプロパティ。毎フレーム更新されて常に正確な時間を表す。読み取り専用
 	/// </summary>
-	public float CoolDownTime
-	{
-		get => m_coolDownTime;
-		private set
-		{
-			m_coolDownTime = Math.Max(value, 0);
-		}
-	}
+	public float CoolDownTime { get => m_coolDownTime; private set { m_coolDownTime = Math.Max(value, 0); } }
 
 	[SerializeField] LayerMask m_targetLayer;
 	/// <summary>
@@ -158,6 +152,11 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		additionalSize = m_itemData.size;
 		additionalAmount = m_itemData.amount;
 		m_slotID = m_itemData.slotID.ToString();
+
+		m_itemCapacity = m_itemData.m_itemCapacity;
+		m_attackItemCapacity = m_itemData.m_attackItemCapacity;
+		m_parameterModifierItemCapacity = m_itemData.m_parameterModifierItemCapacity;
+		m_projectileModifierItemCapacity = m_itemData.m_projectileModifierItemCapacity;
 	}
 
 	public void Release()
@@ -273,7 +272,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 		foreach (var item in Items)
 		{
-			item.ProcessReloadAndMP(shot);
+			item?.ProcessReloadAndMP(shot);
 		}
 
 		if (IsMPSufficient)
@@ -282,7 +281,8 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			CoolDownTime = 0;
 		foreach (var item in Items)
 		{
-			CoolDownTime += item.CoolDownTime;
+			if (item != null)
+				CoolDownTime += item.CoolDownTime;
 		}
 	}
 
@@ -333,8 +333,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			gameObject.transform.rotation = shot.projectiles[0].transform.rotation;
 		}
 
-		EnableComponentsOnCollected(true);
-
 		IsThrown = true;
 		timeSinceThrown = throwDuration;
 		m_rb.AddForce(gameObject.transform.up.normalized * shot.speed, ForceMode2D.Impulse);
@@ -356,6 +354,10 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		}
 	}
 
+	/// <summary>
+	/// Pickupされることができるかどうか。Itemなど壊れてる時などにfalseを返す。
+	/// </summary>
+	/// <returns></returns>
 	public bool CanBePickedUp()
 	{
 		return !m_manager.IsDead;
@@ -419,10 +421,14 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			{
 				m_parent.RefreshItemSlotUIs();
 			}
-			if (value != null && value.OwnerParty is PlayerParty)
+			if (value != null)
 			{
-				value.RefreshItemSlotUIs();
+				EnableComponentsOnCollected(false);
+				if (value.OwnerParty is PlayerParty)
+					value.RefreshItemSlotUIs();
 			}
+			else
+				EnableComponentsOnCollected(true);
 			m_parent = value;
 		}
 	}
@@ -430,16 +436,12 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <summary>
 	/// 次に使用するアイテム
 	/// </summary>
-	public List<Item> Items
-	{
-		get => m_items;
-		private set => m_items = value;
-	}
+	public List<Item> Items { get => m_items; private set => m_items = value; }
 
-	[SerializeField] protected int m_itemCapacity;
-	[SerializeField] int m_attackItemCapacity;
-	[SerializeField] int m_parameterModifierItemCapacity;
-	[SerializeField] int m_projectileModifierItemCapacity;
+	[SerializeField] protected int m_itemCapacity = 10;
+	[SerializeField] int m_attackItemCapacity = 2;
+	[SerializeField] int m_parameterModifierItemCapacity = 10;
+	[SerializeField] int m_projectileModifierItemCapacity = 3;
 
 	public virtual void InitItems()
 	{
@@ -465,16 +467,16 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	}
 	public virtual bool CanAddItem(int index, Item item)
 	{
-		if (item != null && index <= m_items.Count)
+		if (item != null && index <= Items.Count && item != null)
 		{
 			return IsWithinItemLimits(item);
 		}
 		else
 			return false;
 	}
-	protected bool IsWithinItemLimits(Item item)
+	protected virtual bool IsWithinItemLimits(Item item)
 	{
-		if (Items.Count >= m_itemCapacity)
+		if (GetItemsCount() >= m_itemCapacity)
 			return false;
 		if (item is IAttackItem && Items.Count(a => a is IAttackItem) >= m_attackItemCapacity)
 			return false;
@@ -484,10 +486,15 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			return false;
 		return true;
 	}
+	protected virtual int GetItemsCount()
+	{
+		return Items.Count;
+	}
 	public virtual void AddItem(Item item)
 	{
 		if (CanAddItem(Items.Count, item))
 		{
+			Debug.Log("this item can be added");
 			AddItem(Items.Count, item);
 			return;
 		}
@@ -502,12 +509,13 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 				}
 			}
 		}
+		Debug.Log("this item can not be added");
 	}
 	public virtual void AddItem(int index, Item item)
 	{
 		if (CanAddItem(index, item))
 		{
-			// Debug.Log($"item: {gameObject.name}");
+			Debug.Log($"item: {gameObject.name}");
 			item.RemovePrevRelation();
 			Items.Insert(index, item);
 			item.OnAdded(this);
@@ -519,7 +527,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	{
 		Owner = itemParent.Owner;
 		Parent = itemParent;
-		EnableComponentsOnCollected(false);
 	}
 
 	/// <summary>
@@ -550,11 +557,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// </summary>
 	public void RefreshItemSlotUIs()
 	{
-		if (m_itemSlotUI != null)
-		{
-			Debug.LogWarning("ItemSlotUI is not null.");
-			return;
-		}
 		InitItemSlotUI();
 		m_itemSlotUI.DetachChildrenUI();
 		Debug.Log($"Owner: {Owner}, OwnerParty: {OwnerParty}");
@@ -588,15 +590,15 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// m_itemSlotUIを生成して取得する。すでにあるなら無視される。
 	/// </summary>
 	/// <returns></returns>
-	ItemSlot InitItemSlotUI()
+	protected virtual void InitItemSlotUI()
 	{
 		if (m_itemSlotUI == null)
 		{
 			m_itemSlotUI = ResourceManager.GetOther(m_slotID).GetComponent<ItemSlot>();
 			m_itemSlotUI.Init(this, gameObject.GetComponentInChildren<SpriteRenderer>().sprite);
 			m_itemSlotUI.SetItemParent(this);
+			m_itemSlotUI.InitSlots(m_itemCapacity);
 		}
-		return m_itemSlotUI;
 	}
 
 	/// <summary>
@@ -654,11 +656,9 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 	public void BeginDrag()
 	{
-		if (TryGetComponent(out m_rb))
-		{
-			m_gravity = m_rb.gravityScale;
-			m_rb.gravityScale = 0;
-		}
+		m_gravity = m_rb.gravityScale;
+		m_rb.gravityScale = 0;
+		m_rb.velocity = Vector2.zero;
 	}
 
 	/// <summary>
@@ -698,9 +698,22 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 	public void EndDrag()
 	{
-		// Debug.Log("EndDrag");
+		Debug.Log("EndDrag");
 		// 必要に応じてドラッグ終了時の処理をここに追加
 		m_rb.gravityScale = m_gravity;
-		m_rb.velocity = Vector2.zero;
+		Parent?.RefreshItemSlotUIs();
+	}
+
+	/// <summary>
+	/// このアイテムを追加するのに失敗したとき呼び出されるメソッド。親がいない場合は投げる。
+	/// </summary>
+	/// <returns></returns>
+	public void OnAddItemFailed()
+	{
+		if (Parent == null)
+		{
+			Parent.RemoveItem(this);
+			GameManager.Instance.PlayerNPCManager?.ThrowItem(this);
+		}
 	}
 }
