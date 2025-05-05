@@ -16,8 +16,9 @@ public class GameOverInfoUI : UI
     [SerializeField] Button continuButton;
     [SerializeField] Button quitButton;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         continuButton.onClick.AddListener(Continu);
         quitButton.onClick.AddListener(Quit);
     }
@@ -37,7 +38,7 @@ public class GameOverInfoUI : UI
 
     void Close()
     {
-        Release();
+        GetComponent<PoolableResourceComponent>().Release();
     }
 
     void Continu()

@@ -2,24 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using UnityEngine;
+using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 
-public class UI : MonoBehaviour, IPoolable
+[RequireComponent(typeof(PoolableResourceComponent))]
+public class UI : MonoBehaviour
 {
-    public string ID { get; private set; }
+    protected PoolableResourceComponent m_poolableResourceComponent;
 
-    /// <summary>
-    /// Getされたとき呼び出される。必ずbase.OnGetを呼ぶこと。
-    /// </summary>
-    /// <param name="id"></param>
-    public virtual void OnGet(string id)
+    protected virtual void Awake()
     {
-        ID = id;
+        if (!TryGetComponent(out m_poolableResourceComponent))
+            Debug.LogWarning("m_poolableResourceComponent is null");
+        m_poolableResourceComponent.ReleaseCallback += OnRelease;
     }
 
     public virtual void OnRelease() { }
-
-    public void Release()
-    {
-        ResourceManager.ReleaseOther(ID, gameObject);
-    }
 }

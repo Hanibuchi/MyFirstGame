@@ -9,12 +9,12 @@ using Newtonsoft.Json;
 using UnityEditor.iOS;
 using UnityEditor;
 
+[RequireComponent(typeof(PoolableResourceComponent))]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
-public class ChunkManager : MonoBehaviour, IPoolable
+public class ChunkManager : MonoBehaviour
 {
     string ChunkDataPath => GetChunkDataPath(bossAreaManager.AreaDirectoryPath, ChunkPos);
-    public string ID { get; private set; }
     [SerializeField] AreaManager bossAreaManager;
     public AreaManager BossAreaManager { get => bossAreaManager; private set => bossAreaManager = value; }
 
@@ -44,6 +44,14 @@ public class ChunkManager : MonoBehaviour, IPoolable
 
     Vector3Int ChunkSize => BossAreaManager.BossTerrainManager.ChunkSize;
 
+    PoolableResourceComponent m_poolableResourceComponent;
+
+    private void Awake()
+    {
+        if (!TryGetComponent(out m_poolableResourceComponent))
+            Debug.LogWarning("m_poolableResourceComponent is null");
+        m_poolableResourceComponent.ReleaseCallback += OnRelease;
+    }
     public void Init(AreaManager areaManager)
     {
         BossAreaManager = areaManager;
@@ -93,7 +101,7 @@ public class ChunkManager : MonoBehaviour, IPoolable
 
     public ChunkData Deactivate()
     {
-        ResourceManager.ReleaseOther(ID, gameObject);
+        m_poolableResourceComponent.Release();
 
         new List<IChunkHandler>(Handlers).ForEach(a => a.OnChunkDeactivate());
 
@@ -150,7 +158,7 @@ public class ChunkManager : MonoBehaviour, IPoolable
     /// <param name="gm"></param>
     public void DeleteTile(TileObjManager gm)
     {
-        ResourceManager.ReleaseOther(gm.ID, gm.gameObject);
+        gm.GetComponent<PoolableResourceComponent>().Release();
         TerrainManager.Instance.TerrainTilemap.SetTile(gm.Position, null);
         Handlers.Remove(gm);
     }
@@ -336,18 +344,9 @@ public class ChunkManager : MonoBehaviour, IPoolable
         Selection.activeObject = asset;
     }
 
-    public void OnGet(string id)
-    {
-        ID = id;
-    }
     public void OnRelease()
     {
         Handlers.Clear();
-    }
-
-	public void Release()
-	{
-        ResourceManager.ReleaseOther(ID, gameObject);
     }
 }
 

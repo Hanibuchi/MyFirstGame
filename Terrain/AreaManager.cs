@@ -7,11 +7,11 @@ using MyGame;
 using UnityEditor.Build.Pipeline;
 using UnityEngine;
 
-public class AreaManager : MonoBehaviour, IResourceHandler
+[RequireComponent(typeof(PoolableResourceComponent))]
+public class AreaManager : MonoBehaviour
 {
-    public string AreaDirectoryPath => Path.Combine(bossTerrainManager.TerrainDataDirectoryPath, ID);
-    string AreaDataPath => Path.Combine(AreaDirectoryPath, ID);
-    public string ID { get; private set; }
+    public string AreaDirectoryPath => Path.Combine(bossTerrainManager.TerrainDataDirectoryPath, m_poolableResourceComponent.ID);
+    string AreaDataPath => Path.Combine(AreaDirectoryPath, m_poolableResourceComponent.ID);
     [SerializeField] TerrainManager bossTerrainManager;
 
     public TerrainManager BossTerrainManager { get => bossTerrainManager; private set => bossTerrainManager = value; }
@@ -27,6 +27,14 @@ public class AreaManager : MonoBehaviour, IResourceHandler
 
     float HiringCostMean;
     float HiringCostStdDev;
+    
+    PoolableResourceComponent m_poolableResourceComponent;
+
+    private void Awake()
+    {
+        if (!TryGetComponent(out m_poolableResourceComponent))
+            Debug.LogWarning("m_poolableResourceComponent is null");
+    }
 
     public void Init(TerrainManager terrainManager)
     {
@@ -122,10 +130,5 @@ public class AreaManager : MonoBehaviour, IResourceHandler
         ChunkManagers.Clear();
 
         ChunkDatas.Clear();
-    }
-
-    public void OnGet(string id)
-    {
-        ID = id;
     }
 }

@@ -20,8 +20,9 @@ public class PlayerStatusUI : UI, INPCStatusUI
     public PlayerStatusSlotsFrame PlayerStatusSlotsFrame { get => m_playerStatusSlotsFrame; private set => m_playerStatusSlotsFrame = value; }
 
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         UIManager.Instance.SetPlayerStatusUI(this);
     }
 

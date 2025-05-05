@@ -12,8 +12,9 @@ public class TitleUI : BaseMenuUI
     [SerializeField] Button quitButton;
     [SerializeField] Button languageButton;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         playButton.onClick.AddListener(Play);
         settingsButton.onClick.AddListener(Settings);
         achievementButton.onClick.AddListener(Achievements);

@@ -18,8 +18,9 @@ public class SaveSlotUI : UI
     [SerializeField] Button deleteButton;
     // [SerializeField]  image;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         deleteButton.onClick.AddListener(ConfirmDelete);
     }
 

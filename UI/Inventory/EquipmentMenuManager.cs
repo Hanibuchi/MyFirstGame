@@ -11,8 +11,9 @@ public class EquipmentMenuManager : UI
     public bool IsOpen => gameObject.activeInHierarchy;
     [SerializeField] EquipmentMenuFrame EquipmentMenuFrame;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         UIManager.Instance.SetEquipmentMenuManager(this);
         Close();
     }

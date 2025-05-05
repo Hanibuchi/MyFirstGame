@@ -264,7 +264,7 @@ public class NPCManager : MobManager
 	public NPCData MakeNPCDataAndRelease()
 	{
 		NPCData npcData = MakeNPCData();
-		Release();
+		// Release();
 		return npcData;
 	}
 

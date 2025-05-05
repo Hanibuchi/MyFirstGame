@@ -237,11 +237,6 @@ public class MobManager : ObjectManager, IItemOwner
         }
     }
 
-    public override void OnGet(string id)
-    {
-        base.OnGet(id);
-        ((IItemOwner)this).ResetItems();
-    }
 
     protected override void ResetToGeneratedStatus()
     {
@@ -255,6 +250,8 @@ public class MobManager : ObjectManager, IItemOwner
             BaseDamage = mobData.BaseDamage;
         }
         base.ResetToGeneratedStatus(); // ResetToBaseを後で実行するためにこれは上の処理の後に実行する。
+
+        ((IItemOwner)this).ResetItems();
     }
 
     // すべてのステータスをBaseに戻す
@@ -669,10 +666,6 @@ public class MobManager : ObjectManager, IItemOwner
         }
     }
 
-    public override void Release()
-    {
-        ResourceManager.ReleaseMob(this);
-    }
 
     public MobData MakeMobData()
     {
@@ -682,7 +675,7 @@ public class MobManager : ObjectManager, IItemOwner
     protected MobData FillMobData(MobData mobData)
     {
         base.FillObjectData(mobData);
-        mobData.MobID = ID;
+        // mobData.MobID = ID;
         mobData.BaseTargetLayer = BaseTargetLayer;
         mobData.CurrentTargetLayer = CurrentTargetLayer;
         mobData.BaseMaxMP = BaseMaxMP;

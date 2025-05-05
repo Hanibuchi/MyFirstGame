@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using MyGame;
 using UnityEngine;
 
+[RequireComponent(typeof(PoolableResourceComponent))]
 [RequireComponent(typeof(Rigidbody2D))]
-public class Projectile : MonoBehaviour, IPoolable
+public class Projectile : MonoBehaviour
 {
-    public string ID { get; private set; }
     [SerializeField] Shot shot;
     [SerializeField] float lifeTime;
 
@@ -18,6 +18,13 @@ public class Projectile : MonoBehaviour, IPoolable
     {
         this.shot = shot;
         lifeTime = this.shot.duration;
+    }
+    PoolableResourceComponent m_poolableResourceComponent;
+
+    private void Awake()
+    {
+        if (!TryGetComponent(out m_poolableResourceComponent))
+            Debug.LogWarning("m_poolableResourceComponent is null");
     }
 
     private void Update()
@@ -53,16 +60,6 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public void Destroyed()
     {
-        ResourceManager.ReleaseProjectile(this);
-    }
-
-    public void OnGet(string id)
-    {
-        ID = id;
-    }
-
-    public void Release()
-    {
-        ResourceManager.ReleaseProjectile(this);
+        m_poolableResourceComponent.Release();
     }
 }

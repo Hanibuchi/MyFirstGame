@@ -10,8 +10,9 @@ public class BackableMenuUI : BaseMenuUI
 {
     public Button backButton;
 
-    protected virtual void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         backButton?.onClick.AddListener(Back);
     }
     protected override void OnCancelButtonPushed(InputAction.CallbackContext callback)

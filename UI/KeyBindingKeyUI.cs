@@ -57,7 +57,7 @@ public class KeyBindingKeyUI : UI
 
     public void Delete()
     {
-        Release();
+        GetComponent<PoolableResourceComponent>().Release();
     }
 
     public override void OnRelease()

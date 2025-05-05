@@ -12,8 +12,9 @@ public class PauseUI : BaseMenuUI
     [SerializeField] Button settings;
     [SerializeField] Button statistics;
     [SerializeField] Button returnToTitle;
-    protected void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         continu.onClick.AddListener(Continu);
         achievements.onClick.AddListener(Achievements);
         settings.onClick.AddListener(Settings);

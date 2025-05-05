@@ -14,8 +14,9 @@ public class GameOverUI : UI
     float hiringCost;
     List<HiredMemberData> traitorDatas;
     [SerializeField] Button OKButton;
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         OKButton.onClick.AddListener(OK);
     }
     public void Open(string causeOfDeath, AreaManager areaManager, Vector2Int chunkPos, Vector3 pos, float hiringCost, List<HiredMemberData> traitorDatas)
@@ -37,6 +38,6 @@ public class GameOverUI : UI
 
     void Close()
     {
-        Release();
+        GetComponent<PoolableResourceComponent>().Release();
     }
 }

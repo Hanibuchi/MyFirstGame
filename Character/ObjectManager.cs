@@ -11,7 +11,7 @@ using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolable, IStatusAffectable
+public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IStatusAffectable
 {
     public BaseObjectData Data;
     /// <summary>
@@ -83,15 +83,6 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolabl
     public Action<float> MoveAction { get; set; }
 
 
-    /// <summary>
-    /// IDをセット。ResourceManagerで生成時に実行される。
-    /// </summary>
-    /// <param name="id"></param>
-    public virtual void OnGet(string id)
-    {
-        ID = id;
-        ResetToGeneratedStatus();
-    }
 
     /// <summary>
     /// ステータスを初期値にする
@@ -228,10 +219,6 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolabl
         // Release();
     }
 
-    public virtual void Release()
-    {
-        ResourceManager.ReleaseItem(this);
-    }
 
     public void OnRelease()
     {
@@ -248,7 +235,7 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolabl
 
     public virtual void OnChunkDeactivate()
     {
-        Release();
+        // Release();
     }
 
     public virtual void OnChunkActivate()
@@ -257,7 +244,7 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolabl
 
     public void OnChunkReset()
     {
-        Release();
+        // Release();
     }
 
     public virtual ObjectData MakeObjectData()
@@ -272,7 +259,7 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolabl
     /// <returns></returns>
     protected virtual ObjectData FillObjectData(ObjectData objectData)
     {
-        objectData.ItemID = ID;
+        // objectData.ItemID = ID;
         objectData.BaseMaxHP = BaseMaxHP;
         objectData.CurrentMaxHP = CurrentMaxHP;
         objectData.CurrentHP = CurrentHP;

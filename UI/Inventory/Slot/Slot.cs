@@ -65,7 +65,7 @@ public class Slot : UI, IDropHandler
         base.OnRelease();
         foreach (Transform child in m_itemSlotFrame)
         {
-            if (child.TryGetComponent(out IPoolable poolable))
+            if (child.TryGetComponent(out PoolableResourceComponent poolable))
             {
                 poolable.Release();
             }

@@ -8,7 +8,8 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 // このオブジェクトをDestroyするとRuleTileはそのまま残る。DestroyしてからRuleTile.SetTile(pos,null)するとエラー出る。RuleTileを消したいときは必ずこのオブジェクトより先に消さないといけない。
-public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolable
+[RequireComponent(typeof(PoolableResourceComponent))]
+public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler
 {
     [SerializeField] ChunkManager bossChunkManager;
     /// <summary>
@@ -21,7 +22,6 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolab
     protected MobManager lastDamageTaker;
 
     [SerializeField] TileObjData Data;
-    public string ID { get; private set; }
 
     // 基本ステータス
     [SerializeField] float maxHP;
@@ -58,6 +58,14 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolab
         {
             damageRate = value;
         }
+    }
+
+    PoolableResourceComponent m_poolableResourceComponent;
+
+    private void Awake()
+    {
+        if (!TryGetComponent(out m_poolableResourceComponent))
+            Debug.LogWarning("m_poolableResourceComponent is null");
     }
 
     public void Init(Vector3Int pos)
@@ -159,14 +167,5 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler, IPoolab
         lastDamageTaker?.AddExperience(CalculateExperience());
 
         BossChunkManager?.DeleteTile(this);
-    }
-
-    public void OnGet(string id)
-    {
-        ID = id;
-    }
-    public void Release()
-    {
-        ResourceManager.ReleaseOther(this);
     }
 }

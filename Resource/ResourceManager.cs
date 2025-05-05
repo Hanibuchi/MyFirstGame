@@ -16,15 +16,6 @@ public class ResourceManager : MonoBehaviour
     static readonly Dictionary<string, ChunkData> chunkDatas = new();
     static readonly Dictionary<string, BaseTile> baseTiles = new();
     static readonly ShotPool shotPool = new(30, 50);
-    public enum AssetType
-    {
-        Item,
-        Projectile,
-        Mob,
-        Other,
-        ChunkData,
-        Tile,
-    }
 
     // 以下のIDは直接には使用されず，.ToString()で文字列に変換されて使用される．
     public enum ItemID
@@ -157,47 +148,47 @@ public class ResourceManager : MonoBehaviour
     /// <param name="groupName">ロードするアセットがもつ共通のラベル</param>
     async Task LoadAsset(string groupName)
     {
-        foreach (AssetType kind in Enum.GetValues(typeof(AssetType)))
+        foreach (ResourceType kind in Enum.GetValues(typeof(ResourceType)))
         {
             switch (kind)
             {
-                case AssetType.Item:
+                case ResourceType.Item:
                     await LoadAssetsToObjectPool(groupName, kind);
                     break;
-                case AssetType.Projectile:
+                case ResourceType.Projectile:
                     await LoadAssetsToObjectPool(groupName, kind);
                     break;
-                case AssetType.Mob:
+                case ResourceType.Mob:
                     await LoadAssetsToObjectPool(groupName, kind);
                     break;
-                case AssetType.Other:
+                case ResourceType.Other:
                     await LoadAssetsToObjectPool(groupName, kind);
                     break;
-                case AssetType.ChunkData:
+                case ResourceType.ChunkData:
                     await LoadChunkData(groupName);
                     break;
-                case AssetType.Tile:
+                case ResourceType.Tile:
                     await LoadTile(groupName);
                     break;
             }
         }
     }
 
-    async Task LoadAssetsToObjectPool(string groupName, AssetType kind)
+    async Task LoadAssetsToObjectPool(string groupName, ResourceType kind)
     {
         Dictionary<string, GameObjectPool> dict;
         MakeObjectPoolDelegate poolDelegate;
         switch (kind)
         {
-            case AssetType.Item:
+            case ResourceType.Item:
                 dict = itemPools;
                 poolDelegate = ItemDelegate;
                 break;
-            case AssetType.Projectile:
+            case ResourceType.Projectile:
                 dict = projectilePools;
                 poolDelegate = ProjectileDelegate;
                 break;
-            case AssetType.Mob:
+            case ResourceType.Mob:
                 dict = mobPools;
                 poolDelegate = MobDelegate;
                 break;
@@ -241,7 +232,7 @@ public class ResourceManager : MonoBehaviour
 
     async Task LoadChunkData(string groupName)
     {
-        List<string> labels = new() { groupName, AssetType.ChunkData.ToString() };
+        List<string> labels = new() { groupName, ResourceType.ChunkData.ToString() };
         var locationHandle = Addressables.LoadResourceLocationsAsync(labels, Addressables.MergeMode.Intersection, typeof(ChunkAsset));
         await locationHandle.Task;
 
@@ -274,7 +265,7 @@ public class ResourceManager : MonoBehaviour
 
     async Task LoadTile(string groupName)
     {
-        List<string> labels = new() { groupName, AssetType.Tile.ToString() };
+        List<string> labels = new() { groupName, ResourceType.Tile.ToString() };
         var locationHandle = Addressables.LoadResourceLocationsAsync(labels, Addressables.MergeMode.Intersection, typeof(BaseTile));
         await locationHandle.Task;
 
@@ -308,9 +299,9 @@ public class ResourceManager : MonoBehaviour
 
     public static GameObject GetItem(string id)
     {
-        return GetFromObjectPool(itemPools, id);
+        return GetFromObjectPool(ResourceType.Item, itemPools, id);
     }
-    public static void ReleaseItem(IPoolable poolable)
+    public static void ReleaseItem(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(itemPools, poolable.ID, mono.gameObject);
@@ -325,9 +316,9 @@ public class ResourceManager : MonoBehaviour
 
     public static GameObject GetProjectile(string id)
     {
-        return GetFromObjectPool(projectilePools, id);
+        return GetFromObjectPool(ResourceType.Projectile, projectilePools, id);
     }
-    public static void ReleaseProjectile(IPoolable poolable)
+    public static void ReleaseProjectile(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(projectilePools, poolable.ID, mono.gameObject);
@@ -341,9 +332,9 @@ public class ResourceManager : MonoBehaviour
 
     public static GameObject GetMob(string id)
     {
-        return GetFromObjectPool(mobPools, id);
+        return GetFromObjectPool(ResourceType.Mob, mobPools, id);
     }
-    public static void ReleaseMob(IPoolable poolable)
+    public static void ReleaseMob(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(mobPools, poolable.ID, mono.gameObject);
@@ -357,13 +348,13 @@ public class ResourceManager : MonoBehaviour
 
     public static GameObject GetOther(string id)
     {
-        return GetFromObjectPool(otherPools, id);
+        return GetFromObjectPool(ResourceType.Other, otherPools, id);
     }
     public static void ReleaseOther(string id, GameObject obj)
     {
         Release(otherPools, id, obj);
     }
-    public static void ReleaseOther(IPoolable poolable)
+    public static void ReleaseOther(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(otherPools, poolable.ID, mono.gameObject);
@@ -383,9 +374,9 @@ public class ResourceManager : MonoBehaviour
             return null;
         }
         var chunkData = chunkDatas[id];
-        if (chunkData is IPoolable handler)
+        if (chunkData is IPoolableResourceComponent handler)
         {
-            handler?.OnGet(id);
+            handler?.OnGet(ResourceType.ChunkData, id);
         }
         return chunkData;
     }
@@ -398,14 +389,14 @@ public class ResourceManager : MonoBehaviour
             return null;
         }
         var baseTile = baseTiles[id];
-        if (baseTile is IPoolable handler)
+        if (baseTile is IPoolableResourceComponent handler)
         {
-            handler?.OnGet(id);
+            handler?.OnGet(ResourceType.Tile, id);
         }
         return baseTile;
     }
 
-    static GameObject GetFromObjectPool(Dictionary<string, GameObjectPool> dictionary, string id)
+    static GameObject GetFromObjectPool(ResourceType type, Dictionary<string, GameObjectPool> dictionary, string id)
     {
         if (!dictionary.ContainsKey(id) || dictionary[id] == null)
         {
@@ -413,10 +404,10 @@ public class ResourceManager : MonoBehaviour
             return null;
         }
         var gameObj = dictionary[id].Get();
-        var handlers = gameObj.GetComponents<IPoolable>();
+        var handlers = gameObj.GetComponents<IPoolableResourceComponent>();
         foreach (var handler in handlers)
         {
-            handler?.OnGet(id);
+            handler?.OnGet(type, id);
         }
         return gameObj;
     }
@@ -427,7 +418,7 @@ public class ResourceManager : MonoBehaviour
             Debug.Log("this id is not contained");
             return;
         }
-        if (item.TryGetComponent(out IPoolable handler))
+        if (item.TryGetComponent(out IPoolableResourceComponent handler))
         {
             handler.OnRelease();
         }
@@ -451,4 +442,13 @@ public class ResourceManager : MonoBehaviour
     {
         shotPool.Release(shot);
     }
+}
+public enum ResourceType
+{
+    Item,
+    Projectile,
+    Mob,
+    Other,
+    ChunkData,
+    Tile,
 }

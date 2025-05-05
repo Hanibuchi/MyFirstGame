@@ -9,10 +9,8 @@ using MyGame;
 [RequireComponent(typeof(ObjectManager))]
 [RequireComponent(typeof(Rigidbody2D))]
 // Itemの動作を統括するコンポーネント。ItemはItemに統合された。
-public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IPoolable, IItem, IItemParent
+public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IItem, IItemParent
 {
-	string m_id;
-	public string ID { get => m_id; private set => m_id = value; }
 	[SerializeField] protected ItemData m_itemData;
 	private ItemSlot m_itemSlotUI;
 
@@ -127,11 +125,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		InitItems();
 	}
 
-	public virtual void OnGet(string id)
-	{
-		ID = id;
-		Init();
-	}
 	protected virtual void Init()
 	{
 		if (m_itemData == null)
@@ -157,11 +150,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		m_attackItemCapacity = m_itemData.m_attackItemCapacity;
 		m_parameterModifierItemCapacity = m_itemData.m_parameterModifierItemCapacity;
 		m_projectileModifierItemCapacity = m_itemData.m_projectileModifierItemCapacity;
-	}
-
-	public void Release()
-	{
-		ResourceManager.ReleaseItem(this);
 	}
 
 	/// <summary>

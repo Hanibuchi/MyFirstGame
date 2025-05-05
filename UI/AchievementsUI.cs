@@ -83,7 +83,7 @@ public class AchievementsUI : BackableMenuUI
         var entryUIs = achievementsFrame.GetComponentsInChildren<AchievementEntryUI>();
         foreach (var entryUI in entryUIs)
         {
-            entryUI.Release();
+            entryUI.GetComponent<PoolableResourceComponent>().Release();
         }
     }
 }
