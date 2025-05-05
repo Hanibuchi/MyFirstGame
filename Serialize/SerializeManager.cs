@@ -1,0 +1,60 @@
+using System.Collections;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using UnityEngine;
+
+public class SerializeManager : MonoBehaviour
+{
+    public string SaveState()
+    {
+        var components = GetComponents<ISerializeHandler>();
+
+        var dict = new Dictionary<string, string>();
+
+        foreach (var comp in components)
+        {
+            comp.OnBeforeSerializeData();
+
+            var type = comp.GetType();
+            var json = comp.Serialize();
+            dict[type.FullName] = json;
+        }
+
+        return JsonConvert.SerializeObject(dict, Formatting.Indented);
+    }
+
+    public void LoadState(string json)
+    {
+        var components = GetComponents<ISerializeHandler>();
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+        foreach (var comp in components)
+        {
+            var type = comp.GetType();
+            if (dict.TryGetValue(type.FullName, out var compJson))
+            {
+                comp.Deserialize(compJson);
+
+                comp.OnAfterDeserializeData();
+            }
+        }
+    }
+}
+interface ISerializeHandler
+{
+    public void OnBeforeSerializeData() { }
+    string Serialize()
+    {
+        var setting = new JsonSerializerSettings
+        {
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            Formatting = Formatting.None,
+        };
+        return JsonConvert.SerializeObject(this, setting);
+    }
+    void Deserialize(string json)
+    {
+        JsonConvert.PopulateObject(json, this);
+    }
+    public void OnAfterDeserializeData() { }
+}
