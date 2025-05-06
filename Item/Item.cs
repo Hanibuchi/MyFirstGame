@@ -4,7 +4,6 @@ using System;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine.EventSystems;
-using MyGame;
 
 [RequireComponent(typeof(ObjectManager))]
 [RequireComponent(typeof(Rigidbody2D))]
@@ -330,15 +329,15 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// 敵にアイテムがぶつかった際の処理。
 	/// </summary>
 	/// <param name="objectManager"></param>
-	public void MobHit(ObjectManager objectManager)
+	public void MobHit(Health health)
 	{
-		if (IsThrown && ((ThrowTarget & (1 << objectManager.gameObject.layer)) != 0))
+		if (IsThrown && ((ThrowTarget & (1 << health.gameObject.layer)) != 0))
 		{
-			Damage collisionDamage = new Damage()
+			Damage collisionDamage = new()
 			{
 				physical = math.pow(m_rb.velocity.magnitude, 2) * m_rb.mass / 2
 			};
-			objectManager.TakeDamage(collisionDamage, null, m_rb.velocity);
+			health.TakeDamage(collisionDamage, null, m_rb.velocity);
 		}
 	}
 

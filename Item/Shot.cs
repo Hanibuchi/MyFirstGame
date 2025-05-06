@@ -13,6 +13,7 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 {
 	// Core
 	public MobManager user;
+	public Attack m_attack;
 	public GameObject referenceObject;
 	/// <summary>
 	/// 目標のグローバル座標。グローバルであることでuserの位置に依存しない。

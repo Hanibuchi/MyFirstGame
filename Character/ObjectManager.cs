@@ -11,13 +11,12 @@ using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IStatusAffectable
+public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
 {
     public BaseObjectData Data;
     /// <summary>
     /// このオブジェクトのPoolの識別子。PrefabManagerで設定される。←生成時に設定されるようにする可能性←やっぱりProjectileManagerで設定。
     /// </summary>
-    public string ID { get; private set; }
     [SerializeField] bool isDead;
     public bool IsDead { get => isDead; private set => isDead = value; } // 死んだかどうか。
 
@@ -71,8 +70,6 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IStatusA
     public Damage BaseDamageRate { get => baseDamageRate; protected set { baseDamageRate = value; OnBaseDamageRateChanged?.Invoke(baseDamageRate); } }
     public event Action<Damage> OnBaseDamageRateChanged;
 
-    [SerializeField] private Damage damageRate; // ダメージ率。大きいほどより多くのダメージを受ける
-    public Damage DamageRate { get => damageRate; protected set { damageRate = value; OnDamageRateChanged?.Invoke(damageRate); } }
     public event Action<Damage> OnDamageRateChanged;
 
     [SerializeField] ChunkManager bossChunkManager;
@@ -105,84 +102,10 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IStatusA
     protected virtual void ResetToBase()
     {
         IsDead = false;
-        CurrentMaxHP = BaseMaxHP;
-        CurrentHP = BaseMaxHP;
-        DamageRate = BaseDamageRate;
     }
 
     protected MobManager LastDamageTaker;
 
-
-    /// <summary>
-    /// ダメージ処理のトリガーはMob側で行う。こうすることで子オブジェクトにProjectileがぶつかった時もこのCollisionEnter2Dが呼び出されてくれる。
-    /// </summary>
-    /// <param name="collider"></param>
-    protected void OnCollisionEnter2D(Collision2D other)
-    {
-        DetectCollision(other.gameObject);
-
-        DetectItemCollision(other.gameObject);
-    }
-    protected void OnCollisionStay2D(Collision2D other)
-    {
-        DetectCollision(other.gameObject);
-    }
-
-    /// <summary>
-    /// Projectileとの衝突
-    /// </summary>
-    /// <param name="other"></param>
-    protected virtual void DetectCollision(GameObject other)
-    {
-        if (other.TryGetComponent(out Projectile projectile))
-        {
-            projectile.Hit(this);
-        }
-    }
-
-    /// <summary>
-    /// アイテムとの衝突を検知。
-    /// </summary>
-    /// <param name="other"></param>
-    protected void DetectItemCollision(GameObject other)
-    {
-        if (other.TryGetComponent(out Item item))
-        {
-            item.MobHit(this);
-        }
-    }
-
-    public virtual void TakeDamage(Damage damage, MobManager user, Vector2 direction)
-    {
-        if (IsDead)
-            return;
-
-        LastDamageTaker = user;
-        ((IDamageable)this).TakeDamageSub(damage, direction);
-    }
-
-    /// <summary>
-    /// HPを増やすメソッド。このようにメソッドで編集すると，後でアニメーションなどをつけやすくなる
-    /// </summary>
-    /// <param name="additionalHP"></param>
-    public void IncreaseCurrentHP(float additionalHP)
-    {
-        CurrentHP = math.clamp(CurrentHP + additionalHP, 0, CurrentMaxHP);
-        if (additionalHP > 0)
-        {
-            // HPが増えたときの演出。
-        }
-        else if (additionalHP < 0)
-        {
-            // HPが減った時の演出。
-        }
-        else
-        {
-            // 何も起きなかった時の演出。
-        }
-        if (CurrentHP <= 0)
-            Die();
-    }
     public void ApplyKnockback(float knockback, Vector2 direction)
     {
         if (TryGetComponent(out Rigidbody2D rb))
@@ -259,12 +182,6 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IStatusA
     /// <returns></returns>
     protected virtual ObjectData FillObjectData(ObjectData objectData)
     {
-        // objectData.ItemID = ID;
-        objectData.BaseMaxHP = BaseMaxHP;
-        objectData.CurrentMaxHP = CurrentMaxHP;
-        objectData.CurrentHP = CurrentHP;
-        objectData.BaseDamageRate = BaseDamageRate;
-        objectData.CurrentDamageRate = DamageRate;
         objectData.StatusDataList.Clear();
         foreach (var status in StatusList)
         {
@@ -286,11 +203,6 @@ public class ObjectManager : MonoBehaviour, IDamageable, IChunkHandler, IStatusA
     }
     public void ApplyObjectData(ObjectData objectData)
     {
-        BaseMaxHP = objectData.BaseMaxHP;
-        CurrentMaxHP = objectData.CurrentMaxHP;
-        CurrentHP = objectData.CurrentHP;
-        BaseDamageRate = objectData.BaseDamageRate;
-        DamageRate = objectData.CurrentDamageRate;
         foreach (var data in objectData.StatusDataList)
         {
             ((IStatusAffectable)this).AddStatus(data);

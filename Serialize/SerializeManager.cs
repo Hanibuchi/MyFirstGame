@@ -42,6 +42,9 @@ public class SerializeManager : MonoBehaviour
 }
 interface ISerializeHandler
 {
+    /// <summary>
+    /// シリアライズ前に実行される。特殊な処理が必要なときはこのときする。
+    /// </summary>
     public void OnBeforeSerializeData() { }
     string Serialize()
     {
@@ -56,5 +59,8 @@ interface ISerializeHandler
     {
         JsonConvert.PopulateObject(json, this);
     }
+    /// <summary>
+    /// デシリアライズ後に実行される。適用に特殊な処理が必要ならこのときする。
+    /// </summary>
     public void OnAfterDeserializeData() { }
 }

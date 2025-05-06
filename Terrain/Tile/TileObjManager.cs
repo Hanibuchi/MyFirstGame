@@ -9,7 +9,7 @@ using UnityEngine.Tilemaps;
 
 // このオブジェクトをDestroyするとRuleTileはそのまま残る。DestroyしてからRuleTile.SetTile(pos,null)するとエラー出る。RuleTileを消したいときは必ずこのオブジェクトより先に消さないといけない。
 [RequireComponent(typeof(PoolableResourceComponent))]
-public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler
+public class TileObjManager : MonoBehaviour, IChunkHandler
 {
     [SerializeField] ChunkManager bossChunkManager;
     /// <summary>
@@ -23,42 +23,6 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler
 
     [SerializeField] TileObjData Data;
 
-    // 基本ステータス
-    [SerializeField] float maxHP;
-    public float MaxHP
-    {
-        get => maxHP;
-        protected set
-        {
-            if (maxHP != value)
-            {
-                maxHP = Math.Max(value, 0);
-            }
-        }
-    }
-
-    [SerializeField] float currentHP;
-    public float CurrentHP
-    {
-        get => currentHP;
-        protected set
-        {
-            if (currentHP != value)
-            {
-                currentHP = Math.Max(value, 0);
-            }
-        }
-    }
-
-    [SerializeField] Damage damageRate; // 防御率
-    public Damage DamageRate
-    {
-        get => damageRate;
-        set
-        {
-            damageRate = value;
-        }
-    }
 
     PoolableResourceComponent m_poolableResourceComponent;
 
@@ -78,9 +42,6 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler
             Debug.LogWarning("Data is null!!!");
             return;
         }
-        MaxHP = Data.MaxHP;
-        DamageRate = Data.DamageRate;
-        CurrentHP = MaxHP;
     }
 
     public void OnChunkGenerate() { }
@@ -98,68 +59,32 @@ public class TileObjManager : MonoBehaviour, IDamageable, IChunkHandler
     /// ダメージ処理のトリガーはMob側で行う。こうすることで子オブジェクトにProjectileがぶつかった時もこのCollisionEnter2Dが呼び出されてくれる。
     /// </summary>
     /// <param name="collider"></param>
-    protected void OnCollisionEnter2D(Collision2D other)
-    {
-        DetectCollision(other.gameObject);
-    }
-    protected void OnCollisionStay2D(Collision2D other)
-    {
-        DetectCollision(other.gameObject);
-    }
+    // protected void OnCollisionEnter2D(Collision2D other)
+    // {
+    //     DetectCollision(other.gameObject);
+    // }
+    // protected void OnCollisionStay2D(Collision2D other)
+    // {
+    //     DetectCollision(other.gameObject);
+    // }
 
-    /// <summary>
-    /// Projectileとの衝突
-    /// </summary>
-    /// <param name="other"></param>
-    protected virtual void DetectCollision(GameObject other)
-    {
-        if (other.TryGetComponent(out Projectile projectile))
-        {
-            projectile.Hit(this);
-        }
-    }
+    // /// <summary>
+    // /// Projectileとの衝突
+    // /// </summary>
+    // /// <param name="other"></param>
+    // protected virtual void DetectCollision(GameObject other)
+    // {
+    //     if (other.TryGetComponent(out Projectile projectile))
+    //     {
+    //         projectile.Hit(this);
+    //     }
+    // }
 
-    public virtual void TakeDamage(Damage damage, MobManager user, Vector2 direction)
-    {
-        if (DamageRate.destruction > damage.destruction)
-        {
-            return;
-        }
-
-        lastDamageTaker = user;
-        ((IDamageable)this).TakeDamageSub(damage, direction);
-    }
-
-    /// <summary>
-    /// HPを増やすメソッド。このようにメソッドで編集すると，後でアニメーションなどをつけやすくなる
-    /// </summary>
-    /// <param name="additionalHP"></param>
-    public void IncreaseCurrentHP(float additionalHP)
-    {
-        CurrentHP = math.clamp(CurrentHP + additionalHP, 0, MaxHP);
-        if (additionalHP > 0)
-        {
-            // HPが増えたときの演出。
-        }
-        else if (additionalHP < 0)
-        {
-            // HPが減った時の演出。
-        }
-        else
-        {
-            // 何も起きなかった時の演出。
-        }
-        if (CurrentHP <= 0)
-            Die();
-    }
-    public void ApplyKnockback(float knockback, Vector2 direction)
-    {
-    }
 
     // 倒されたときに相手に与える経験値を計算する
     private float CalculateExperience()
     {
-        return MaxHP;
+        return 0;
     }
 
     public virtual void Die()
