@@ -40,7 +40,7 @@ public class Health : MonoBehaviour, ISerializeHandler
     }
     public event Action<Damage> OnBaseDamageRateChanged;
 
-    [SerializeField] private Damage m_damageRate;
+    [JsonProperty][SerializeField] Damage m_damageRate;
     public Damage DamageRate
     {
         get => m_damageRate;
@@ -64,8 +64,8 @@ public class Health : MonoBehaviour, ISerializeHandler
     /// <param name="healthData"></param>
     public void Initialize(HealthData healthData)
     {
-        BaseMaxHP = healthData.m_baseMaxHP;
-        BaseDamageRate = healthData.m_baseDamageRate;
+        BaseMaxHP = healthData.baseMaxHP;
+        BaseDamageRate = healthData.baseDamageRate;
         ResetToBase();
         RestoreHP();
     }

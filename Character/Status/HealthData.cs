@@ -6,6 +6,6 @@ using UnityEngine;
 [Serializable]
 public class HealthData
 {
-    public float m_baseMaxHP;
-    public Damage m_baseDamageRate;
+    public float baseMaxHP;
+    public Damage baseDamageRate;
 }

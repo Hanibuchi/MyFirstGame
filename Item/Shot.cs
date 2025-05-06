@@ -12,8 +12,8 @@ using MyGame;
 public class Shot //: UnityEngine.Object ←これ==nullが正しく使えないため継承しないほうがいい
 {
 	// Core
-	public MobManager user;
-	public Attack m_attack;
+	public MobManager mobMan; // 廃止予定
+	public GameObject user;
 	public GameObject referenceObject;
 	/// <summary>
 	/// 目標のグローバル座標。グローバルであることでuserの位置に依存しない。
@@ -71,7 +71,7 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 
 	public Shot(Shot shot)
 	{
-		SetCore(shot.user, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
+		SetCore(shot.mobMan, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
 		SetExtras(shot.targetLayer, shot.damage, shot.diffusion, shot.speed, shot.duration, shot.size, shot.amount, shot.recoil);
 	}
 
@@ -82,12 +82,12 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 	/// <returns></returns>
 	public Shot CopyCore(Shot shot)
 	{
-		return SetCore(shot.user, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
+		return SetCore(shot.mobMan, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
 	}
 
 	public Shot SetCore(MobManager user, GameObject referenceObject, Vector2 target, LayerMask baseTargetLayer, Damage userDamageRate)
 	{
-		this.user = user;
+		this.mobMan = user;
 		this.referenceObject = referenceObject;
 		this.baseTargetLayer = baseTargetLayer;
 		this.target = target;
@@ -111,6 +111,6 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 
 	public override string ToString()
 	{
-		return $"Shot: user: {user}, referenceObj: {referenceObject}, target: {target}, baseTargetLayer: {baseTargetLayer}, userDamageRate: {userDamageRate}, targetLayer: {targetLayer}, damage: {damage}, diffusion: {diffusion}, speed: {speed}, duration: {duration}, size: {size}, amount: {amount}, recoil: {recoil}";
+		return $"Shot: user: {mobMan}, referenceObj: {referenceObject}, target: {target}, baseTargetLayer: {baseTargetLayer}, userDamageRate: {userDamageRate}, targetLayer: {targetLayer}, damage: {damage}, diffusion: {diffusion}, speed: {speed}, duration: {duration}, size: {size}, amount: {amount}, recoil: {recoil}";
 	}
 }

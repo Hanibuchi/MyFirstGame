@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
-public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
+public class NPCEquipmentMenu : UI, IItemParentUI
 {
     public IItemParent ItemParent { get; private set; }
     public void SetItemParent(IItemParent itemParent)
@@ -95,9 +95,11 @@ public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
 
 
 
-
-
-
+    // NPCImageManager m_imageManager;
+    Health m_health;
+    Mana m_mana;
+    Level m_level;
+    Job m_job;
 
 
     NPCManager m_npcManager; // 後々MobManagerにしたいが，アイテムの処理などがだるく時間がかかる
@@ -115,32 +117,48 @@ public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
     /// NPCEquipmentMenuを初期化し，ステータスが表示されるよう登録する。
     /// </summary>
     /// <param name="newNPCManager"></param>
-    public void RegisterStatus(NPCManager newNPCManager)
+    public void RegisterStatus(GameObject obj)
     {
-        m_npcManager = newNPCManager;
+        m_npcManager = obj.GetComponent<NPCManager>();
 
         GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1); // なぜかscaleが(0,0)になるため対症療法的にこうしてる。
 
-        UpdateNPCImage(newNPCManager.NPCImage);
-        UpdateNPCName(newNPCManager.gameObject.name);
-        UpdateNPCLevel(newNPCManager.CurrentLevel);
-        UpdateNPCJob(newNPCManager.Job);
-        UpdateCurrentHP(newNPCManager.CurrentHP);
-        UpdateMaxtHP(newNPCManager.CurrentMaxHP);
-        UpdateCurrentMP(newNPCManager.CurrentMP);
-        UpdateMaxtMP(newNPCManager.CurrentMaxMP);
+        UpdateNPCName(obj.name);
 
-        newNPCManager.OnNPCImageChanged += UpdateNPCImage;
-        newNPCManager.OnCurrentLevelChanged += UpdateNPCLevel;
-        newNPCManager.OnJobChanged += UpdateNPCJob;
-        newNPCManager.OnCurrentHPChanged += UpdateCurrentHP;
-        newNPCManager.OnCurrentMaxHPChanged += UpdateMaxtHP;
-        newNPCManager.OnCurrentMPChanged += UpdateCurrentMP;
-        newNPCManager.OnCurrentMaxMPChanged += UpdateMaxtMP;
+        // if (obj.TryGetComponent(out m_imageManager))
+        // {
+        //     UpdateNPCImage(m_imageManager.GetImage());
+        //     m_imageManager.OnNPCImageChanged += UpdateNPCImage;
+        // }
+
+
+        if (obj.TryGetComponent(out m_health))
+        {
+            UpdateMaxtHP(m_health.MaxHP);
+            UpdateHP(m_health.HP);
+        }
+
+        if (obj.TryGetComponent(out m_mana))
+        {
+            UpdateMaxtMP(m_mana.MaxMP);
+            UpdateMP(m_mana.MP);
+        }
+
+        // if (obj.TryGetComponent(out m_level))
+        // {
+        //     UpdateNPCLevel(m_level.Level);
+        // }
+
+        // if (obj.TryGetComponent(out m_job))
+        // {
+        //     UpdateNPCJob(m_job.Job);
+        // }
+
+        SetCallbacks(true);
 
         InitSlots(m_npcManager.ItemCapacity);
 
-        name = m_npcManager.gameObject.name + "EquipMentMenu";
+        name = obj.name + "EquipMentMenu";
     }
 
 
@@ -163,16 +181,50 @@ public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
     /// <param name="equipmentMenu"></param>
     public void UnregisterStatus()
     {
-        if (m_npcManager == null)
-            return;
-        m_npcManager.OnNPCImageChanged -= UpdateNPCImage;
-        m_npcManager.OnCurrentLevelChanged -= UpdateNPCLevel;
-        m_npcManager.OnJobChanged -= UpdateNPCJob;
-        m_npcManager.OnCurrentHPChanged -= UpdateCurrentHP;
-        m_npcManager.OnCurrentMaxHPChanged -= UpdateMaxtHP;
-        m_npcManager.OnCurrentMPChanged -= UpdateCurrentMP;
-        m_npcManager.OnCurrentMaxMPChanged -= UpdateMaxtMP;
+        SetCallbacks(false);
     }
+    void SetCallbacks(bool isRegister)
+    {
+        if (isRegister)
+        {
+            // if ( m_imageManager!=null)
+            //     m_imageManager.OnNPCImageChanged += UpdateNPCImage;
+            if (m_health != null)
+            {
+                m_health.OnMaxHPChanged += UpdateMaxtHP;
+                m_health.OnHPChanged += UpdateHP;
+            }
+            if (m_mana != null)
+            {
+                m_mana.OnMaxMPChanged += UpdateMaxtMP;
+                m_mana.OnMPChanged += UpdateMP;
+            }
+            // if (m_level != null)
+            //     m_level.OnLevelChanged += UpdateNPCLevel;
+            // if (m_job != null)
+            //     m_job.OnJobChanged += UpdateNPCJob;
+        }
+        else
+        {
+            // if ( m_imageManager!=null)
+            //     m_imageManager.OnNPCImageChanged -= UpdateNPCImage;
+            if (m_health != null)
+            {
+                m_health.OnMaxHPChanged -= UpdateMaxtHP;
+                m_health.OnHPChanged -= UpdateHP;
+            }
+            if (m_mana != null)
+            {
+                m_mana.OnMaxMPChanged -= UpdateMaxtMP;
+                m_mana.OnMPChanged -= UpdateMP;
+            }
+            // if (m_level != null)
+            //     m_level.OnLevelChanged -= UpdateNPCLevel;
+            // if (m_job != null)
+            //     m_job.OnJobChanged -= UpdateNPCJob;
+        }
+    }
+
 
 
 
@@ -231,7 +283,7 @@ public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
         }
     }
 
-    public void UpdateCurrentHP(float currentHP)
+    public void UpdateHP(float currentHP)
     {
         if (hpSlider != null && mpSlider != null)
         {
@@ -255,7 +307,7 @@ public class NPCEquipmentMenu : UI, INPCStatusUI, IItemParentUI
         }
     }
 
-    public void UpdateCurrentMP(float currentMP)
+    public void UpdateMP(float currentMP)
     {
         if (mpSlider != null && mpSlider != null)
         {

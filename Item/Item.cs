@@ -243,12 +243,12 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <param name="shot"></param>
 	protected void ProcessReloadAndMP(Shot shot)
 	{
-		if (shot.user == null)
+		if (shot.mobMan == null)
 			return;
 
-		if (MP <= shot.user.CurrentMP)
+		if (shot.user != null && shot.user.TryGetComponent(out Mana mana) && MP <= mana.MP)
 		{
-			shot.user.IncreaseCurrentMP(-MP);
+			mana.ChangeMP(-MP);
 			IsMPSufficient = true;
 		}
 		else

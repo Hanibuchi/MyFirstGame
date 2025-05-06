@@ -46,7 +46,7 @@ public class NPCManager : MobManager
 			{
 				m_equipmentMenu = ResourceManager.GetOther(ResourceManager.UIID.NPCEquipmentMenu.ToString()).GetComponent<NPCEquipmentMenu>();
 				m_equipmentMenu.SetItemParent(this);
-				m_equipmentMenu.RegisterStatus(this);
+				m_equipmentMenu.RegisterStatus(gameObject);
 			}
 			return m_equipmentMenu;
 		}
@@ -85,7 +85,7 @@ public class NPCManager : MobManager
 			{
 				gameObject.AddComponent<PlayerController>();
 			}
-			UIManager.Instance.PlayerStatusUI.RegisterStatus(this);
+			UIManager.Instance.PlayerStatusUI.RegisterStatus(gameObject);
 			GameManager.Instance.SetPlayerNPCManager(this);
 		}
 	}

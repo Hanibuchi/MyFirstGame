@@ -51,7 +51,7 @@ public class Projectile : MonoBehaviour
             }
 
             Vector2 direction = damageableObj.transform.position - transform.position;
-            health.TakeDamage(shot.damage.CalculateDamageWithDamageRates(shot.userDamageRate), shot.m_attack, direction);
+            health.TakeDamage(shot.damage.CalculateDamageWithDamageRates(shot.userDamageRate), shot?.user.GetComponent<Attack>(), direction);
             Destroyed();
             shot.referenceObject = gameObject;
             shot.NextAttack?.Invoke(shot);

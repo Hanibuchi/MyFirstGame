@@ -130,6 +130,6 @@ public class TestAttackItem : Item, IAttackItem
 	/// <param name="shot"></param>
 	public void ApplyRecoil(Shot shot)
 	{
-		shot.user?.ApplyRecoil(shot);
+		shot.mobMan?.ApplyRecoil(shot);
 	}
 }

@@ -5,9 +5,9 @@ using UnityEngine.UI;
 using TMPro;
 using MyGame;
 
-public class PlayerStatusUI : UI, INPCStatusUI
+public class PlayerStatusUI : UI
 {
-    NPCManager npcManager; // 後々MobManagerにしたいが，アイテムの処理などがだるく時間がかかる
+    GameObject m_obj;
     [SerializeField] protected Image npcImage;
     [SerializeField] protected TextMeshProUGUI npcName;
     [SerializeField] protected TextMeshProUGUI npcLevel;
@@ -20,10 +20,17 @@ public class PlayerStatusUI : UI, INPCStatusUI
     public PlayerStatusSlotsFrame PlayerStatusSlotsFrame { get => m_playerStatusSlotsFrame; private set => m_playerStatusSlotsFrame = value; }
 
 
+    Health m_health;
+    Mana m_mana;
+    Level m_level;
+    Job m_job;
+
+
     protected override void Awake()
     {
         base.Awake();
         UIManager.Instance.SetPlayerStatusUI(this);
+
     }
 
     public void Open()
@@ -39,40 +46,35 @@ public class PlayerStatusUI : UI, INPCStatusUI
     /// NPCEquipmentMenuを初期化し，ステータスが表示されるよう登録する。
     /// </summary>
     /// <param name="equipmentMenu"></param>
-    public void RegisterStatus(NPCManager newNPCManager)
+    public void RegisterStatus(GameObject obj)
     {
-        if (npcManager != null)
-            UnregisterStatus();
+        m_obj = obj;
 
-        npcManager = newNPCManager;
+        UpdateNPCName(obj.name);
 
-        GetStatusDisplayComponents();
+        if (m_obj.TryGetComponent(out m_health))
+        {
+            UpdateMaxtHP(m_health.MaxHP);
+            UpdateHP(m_health.HP);
+        }
 
-        UpdateNPCName(newNPCManager.gameObject.name);
-        UpdateNPCLevel(newNPCManager.CurrentLevel);
-        UpdateNPCJob(newNPCManager.Job);
-        UpdateMaxtHP(newNPCManager.CurrentMaxHP);
-        UpdateCurrentHP(newNPCManager.CurrentHP);
-        UpdateMaxtMP(newNPCManager.CurrentMaxMP);
-        UpdateCurrentMP(newNPCManager.CurrentMP);
+        if (m_obj.TryGetComponent(out m_mana))
+        {
+            UpdateMaxtMP(m_mana.MaxMP);
+            UpdateMP(m_mana.MP);
+        }
+
+        // if (m_obj.TryGetComponent(out m_level))
+        // {
+        //     UpdateNPCLevel(m_level.Level);
+        // }
+
+        // if (m_obj.TryGetComponent(out m_job))
+        // {
+        //     UpdateNPCJob(m_job.Job);
+        // }
 
         SetCallbacks(true);
-    }
-
-    void GetStatusDisplayComponents()
-    {
-        // if (PlayerStatusSlotsFrame != null)
-        // {
-        //     playerStatusUISlots = new List<EquipmentSlot>(PlayerStatusSlotsFrame.GetComponentsInChildren<EquipmentSlot>());
-        //     if (playerStatusUISlots != null)
-        //         for (int i = 0; i < playerStatusUISlots.Count; i++)
-        //         {
-        //             playerStatusUISlots[i].npcManager = npcManager;
-        //             playerStatusUISlots[i].id = i;
-        //         }
-        // }
-        // else
-        //     Debug.LogWarning("equipmentSlotsFrame moved");
     }
 
     void OnDestroy()
@@ -86,11 +88,6 @@ public class PlayerStatusUI : UI, INPCStatusUI
     /// <param name="equipmentMenu"></param>
     public void UnregisterStatus()
     {
-        if (npcManager == null)
-        {
-            return;
-        }
-
         SetCallbacks(false);
     }
 
@@ -99,21 +96,37 @@ public class PlayerStatusUI : UI, INPCStatusUI
     {
         if (isRegister)
         {
-            npcManager.OnCurrentLevelChanged += UpdateNPCLevel;
-            npcManager.OnJobChanged += UpdateNPCJob;
-            npcManager.OnCurrentHPChanged += UpdateCurrentHP;
-            npcManager.OnCurrentMaxHPChanged += UpdateMaxtHP;
-            npcManager.OnCurrentMPChanged += UpdateCurrentMP;
-            npcManager.OnCurrentMaxMPChanged += UpdateMaxtMP;
+            if (m_health != null)
+            {
+                m_health.OnMaxHPChanged += UpdateMaxtHP;
+                m_health.OnHPChanged += UpdateHP;
+            }
+            if (m_mana != null)
+            {
+                m_mana.OnMaxMPChanged += UpdateMaxtMP;
+                m_mana.OnMPChanged += UpdateMP;
+            }
+            // if (m_level != null)
+            //     m_level.OnLevelChanged += UpdateNPCLevel;
+            // if (m_job != null)
+            //     m_job.OnJobChanged += UpdateNPCJob;
         }
         else
         {
-            npcManager.OnCurrentLevelChanged -= UpdateNPCLevel;
-            npcManager.OnJobChanged -= UpdateNPCJob;
-            npcManager.OnCurrentHPChanged -= UpdateCurrentHP;
-            npcManager.OnCurrentMaxHPChanged -= UpdateMaxtHP;
-            npcManager.OnCurrentMPChanged -= UpdateCurrentMP;
-            npcManager.OnCurrentMaxMPChanged -= UpdateMaxtMP;
+            if (m_health != null)
+            {
+                m_health.OnMaxHPChanged -= UpdateMaxtHP;
+                m_health.OnHPChanged -= UpdateHP;
+            }
+            if (m_mana != null)
+            {
+                m_mana.OnMaxMPChanged -= UpdateMaxtMP;
+                m_mana.OnMPChanged -= UpdateMP;
+            }
+            // if (m_level != null)
+            //     m_level.OnLevelChanged -= UpdateNPCLevel;
+            // if (m_job != null)
+            //     m_job.OnJobChanged -= UpdateNPCJob;
         }
     }
 
@@ -164,7 +177,7 @@ public class PlayerStatusUI : UI, INPCStatusUI
         }
     }
 
-    public void UpdateCurrentHP(float currentHP)
+    public void UpdateHP(float currentHP)
     {
         if (hpSlider != null && mpSlider != null)
         {
@@ -189,7 +202,7 @@ public class PlayerStatusUI : UI, INPCStatusUI
             Debug.LogWarning("Init() might be not done");
         }
     }
-    public void UpdateCurrentMP(float currentMP)
+    public void UpdateMP(float currentMP)
     {
         if (mpSlider != null && mpSlider != null)
         {

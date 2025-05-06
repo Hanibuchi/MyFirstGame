@@ -37,81 +37,6 @@ public class MobManager : ObjectManager, IItemOwner
     }
     public event Action<LayerMask> OnCurrentTargetLayerChanged;
 
-    [SerializeField] private float baseMaxMP;
-    public float BaseMaxMP
-    {
-        get => baseMaxMP;
-        protected set
-        {
-            if (baseMaxMP != value)
-            {
-                baseMaxMP = math.max(value, 0);
-                OnBaseMaxMPChanged?.Invoke(baseMaxMP);
-            }
-        }
-    }
-    public event Action<float> OnBaseMaxMPChanged;
-
-    [SerializeField] private float currentMaxMP;
-    public float CurrentMaxMP
-    {
-        get => currentMaxMP;
-        protected set
-        {
-            if (currentMaxMP != value)
-            {
-                currentMaxMP = math.max(value, 0);
-                OnCurrentMaxMPChanged?.Invoke(currentMaxMP);
-            }
-        }
-    }
-    public event Action<float> OnCurrentMaxMPChanged;
-
-    [SerializeField] private float currentMP;
-    public float CurrentMP
-    {
-        get => currentMP;
-        protected set
-        {
-            if (currentMP != value)
-            {
-                currentMP = math.max(value, 0);
-                OnCurrentMPChanged?.Invoke(currentMP);
-            }
-        }
-    }
-    public event Action<float> OnCurrentMPChanged;
-
-    [SerializeField] private float baseMPRegen;
-    public float BaseMPRegen
-    {
-        get => baseMPRegen;
-        protected set
-        {
-            if (baseMPRegen != value)
-            {
-                baseMPRegen = value;
-                OnBaseMPRegenChanged?.Invoke(baseMPRegen);
-            }
-        }
-    }
-    public event Action<float> OnBaseMPRegenChanged;
-
-    [SerializeField] private float currentMPRegen;
-    public float CurrentMPRegen
-    {
-        get => currentMPRegen;
-        protected set
-        {
-            if (currentMPRegen != value)
-            {
-                currentMPRegen = value;
-                OnCurrentMPRegenChanged?.Invoke(currentMPRegen);
-            }
-        }
-    }
-    public event Action<float> OnCurrentMPRegenChanged;
-
     [SerializeField] private ulong baseLevel;
     public ulong BaseLevel
     {
@@ -219,32 +144,12 @@ public class MobManager : ObjectManager, IItemOwner
     [SerializeField] protected float Experience;
     [SerializeField] protected float ExperienceToNextLevel;
 
-    private void Update()
-    {
-        // // リロード時間を減らしていく。
-        // if (totalReloadTime > 0)
-        //     totalReloadTime -= Time.deltaTime;
-
-        RegenerateMP();
-    }
-    void RegenerateMP()
-    {
-        // MPが最大値に達していない場合、回復を行う
-        if (CurrentMP < CurrentMaxMP)
-        {
-            // 毎秒mpRecoveryRate分だけMPを回復
-            IncreaseCurrentMP(CurrentMPRegen * Time.deltaTime);
-        }
-    }
-
 
     protected override void ResetToGeneratedStatus()
     {
         if (Data is BaseMobData mobData)
         {
             BaseTargetLayer = mobData.BasetTargetLayer;
-            BaseMaxMP = mobData.BaseMaxMP;
-            BaseMPRegen = mobData.BaseMPRegen;
             BaseLevel = mobData.BaseLevel;
             BaseSpeed = mobData.BaseSpeed;
             BaseDamage = mobData.BaseDamage;
@@ -259,9 +164,6 @@ public class MobManager : ObjectManager, IItemOwner
     {
         base.ResetToBase();
         CurrentTargetLayer = BaseTargetLayer;
-        CurrentMaxMP = BaseMaxMP;
-        CurrentMP = BaseMaxMP;
-        CurrentMPRegen = BaseMPRegen;
         CurrentSpeed = BaseSpeed;
         CurrentLevel = BaseLevel;
         CurrentDamage = BaseDamage;
@@ -283,9 +185,9 @@ public class MobManager : ObjectManager, IItemOwner
     {
         BaseLevel++;
         ExperienceToNextLevel = Mathf.RoundToInt(ExperienceToNextLevel * 1.25f); // 次のレベルまでの経験値を増やす
-        BaseMaxHP *= 1.25f;
-        BaseMaxMP *= 1.25f;
-        BaseMPRegen *= 1.25f;
+        // BaseMaxHP *= 1.25f;
+        // BaseMaxMP *= 1.25f;
+        // BaseMPRegen *= 1.25f;
 
         ResetToBase();
         // ResetStatusはステータスをBaseに戻すため，ここでバフ等を再計算する必要がある。デバフはリセットしたままでいい。
@@ -299,29 +201,6 @@ public class MobManager : ObjectManager, IItemOwner
     /// </summary>
     private void RecalculateBuffs()
     {
-    }
-
-
-    /// <summary>
-    /// MPを増やすメソッド。このようにメソッドで編集すると，後でアニメーションなどをつけやすくなる
-    /// </summary>
-    /// <param name="additionalMP"></param>
-    public void IncreaseCurrentMP(float additionalMP)
-    {
-        CurrentMP = math.clamp(CurrentMP + additionalMP, 0, CurrentMaxMP);
-        // Debug.Log($"AdditionalMP: {additionalMP}, currentmp: {currentmp}");
-        if (additionalMP > 0)
-        {
-            // MPが増えたときの演出。
-        }
-        else if (additionalMP < 0)
-        {
-            // MPが減った時の演出。
-        }
-        else
-        {
-            // 何も起きなかった時の演出。
-        }
     }
 
     public void SetSelectedSlotNumber(int num)
@@ -678,11 +557,6 @@ public class MobManager : ObjectManager, IItemOwner
         // mobData.MobID = ID;
         mobData.BaseTargetLayer = BaseTargetLayer;
         mobData.CurrentTargetLayer = CurrentTargetLayer;
-        mobData.BaseMaxMP = BaseMaxMP;
-        mobData.CurrentMaxMP = CurrentMaxMP;
-        mobData.CurrentMP = CurrentMP;
-        mobData.BaseMPRegen = BaseMPRegen;
-        mobData.CurrentMPRegen = CurrentMPRegen;
         mobData.BaseLevel = BaseLevel;
         mobData.CurrentLevel = CurrentLevel;
         mobData.BaseSpeed = BaseSpeed;
@@ -713,11 +587,6 @@ public class MobManager : ObjectManager, IItemOwner
         ApplyObjectData(mobData);
         BaseTargetLayer = mobData.BaseTargetLayer;
         CurrentTargetLayer = mobData.CurrentTargetLayer;
-        BaseMaxMP = mobData.BaseMaxMP;
-        CurrentMaxMP = mobData.CurrentMaxMP;
-        CurrentMP = mobData.CurrentMP;
-        BaseMPRegen = mobData.BaseMPRegen;
-        CurrentMPRegen = mobData.CurrentMPRegen;
         BaseLevel = mobData.BaseLevel;
         CurrentLevel = mobData.CurrentLevel;
         BaseSpeed = mobData.BaseSpeed;

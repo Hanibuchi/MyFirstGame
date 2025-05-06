@@ -20,56 +20,20 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
     [SerializeField] bool isDead;
     public bool IsDead { get => isDead; private set => isDead = value; } // 死んだかどうか。
 
-    // 基本ステータス
-    [SerializeField] private float baseMaxHP;
-    public float BaseMaxHP
+    [SerializeField] Damage m_baseDamageRate;
+    public Damage BaseDamageRate
     {
-        get => baseMaxHP;
-        protected set
-        {
-            if (baseMaxHP != value)
-            {
-                baseMaxHP = math.max(value, 0);
-                OnBaseMaxHPChanged?.Invoke(baseMaxHP);
-            }
-        }
+        get => m_baseDamageRate;
+        protected set { m_baseDamageRate = value; OnBaseDamageRateChanged?.Invoke(m_baseDamageRate); }
     }
-    public event Action<float> OnBaseMaxHPChanged;
-
-    [SerializeField] private float currentMaxHP;
-    public float CurrentMaxHP
-    {
-        get => currentMaxHP;
-        protected set
-        {
-            if (currentMaxHP != value)
-            {
-                currentMaxHP = math.max(value, 0);
-                OnCurrentMaxHPChanged?.Invoke(currentMaxHP);
-            }
-        }
-    }
-    public event Action<float> OnCurrentMaxHPChanged;
-
-    [SerializeField] private float currentHP;
-    public float CurrentHP
-    {
-        get => currentHP;
-        protected set
-        {
-            if (currentHP != value)
-            {
-                currentHP = math.max(value, 0);
-                OnCurrentHPChanged?.Invoke(currentHP);
-            }
-        }
-    }
-    public event Action<float> OnCurrentHPChanged;
-
-    [SerializeField] private Damage baseDamageRate; // 防御率
-    public Damage BaseDamageRate { get => baseDamageRate; protected set { baseDamageRate = value; OnBaseDamageRateChanged?.Invoke(baseDamageRate); } }
     public event Action<Damage> OnBaseDamageRateChanged;
 
+    [SerializeField] Damage m_damageRate;
+    public Damage DamageRate
+    {
+        get => m_damageRate;
+        protected set { m_damageRate = value; OnDamageRateChanged?.Invoke(m_damageRate); }
+    }
     public event Action<Damage> OnDamageRateChanged;
 
     [SerializeField] ChunkManager bossChunkManager;
@@ -91,7 +55,7 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
             Debug.LogWarning("Data is null!!!");
             return;
         }
-        BaseMaxHP = Data.BaseMaxHP;
+        // BaseMaxHP = Data.BaseMaxHP;
         BaseDamageRate = Data.BaseDamageRate;
         ResetToBase();
     }
@@ -115,19 +79,11 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
         }
     }
 
-    /// <summary>
-    /// CurrentHPを設定する
-    /// </summary>
-    /// <param name="hp"></param>
-    public void SetCurrentHP(float hp)
-    {
-        CurrentHP = hp;
-    }
 
     // 倒されたときに相手に与える経験値を計算する
     private float CalculateExperience()
     {
-        return BaseMaxHP;
+        return 10;
     }
 
     public virtual void Die()

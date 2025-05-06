@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using MyGame;
@@ -12,6 +13,8 @@ public class TestClass : MonoBehaviour
 {
     public static TestClass Instance;
     public GameObject item;
+    [field: SerializeField]
+    public int Num { get; set; }
     public void Test()
     {
     }
