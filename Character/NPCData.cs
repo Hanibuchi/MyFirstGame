@@ -9,5 +9,5 @@ using UnityEngine;
 [Serializable]
 public class NPCData : MobData
 {
-    public Jobs Job;
+    public JobType Job;
 }

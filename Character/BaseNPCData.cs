@@ -6,5 +6,5 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewNPCStatus", menuName = "Status/NPCStatus", order = 0)]
 public class BaseNPCData : BaseMobData
 {
-    public Jobs Job;
+    public JobType Job;
 }

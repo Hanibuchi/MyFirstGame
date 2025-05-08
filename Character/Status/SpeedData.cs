@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public class JobData
+public class SpeedData
 {
-    public JobType baseJob;
+    public float baseSpeed;
 }

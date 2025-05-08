@@ -7,35 +7,6 @@ using UnityEngine;
 
 public class MobManager : ObjectManager, IItemOwner
 {
-    [SerializeField] private float baseSpeed;
-    public float BaseSpeed
-    {
-        get => baseSpeed;
-        protected set
-        {
-            if (baseSpeed != value)
-            {
-                baseSpeed = value;
-                OnBaseSpeedChanged?.Invoke(baseSpeed);
-            }
-        }
-    }
-    public event Action<float> OnBaseSpeedChanged;
-
-    [SerializeField] private float currentSpeed;
-    public float CurrentSpeed
-    {
-        get => currentSpeed;
-        protected set
-        {
-            if (currentSpeed != value)
-            {
-                currentSpeed = value;
-                OnCurrentSpeedChanged?.Invoke(currentSpeed);
-            }
-        }
-    }
-    public event Action<float> OnCurrentSpeedChanged;
 
     [SerializeField] int selectedSlotNumber;
     /// <summary>

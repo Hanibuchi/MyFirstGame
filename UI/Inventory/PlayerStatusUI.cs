@@ -23,7 +23,7 @@ public class PlayerStatusUI : UI
     Health m_health;
     Mana m_mana;
     LevelHandler m_level;
-    Job m_job;
+    JobHandler m_job;
 
 
     protected override void Awake()
@@ -154,7 +154,7 @@ public class PlayerStatusUI : UI
         }
     }
 
-    public void UpdateNPCJob(Jobs newNPCJob)
+    public void UpdateNPCJob(JobType newNPCJob)
     {
         if (npcJob != null)
         {

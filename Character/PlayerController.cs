@@ -39,7 +39,7 @@ public class PlayerController : MonoBehaviour
     List<Item> m_items;
 
     // GameManagerでインスタンス化された.inputActionsでwasd, 矢印キーなどを観測する。子のコンポネントがEnableされたときにinputeActions.Player.Move.performedと.canceledが起きたときにOnMoveが実行されるよう登録され，Disableされたときにそれらの登録を取り消す。OnMoveでは移動キーの入力がmovementInputに入れられる。movementInputを使用して操作を定義する。
-
+    SpeedHandler m_speedHandler;
     void Awake()
     {
         Init();
@@ -52,9 +52,12 @@ public class PlayerController : MonoBehaviour
         m_rb = GetComponent<Rigidbody2D>();
         m_npcManager = GetComponent<NPCManager>();
 
-        SetMoveSpeed(m_npcManager.CurrentSpeed);
-        SetJumpSpeed(m_npcManager.CurrentSpeed);
-        SetSpeedChangeCallback(true);
+        if (TryGetComponent(out m_speedHandler))
+        {
+            SetMoveSpeed(m_speedHandler.Speed);
+            SetJumpSpeed(m_speedHandler.Speed);
+            SetSpeedChangeCallback(true);
+        }
     }
 
     public void SetMoveSpeed(float speed)
@@ -137,20 +140,20 @@ public class PlayerController : MonoBehaviour
     /// <param name="isRegister">trueなら登録，falseなら登録解除</param>
     void SetSpeedChangeCallback(bool isRegister)
     {
-        if (m_npcManager == null)
+        if (m_speedHandler == null)
         {
-            Debug.LogWarning("npcManager is null");
+            Debug.Log("m_speedHandler is null");
             return;
         }
         if (isRegister)
         {
-            m_npcManager.OnCurrentSpeedChanged += SetMoveSpeed;
-            m_npcManager.OnCurrentSpeedChanged += SetJumpSpeed;
+            m_speedHandler.OnSpeedChanged += SetMoveSpeed;
+            m_speedHandler.OnSpeedChanged += SetJumpSpeed;
         }
         else
         {
-            m_npcManager.OnCurrentSpeedChanged -= SetMoveSpeed;
-            m_npcManager.OnCurrentSpeedChanged -= SetJumpSpeed;
+            m_speedHandler.OnSpeedChanged -= SetMoveSpeed;
+            m_speedHandler.OnSpeedChanged -= SetJumpSpeed;
         }
     }
 

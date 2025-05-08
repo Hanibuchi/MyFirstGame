@@ -10,20 +10,6 @@ using MyGame;
 public class NPCManager : MobManager
 {
 	public bool IsLeader;
-	[SerializeField] Jobs job;
-	public Jobs Job
-	{
-		get => job;
-		private set
-		{
-			if (value != job)
-			{
-				job = value;
-				OnJobChanged?.Invoke(job);
-			}
-		}
-	}
-	public event Action<Jobs> OnJobChanged;
 	[SerializeField] Sprite npcImage;
 	public Sprite NPCImage
 	{
@@ -59,7 +45,6 @@ public class NPCManager : MobManager
 	{
 		if (Data is BaseNPCData npcData)
 		{
-			Job = npcData.Job;
 		}
 		base.ResetToGeneratedStatus();
 	}
@@ -280,7 +265,6 @@ public class NPCManager : MobManager
 		FillMobData(npcData);
 		if (npcData is NPCData npcRestoreData)
 		{
-			npcRestoreData.Job = Job;
 		}
 		return npcData;
 	}
@@ -288,7 +272,6 @@ public class NPCManager : MobManager
 	public void ApplyNPCData(NPCData npcData)
 	{
 		ApplyMobData(npcData);
-		Job = npcData.Job;
 	}
 
 	public void OnRespawn()
@@ -306,11 +289,4 @@ public class NPCManager : MobManager
 		}
 		return npcManager;
 	}
-}
-
-
-public enum Jobs
-{
-	Fighter,
-
 }

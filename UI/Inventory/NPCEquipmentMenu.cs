@@ -99,7 +99,7 @@ public class NPCEquipmentMenu : UI, IItemParentUI
     Health m_health;
     Mana m_mana;
     LevelHandler m_level;
-    Job m_job;
+    JobHandler m_job;
 
 
     NPCManager m_npcManager; // 後々MobManagerにしたいが，アイテムの処理などがだるく時間がかかる
@@ -271,7 +271,7 @@ public class NPCEquipmentMenu : UI, IItemParentUI
         }
     }
 
-    public void UpdateNPCJob(Jobs newNPCJob)
+    public void UpdateNPCJob(JobType newNPCJob)
     {
         if (npcJob != null)
         {
