@@ -21,9 +21,6 @@ public class TileObjManager : MonoBehaviour, IChunkHandler
 
     protected MobManager lastDamageTaker;
 
-    [SerializeField] TileObjData Data;
-
-
     PoolableResourceComponent m_poolableResourceComponent;
 
     private void Awake()
@@ -36,12 +33,6 @@ public class TileObjManager : MonoBehaviour, IChunkHandler
     {
         Position = pos;
         transform.position = TerrainManager.Instance.TerrainTilemap.GetCellCenterWorld(pos);
-
-        if (Data == null)
-        {
-            Debug.LogWarning("Data is null!!!");
-            return;
-        }
     }
 
     public void OnChunkGenerate() { }

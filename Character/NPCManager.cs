@@ -43,9 +43,6 @@ public class NPCManager : MobManager
 
 	protected override void ResetToGeneratedStatus()
 	{
-		if (Data is BaseNPCData npcData)
-		{
-		}
 		base.ResetToGeneratedStatus();
 	}
 

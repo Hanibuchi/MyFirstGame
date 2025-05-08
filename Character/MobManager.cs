@@ -29,11 +29,7 @@ public class MobManager : ObjectManager, IItemOwner
 
 
     protected override void ResetToGeneratedStatus()
-    {
-        if (Data is BaseMobData mobData)
-        {
-        }
-        base.ResetToGeneratedStatus(); // ResetToBaseを後で実行するためにこれは上の処理の後に実行する。
+    {// ResetToBaseを後で実行するためにこれは上の処理の後に実行する。
 
         ((IItemOwner)this).ResetItems();
     }

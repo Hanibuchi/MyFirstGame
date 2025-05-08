@@ -13,7 +13,6 @@ using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 [RequireComponent(typeof(Rigidbody2D))]
 public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
 {
-    public BaseObjectData Data;
     /// <summary>
     /// このオブジェクトのPoolの識別子。PrefabManagerで設定される。←生成時に設定されるようにする可能性←やっぱりProjectileManagerで設定。
     /// </summary>

@@ -2,17 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InitialStatusData : MonoBehaviour
+[CreateAssetMenu(fileName = "NewStatusData", menuName = "StatusData", order = 0)]
+public class InitialStatusData : ScriptableObject
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public HealthData healthData;
+    public ManaData manaData;
+    public AttackData attackData;
+    public LevelData levelData;
+    public SpeedData speedData;
+    public JobData jobData;
 }
