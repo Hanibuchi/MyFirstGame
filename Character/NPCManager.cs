@@ -202,13 +202,15 @@ public class NPCManager : MobManager
 		OwnerParty = null;
 	}
 
+	LevelHandler levelHandler;
+
 	/// <summary>
 	/// 雇うのにかかる費用。新たに忠誠度というパラメータを増やし，PlayerPartyに長くいるほど増えるように，この値に追加する。
 	/// </summary>
 	/// <returns></returns>
 	public float GetHiringCost()
 	{
-		return BaseLevel * 10 + 100;
+		return levelHandler.BaseLevel * 10 + 100;
 	}
 
 	// EquipmentMenu(UI)を削除。PartyMemberを削除するとき呼び出す。

@@ -22,7 +22,7 @@ public class PlayerStatusUI : UI
 
     Health m_health;
     Mana m_mana;
-    Level m_level;
+    LevelHandler m_level;
     Job m_job;
 
 

@@ -89,7 +89,7 @@ public class TileObjManager : MonoBehaviour, IChunkHandler
 
     public virtual void Die()
     {
-        lastDamageTaker?.AddExperience(CalculateExperience());
+        if (lastDamageTaker != null && lastDamageTaker.TryGetComponent(out LevelHandler levelHandelr)) levelHandelr.AddExperience(CalculateExperience());
 
         BossChunkManager?.DeleteTile(this);
     }

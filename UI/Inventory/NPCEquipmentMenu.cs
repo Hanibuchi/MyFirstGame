@@ -98,7 +98,7 @@ public class NPCEquipmentMenu : UI, IItemParentUI
     // NPCImageManager m_imageManager;
     Health m_health;
     Mana m_mana;
-    Level m_level;
+    LevelHandler m_level;
     Job m_job;
 
 

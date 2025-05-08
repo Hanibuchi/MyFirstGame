@@ -71,4 +71,67 @@ public class Functions : MonoBehaviour
     {
         return UnityEngine.Random.Range(int.MinValue, int.MaxValue);
     }
+
+    /// <summary>
+    /// 1次直線。nが値，value1が傾き，value2が定数項。
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <returns></returns>
+    public static float Linear(ulong n, float value1, float value2)
+    {
+        return value1 * n + value2;
+    }
+
+    /// <summary>
+    /// 2次曲線。nが値，value1が2次係数，value2が1次係数，value3が定数項。
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <param name="value3"></param>
+    /// <returns></returns>
+    public static float Quadratic(ulong n, float value1, float value2, float value3)
+    {
+        return value1 * n * n + value2 * n + value3;
+    }
+
+    /// <summary>
+    /// 底が2の指数関数。value1は指数係数，value2は初期値。底が2だと計算が速いらしい(GPT曰く)。
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <returns></returns>
+    public static float Exponential2(ulong n, float value1, float value2)
+    {
+        return value2 * Mathf.Pow(2, value1 * n);
+    }
+
+    /// <summary>
+    /// 底が2のロジスティック曲線。value1は指数係数，value2は収束値，valu3は初期値。
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <param name="value3"></param>
+    /// <returns></returns>
+    public static float Logistic2(ulong n, float value1, float value2, float value3)
+    {
+        return value2 / (1 + Mathf.Pow(2, -value1 * n) * (value2 / value3 - 1));
+    }
+
+    /// <summary>
+    /// 底が2のガンペルツ曲線。value1は指数係数，value2は収束値，value3は初期値。
+    /// </summary>
+    /// <param name="n"></param>
+    /// <param name="value1"></param>
+    /// <param name="value2"></param>
+    /// <param name="value3"></param>
+    /// <returns></returns>
+    public static float Gompertz2(ulong n, float value1, float value2, float value3)
+    {
+        return value2 * Mathf.Pow(value2 / value3, -Mathf.Pow(2, value1 * n));
+    }
 }

@@ -20,22 +20,6 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
     [SerializeField] bool isDead;
     public bool IsDead { get => isDead; private set => isDead = value; } // 死んだかどうか。
 
-    [SerializeField] Damage m_baseDamageRate;
-    public Damage BaseDamageRate
-    {
-        get => m_baseDamageRate;
-        protected set { m_baseDamageRate = value; OnBaseDamageRateChanged?.Invoke(m_baseDamageRate); }
-    }
-    public event Action<Damage> OnBaseDamageRateChanged;
-
-    [SerializeField] Damage m_damageRate;
-    public Damage DamageRate
-    {
-        get => m_damageRate;
-        protected set { m_damageRate = value; OnDamageRateChanged?.Invoke(m_damageRate); }
-    }
-    public event Action<Damage> OnDamageRateChanged;
-
     [SerializeField] ChunkManager bossChunkManager;
     public ChunkManager BossChunkManager { get => bossChunkManager; set => bossChunkManager = value; }
 
@@ -50,14 +34,6 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
     /// </summary>
     protected virtual void ResetToGeneratedStatus()
     {
-        if (Data == null)
-        {
-            Debug.LogWarning("Data is null!!!");
-            return;
-        }
-        // BaseMaxHP = Data.BaseMaxHP;
-        BaseDamageRate = Data.BaseDamageRate;
-        ResetToBase();
     }
 
     /// <summary>
@@ -94,7 +70,7 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
         IsDead = true;
 
         if (LastDamageTaker != null && LastDamageTaker != this)
-            LastDamageTaker.AddExperience(CalculateExperience());
+            if (LastDamageTaker.TryGetComponent(out LevelHandler levelHandelr))levelHandelr.AddExperience(CalculateExperience());
         // Release();
     }
 

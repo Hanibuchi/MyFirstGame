@@ -1,18 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 
 public class LevelData : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public LevelHandler.GrowthType growthType;
+    // Lv.1のとき必要となる経験値。
+    public float baseValue;
+    public float value1;
+    public float value2;
 }

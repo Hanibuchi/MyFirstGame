@@ -7,66 +7,6 @@ using UnityEngine;
 
 public class MobManager : ObjectManager, IItemOwner
 {
-    [SerializeField] LayerMask baseTargetLayer;
-    public LayerMask BaseTargetLayer
-    {
-        get => baseTargetLayer;
-        protected set
-        {
-            if (baseTargetLayer != value)
-            {
-                baseTargetLayer = value;
-                OnBaseTargetLayerChanged?.Invoke(baseTargetLayer);
-            }
-        }
-    }
-    public event Action<LayerMask> OnBaseTargetLayerChanged;
-
-    [SerializeField] LayerMask currentTargetLayer;
-    public LayerMask CurrentTargetLayer
-    {
-        get => currentTargetLayer;
-        protected set
-        {
-            if (currentTargetLayer != value)
-            {
-                currentTargetLayer = value;
-                OnCurrentTargetLayerChanged?.Invoke(currentTargetLayer);
-            }
-        }
-    }
-    public event Action<LayerMask> OnCurrentTargetLayerChanged;
-
-    [SerializeField] private ulong baseLevel;
-    public ulong BaseLevel
-    {
-        get => baseLevel;
-        protected set
-        {
-            if (baseLevel != value)
-            {
-                baseLevel = value;
-                OnBaseLevelChanged?.Invoke(baseLevel);
-            }
-        }
-    }
-    public event Action<ulong> OnBaseLevelChanged;
-
-    [SerializeField] private ulong currentLevel;
-    public ulong CurrentLevel
-    {
-        get => currentLevel;
-        protected set
-        {
-            if (currentLevel != value)
-            {
-                currentLevel = value;
-                OnCurrentLevelChanged?.Invoke(currentLevel);
-            }
-        }
-    }
-    public event Action<ulong> OnCurrentLevelChanged;
-
     [SerializeField] private float baseSpeed;
     public float BaseSpeed
     {
@@ -97,31 +37,6 @@ public class MobManager : ObjectManager, IItemOwner
     }
     public event Action<float> OnCurrentSpeedChanged;
 
-    [SerializeField] private Damage baseDamage;
-    public Damage BaseDamage
-    {
-        get => baseDamage;
-        protected set
-        {
-            baseDamage = value;
-            OnBaseDamageChanged?.Invoke(baseDamage);
-        }
-    }
-    public event Action<Damage> OnBaseDamageChanged;
-
-    [SerializeField] private Damage currentDamage;
-    public Damage CurrentDamage
-    {
-        get => currentDamage;
-        protected set
-        {
-            currentDamage = value;
-            OnCurrentDamageChanged?.Invoke(currentDamage);
-        }
-    }
-    public event Action<Damage> OnCurrentDamageChanged;
-    public bool IsAttacking;
-
     [SerializeField] int selectedSlotNumber;
     /// <summary>
     /// 選択されているスロットの番号。この番号のアイテムが実行される。
@@ -141,18 +56,11 @@ public class MobManager : ObjectManager, IItemOwner
     /// </summary>
     [SerializeField] private List<DropItem> dropItems;
 
-    [SerializeField] protected float Experience;
-    [SerializeField] protected float ExperienceToNextLevel;
-
 
     protected override void ResetToGeneratedStatus()
     {
         if (Data is BaseMobData mobData)
         {
-            BaseTargetLayer = mobData.BasetTargetLayer;
-            BaseLevel = mobData.BaseLevel;
-            BaseSpeed = mobData.BaseSpeed;
-            BaseDamage = mobData.BaseDamage;
         }
         base.ResetToGeneratedStatus(); // ResetToBaseを後で実行するためにこれは上の処理の後に実行する。
 
@@ -163,37 +71,6 @@ public class MobManager : ObjectManager, IItemOwner
     protected override void ResetToBase()
     {
         base.ResetToBase();
-        CurrentTargetLayer = BaseTargetLayer;
-        CurrentSpeed = BaseSpeed;
-        CurrentLevel = BaseLevel;
-        CurrentDamage = BaseDamage;
-    }
-
-    // 経験値を追加する
-    public void AddExperience(float amount)
-    {
-        Experience += amount;
-        while (Experience >= ExperienceToNextLevel)
-        {
-            Experience -= ExperienceToNextLevel;
-            LevelUp();
-        }
-    }
-
-    // レベルアップ
-    private void LevelUp()
-    {
-        BaseLevel++;
-        ExperienceToNextLevel = Mathf.RoundToInt(ExperienceToNextLevel * 1.25f); // 次のレベルまでの経験値を増やす
-        // BaseMaxHP *= 1.25f;
-        // BaseMaxMP *= 1.25f;
-        // BaseMPRegen *= 1.25f;
-
-        ResetToBase();
-        // ResetStatusはステータスをBaseに戻すため，ここでバフ等を再計算する必要がある。デバフはリセットしたままでいい。
-        RecalculateBuffs();
-
-        Debug.Log("レベルアップしました！現在のレベル: " + BaseLevel);
     }
 
     /// <summary>
@@ -211,6 +88,8 @@ public class MobManager : ObjectManager, IItemOwner
     {
         SetSelectedSlotNumber(SelectedSlotNumber + num);
     }
+
+    Attack m_attack;
 
     /// <summary>
     /// 攻撃する。itemNumberで何番目のアイテムを使用するか選ぶ。shotのNextProjectiles2はそのアイテム自身を設定する。ItemModifierを持って攻撃する場合を考えて何とかしないといけない
@@ -230,7 +109,7 @@ public class MobManager : ObjectManager, IItemOwner
             SetItemPosition(Items[SelectedSlotNumber].gameObject, target - (Vector2)transform.position);
 
             Shot shot = new();
-            shot.SetCore(this, Items[SelectedSlotNumber].gameObject, target, CurrentTargetLayer, CurrentDamage);
+            shot.SetCore(this, Items[SelectedSlotNumber].gameObject, target, m_attack.TargetLayer, m_attack.Damage);
             // shot.SetExtra(CurrentTargetLayer, Damage.Zero, 0, 0, 0, 0, 0, 0);
 
             Items[SelectedSlotNumber].FirstFire(shot);
@@ -487,7 +366,7 @@ public class MobManager : ObjectManager, IItemOwner
         Shot shot = new()
         {
             projectiles = new List<GameObject>() { item.gameObject },
-            targetLayer = CurrentTargetLayer,
+            targetLayer = m_attack.TargetLayer,
             target = target,
             speed = (target - (Vector2)transform.position).magnitude
         };
@@ -554,18 +433,6 @@ public class MobManager : ObjectManager, IItemOwner
     protected MobData FillMobData(MobData mobData)
     {
         base.FillObjectData(mobData);
-        // mobData.MobID = ID;
-        mobData.BaseTargetLayer = BaseTargetLayer;
-        mobData.CurrentTargetLayer = CurrentTargetLayer;
-        mobData.BaseLevel = BaseLevel;
-        mobData.CurrentLevel = CurrentLevel;
-        mobData.BaseSpeed = BaseSpeed;
-        mobData.CurrentSpeed = CurrentSpeed;
-        mobData.BaseDamage = BaseDamage;
-        mobData.CurrentDamage = CurrentDamage;
-        mobData.ItemCapacity = ItemCapacity;
-        mobData.Experience = Experience;
-        mobData.ExperienceToNextLevel = ExperienceToNextLevel;
 
         foreach (var item in Items)
         {
@@ -585,14 +452,6 @@ public class MobManager : ObjectManager, IItemOwner
     public void ApplyMobData(MobData mobData)
     {
         ApplyObjectData(mobData);
-        BaseTargetLayer = mobData.BaseTargetLayer;
-        CurrentTargetLayer = mobData.CurrentTargetLayer;
-        BaseLevel = mobData.BaseLevel;
-        CurrentLevel = mobData.CurrentLevel;
-        BaseSpeed = mobData.BaseSpeed;
-        CurrentSpeed = mobData.CurrentSpeed;
-        BaseDamage = mobData.BaseDamage;
-        CurrentDamage = mobData.CurrentDamage;
 
         // Itemを装備させる
         ItemCapacity = mobData.ItemCapacity;
@@ -608,8 +467,6 @@ public class MobManager : ObjectManager, IItemOwner
             }
         }
 
-        Experience = mobData.Experience;
-        ExperienceToNextLevel = mobData.ExperienceToNextLevel;
     }
     public static void SpawnMob(MobData mob)
     {
@@ -628,7 +485,7 @@ public class MobManager : ObjectManager, IItemOwner
         {
             physical = 5,
         };
-        CurrentDamage = CurrentDamage.Add(damage);
+        m_attack.AddDamage(damage);
         status.RegisterExpireAction(OnStatusPowerBoostExpired);
         Debug.Log("status was registerd");
     }
@@ -639,7 +496,7 @@ public class MobManager : ObjectManager, IItemOwner
         {
             physical = -5,
         };
-        CurrentDamage = CurrentDamage.Add(damage);
+        m_attack.AddDamage(damage);
     }
 }
 
