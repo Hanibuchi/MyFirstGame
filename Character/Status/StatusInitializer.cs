@@ -14,6 +14,18 @@ public class StatusInitializer : MonoBehaviour
     JobHandler m_jobHandler;
     private void Awake()
     {
+        if (!isInitialized)
+            Initialize();
+    }
+
+    [SerializeField] bool isInitialized = false;
+    public void Initialize()
+    {
+        if (isInitialized)
+        {
+            Debug.LogWarning("already initialized");
+            return;
+        }
         if (m_initialStatusData == null)
         {
             Debug.LogWarning("initialStatudData is null!");
@@ -26,17 +38,34 @@ public class StatusInitializer : MonoBehaviour
         m_levelHandler = GetComponent<LevelHandler>();
         m_speedHandler = GetComponent<SpeedHandler>();
         m_jobHandler = GetComponent<JobHandler>();
-        
-        Initialize();
-    }
 
-    public void Initialize()
-    {
         m_health?.Initialize(m_initialStatusData.healthData);
         m_mana?.Initialize(m_initialStatusData.manaData);
         m_attack?.Initialize(m_initialStatusData.attackData);
         m_levelHandler?.Initialize(m_initialStatusData.levelData);
         m_speedHandler?.Initialize(m_initialStatusData.speedData);
         m_jobHandler?.Initialize(m_initialStatusData.jobData);
+
+        m_levelHandler.SetBaseLevel(1);
+        ResetToBase();
+        Restore();
+
+        isInitialized = true;
+    }
+
+    public void ResetToBase()
+    {
+        m_health?.ResetToBase();
+        m_mana?.ResetToBase();
+        m_attack?.ResetToBase();
+        m_levelHandler?.ResetToBase();
+        m_speedHandler?.ResetToBase();
+        m_jobHandler?.ResetToBase();
+    }
+
+    public void Restore()
+    {
+        m_health?.RestoreHP();
+        m_mana?.RestoreMP();
     }
 }

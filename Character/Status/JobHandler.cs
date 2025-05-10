@@ -7,6 +7,7 @@ using UnityEngine;
 [JsonObject(MemberSerialization.OptIn)]
 public class JobHandler : MonoBehaviour, ISerializeHandler
 {
+    [SerializeField] JobData m_jobData;
     [JsonProperty][SerializeField] JobType m_baseJob;
     public JobType BaseJob
     {
@@ -23,14 +24,25 @@ public class JobHandler : MonoBehaviour, ISerializeHandler
     }
     public event Action<JobType> OnJobChanged;
 
+    LevelHandler m_levelHandler;
+
     public void Initialize(JobData jobData)
     {
+        if (TryGetComponent(out m_levelHandler))
+        {
+            m_levelHandler.OnLevelChanged += OnLevelChanged;
+        }
+        m_jobData = jobData;
         BaseJob = jobData.baseJob;
-        ResetToBase();
     }
     public void ResetToBase()
     {
         Job = BaseJob;
+    }
+
+    public void OnLevelChanged(ulong level)
+    {
+
     }
 }
 

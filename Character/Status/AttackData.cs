@@ -7,5 +7,6 @@ using UnityEngine;
 public class AttackData
 {
     public Damage baseDamage;
+    public StatusCurveParameters damageModifierGrowthCurve;
     public LayerMask baseTargetLayer;
 }

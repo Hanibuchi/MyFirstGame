@@ -8,6 +8,7 @@ using UnityEngine;
 [JsonObject(MemberSerialization.OptIn)]
 public class Health : MonoBehaviour, ISerializeHandler
 {
+    [SerializeField] HealthData m_healthData;
     [JsonProperty][SerializeField] float m_baseMaxHP;
     public float BaseMaxHP
     {
@@ -48,15 +49,19 @@ public class Health : MonoBehaviour, ISerializeHandler
     }
     public event Action<Damage> OnDamageRateChanged;
 
+    [JsonProperty][SerializeField] float m_damageRateModifier;
+    public float DamageRateModifier
+    {
+        get => m_damageRateModifier;
+        protected set { m_damageRateModifier = value; OnDamageRateModifierChanged?.Invoke(m_damageRateModifier); }
+    }
+    public event Action<float> OnDamageRateModifierChanged;
+
+
     // DeathHandler作ったらコメントアウト外す。他にもある
     // DeathHandler m_deathHandler;
     // KnockbackHandler m_knockbackHandler;
-
-    private void Awake()
-    {
-        // m_deathHandler = GetComponent<DeathHandler>();
-        // m_knockbackHandler = GetComponent<KnockbackHandler>();
-    }
+    LevelHandler m_levelHandler;
 
     /// <summary>
     /// healthDataの値をセットする。
@@ -64,10 +69,13 @@ public class Health : MonoBehaviour, ISerializeHandler
     /// <param name="healthData"></param>
     public void Initialize(HealthData healthData)
     {
-        BaseMaxHP = healthData.baseMaxHP;
-        BaseDamageRate = healthData.baseDamageRate;
-        ResetToBase();
-        RestoreHP();
+        m_healthData = healthData;
+        // m_deathHandler = GetComponent<DeathHandler>();
+        // m_knockbackHandler = GetComponent<KnockbackHandler>();
+        if (TryGetComponent(out m_levelHandler))
+        {
+            m_levelHandler.OnLevelChanged += OnLevelChanged;
+        }
     }
     /// <summary>
     /// HPとDamageRateをBaseの値にする。
@@ -195,5 +203,12 @@ public class Health : MonoBehaviour, ISerializeHandler
         {
             // m_deathHandler?.Die();
         }
+    }
+
+
+    public void OnLevelChanged(ulong level)
+    {
+        BaseMaxHP = m_healthData.baseMaxHPGrowthCurve.Function(level);
+        BaseDamageRate = m_healthData.baseDamageRate.Multiple(m_healthData.damageRateModifierGrowthCurve.Function(level));
     }
 }

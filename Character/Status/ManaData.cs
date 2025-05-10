@@ -6,6 +6,6 @@ using UnityEngine;
 [Serializable]
 public class ManaData
 {
-    public float baseMaxMP;
-    public float baseMPRegen;
+    public StatusCurveParameters baseMaxMPGrowthCurve;
+    public StatusCurveParameters baseMPRegenGrowthCurve;
 }

@@ -6,5 +6,5 @@ using UnityEngine;
 [Serializable]
 public class SpeedData
 {
-    public float baseSpeed;
+    public StatusCurveParameters baseSpeedGrowthCurve;
 }

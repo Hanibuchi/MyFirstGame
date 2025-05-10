@@ -8,6 +8,7 @@ using UnityEngine;
 [JsonObject(MemberSerialization.OptIn)]
 public class Mana : MonoBehaviour, ISerializeHandler
 {
+    [SerializeField] ManaData m_manaData;
     [JsonProperty][SerializeField] private float m_baseMaxMP;
     public float BaseMaxMP
     {
@@ -48,12 +49,16 @@ public class Mana : MonoBehaviour, ISerializeHandler
     }
     public event Action<float> OnMPRegenChanged;
 
+
+    LevelHandler m_levelHandler;
+
     public void Initialize(ManaData manaData)
     {
-        BaseMaxMP = manaData.baseMaxMP;
-        BaseMPRegen = manaData.baseMPRegen;
-        ResetToBase();
-        RestoreMP();
+        m_manaData = manaData;
+        if (TryGetComponent(out m_levelHandler))
+        {
+            m_levelHandler.OnLevelChanged += OnLevelChanged;
+        }
     }
     public void ResetToBase()
     {
@@ -75,5 +80,12 @@ public class Mana : MonoBehaviour, ISerializeHandler
     public void ChangeMP(float additionalMP)
     {
         MP = math.clamp(MP + additionalMP, 0, MaxMP);
+    }
+
+
+    public void OnLevelChanged(ulong level)
+    {
+        BaseMaxMP = m_manaData.baseMaxMPGrowthCurve.Function(level);
+        BaseMPRegen = m_manaData.baseMPRegenGrowthCurve.Function(level);
     }
 }

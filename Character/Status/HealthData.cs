@@ -6,6 +6,7 @@ using UnityEngine;
 [Serializable]
 public class HealthData
 {
-    public float baseMaxHP;
-    public Damage baseDamageRate;
+    public StatusCurveParameters baseMaxHPGrowthCurve;
+    public Damage baseDamageRate = Damage.DefaultDamageRate;
+    public StatusCurveParameters damageRateModifierGrowthCurve;
 }

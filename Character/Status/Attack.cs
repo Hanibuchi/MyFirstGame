@@ -7,6 +7,7 @@ using UnityEngine;
 [JsonObject(MemberSerialization.OptIn)]
 public class Attack : MonoBehaviour, ISerializeHandler
 {
+    [SerializeField] AttackData m_attackData;
     [JsonProperty][SerializeField] Damage m_baseDamage;
     public Damage BaseDamage
     {
@@ -15,7 +16,6 @@ public class Attack : MonoBehaviour, ISerializeHandler
     }
     public event Action<Damage> OnBaseDamageChanged;
 
-
     [JsonProperty][SerializeField] Damage m_damage;
     public Damage Damage
     {
@@ -23,6 +23,14 @@ public class Attack : MonoBehaviour, ISerializeHandler
         protected set { m_damage = value; OnDamageChanged?.Invoke(m_damage); }
     }
     public event Action<Damage> OnDamageChanged;
+
+    [JsonProperty][SerializeField] float m_damageModifier;
+    public float DamageModifier
+    {
+        get => m_damageModifier;
+        protected set { m_damageModifier = value; OnDamageModifierChanged?.Invoke(m_damageModifier); }
+    }
+    public event Action<float> OnDamageModifierChanged;
 
     [JsonProperty][SerializeField] LayerMask m_baseTargetLayer;
     public LayerMask BaseTargetLayer
@@ -40,11 +48,15 @@ public class Attack : MonoBehaviour, ISerializeHandler
     }
     public event Action<LayerMask> OnTargetLayerChanged;
 
+    LevelHandler m_levelHandler;
+
     public void Initialize(AttackData attackData)
     {
-        BaseDamage = attackData.baseDamage;
-        BaseTargetLayer = attackData.baseTargetLayer;
-        ResetToBase();
+        m_attackData = attackData;
+        if (TryGetComponent(out m_levelHandler))
+        {
+            m_levelHandler.OnLevelChanged += OnLevelChanged;
+        }
     }
     public void ResetToBase()
     {
@@ -58,5 +70,12 @@ public class Attack : MonoBehaviour, ISerializeHandler
     public void AddDamage(Damage damage)
     {
         Damage.Add(damage);
+    }
+
+    public void OnLevelChanged(ulong level)
+    {
+        BaseDamage = m_attackData.baseDamage;
+        DamageModifier = m_attackData.damageModifierGrowthCurve.Function(level);
+        BaseTargetLayer = m_attackData.baseTargetLayer;
     }
 }

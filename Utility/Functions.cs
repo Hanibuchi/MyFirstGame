@@ -132,6 +132,8 @@ public class Functions : MonoBehaviour
     /// <returns></returns>
     public static float Gompertz2(ulong n, float value1, float value2, float value3)
     {
-        return value2 * Mathf.Pow(value2 / value3, -Mathf.Pow(2, value1 * n));
+        if (value1 == 0)
+            return 0;
+        return value2 * Mathf.Pow(value2 / value3, -Mathf.Pow(2, -value1 * n));
     }
 }

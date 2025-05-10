@@ -25,93 +25,6 @@ public struct Damage
     public float caterpillar;
     public float heal;
 
-    // public float CriticalRate
-    // {
-    //     get => criticalRate;
-    //     set => criticalRate = Mathf.Max(0, value);
-    // }
-
-    // public float InstantDeathRate
-    // {
-    //     get => instantDeathRate;
-    //     set => instantDeathRate = Mathf.Max(0, value);
-    // }
-
-    // public float AdditionalDamageRate
-    // {
-    //     get => additionalDamageRate;
-    //     set => additionalDamageRate = Mathf.Max(0, value);
-    // }
-
-    // /// <summary>
-    // /// ノックバック。撃たれた方が受ける力
-    // /// </summary>
-    // public float Knockback
-    // {
-    //     get => knockback;
-    //     set => knockback = Mathf.Max(0, value);
-    // }
-
-    // public float Destruction
-    // {
-    //     get => destruction;
-    //     set => destruction = Mathf.Max(0, value);
-    // }
-
-    // public float Fire
-    // {
-    //     get => fire;
-    //     set => fire = Mathf.Max(0, value);
-    // }
-
-    // public float Water
-    // {
-    //     get => water;
-    //     set => water = Mathf.Max(0, value);
-    // }
-
-    // public float Electric
-    // {
-    //     get => electric;
-    //     set => electric = Mathf.Max(0, value);
-    // }
-
-    // public float Wind
-    // {
-    //     get => wind;
-    //     set => wind = Mathf.Max(0, value);
-    // }
-
-    // public float Ice
-    // {
-    //     get => ice;
-    //     set => ice = Mathf.Max(0, value);
-    // }
-
-    // public float Poison
-    // {
-    //     get => poison;
-    //     set => poison = Mathf.Max(0, value);
-    // }
-
-    // public float Physical
-    // {
-    //     get => physical;
-    //     set => physical = Mathf.Max(0, value);
-    // }
-
-    // public float Caterpillar
-    // {
-    //     get => caterpillar;
-    //     set => caterpillar = Mathf.Max(0, value);
-    // }
-
-    // public float Heal
-    // {
-    //     get => heal;
-    //     set => heal = Mathf.Max(0, value);
-    // }
-
     /// <summary>
     /// 単純な足し算。値型であるため非破壊的。
     /// </summary>
@@ -169,6 +82,28 @@ public struct Damage
     }
 
     /// <summary>
+    /// すべての属性ダメージにスカラをかける。要素が0から1までのDamageに対して，0から1まででレベルに対して各要素が単調減少となる要素のDamageを計算するのに使う。あんまりよく考えてない。本格的にゲームバランスを考えるときに考え直す。
+    /// </summary>
+    /// <param name="modifier"></param>
+    /// <returns></returns>
+    public Damage Multiple(float modifier)
+    {
+        Damage result = new()
+        {
+            knockback = knockback * modifier,
+            fire = fire * modifier,
+            ice = ice * modifier,
+            physical = physical * modifier,
+            electric = electric * modifier,
+            caterpillar = caterpillar * modifier,
+            poison = poison * modifier,
+            water = water * modifier,
+            heal = heal * modifier,
+        };
+        return result;
+    }
+
+    /// <summary>
     /// 属性ダメージの合計を返す
     /// </summary>
     /// <returns></returns>
@@ -194,9 +129,9 @@ public struct Damage
         criticalRate = 0,
         instantDeathRate = 0,
         totalDamageRate = 1,
-        knockback = 1,
         destruction = 0,
 
+        knockback = 1,
         fire = 1,
         water = 1,
         electric = 1,

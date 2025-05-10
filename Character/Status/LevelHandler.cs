@@ -9,7 +9,8 @@ using UnityEngine;
 [JsonObject(MemberSerialization.OptIn)]
 public class LevelHandler : MonoBehaviour, ISerializeHandler
 {
-    LevelData m_levelData;
+    [SerializeField] LevelData m_levelData;
+    [SerializeField] StatusInitializer m_statusInitializer;
     [JsonProperty][SerializeField] ulong m_baseLevel;
     public ulong BaseLevel
     {
@@ -44,11 +45,26 @@ public class LevelHandler : MonoBehaviour, ISerializeHandler
     public event Action<float> OnExperienceToNextLevelChanged;
 
     // StatusEffect m_statusEffect;
-    private void Awake()
+
+    /// <summary>
+    /// BaseLevelをセットする。簡略化のため，ついでにResetToBaseもする。
+    /// </summary>
+    /// <param name="level"></param>
+    public void SetBaseLevel(ulong level)
     {
-        // m_statusEffect = GetComponent<StatusEffect>();
+        BaseLevel = level;
+        CalculateExperienceToNextLevel();
+        ResetToBase();
     }
 
+    /// <summary>
+    /// Levelを変化させる。ステータス効果用。
+    /// </summary>
+    /// <param name="additionalLevel"></param>
+    public void ChangeLevel(ulong additionalLevel)
+    {
+        Level += additionalLevel;
+    }
 
     // 経験値を追加する
     public void AddExperience(float additionalExperience)
@@ -62,14 +78,15 @@ public class LevelHandler : MonoBehaviour, ISerializeHandler
     }
 
     /// <summary>
-    /// レベルアップ。ただし，BaseLevelが上がるだけでLevelは上がらない。
+    /// レベルアップ。
     /// </summary>
     void LevelUp()
     {
         BaseLevel++;
         CalculateExperienceToNextLevel();
-
         ResetToBase();
+        m_statusInitializer.ResetToBase();
+
         // m_statusEffect?.Recalculate();
 
         Debug.Log("レベルアップ！ Lv." + BaseLevel);
@@ -81,37 +98,17 @@ public class LevelHandler : MonoBehaviour, ISerializeHandler
             Debug.LogWarning("levelData is null");
             return;
         }
-        ExperienceToNextLevel = TotalExperience(BaseLevel + 1) - TotalExperience(BaseLevel);
-    }
-
-    float TotalExperience(ulong level)
-    {
-        float result = 0;
-        switch (m_levelData.growthType)
-        {
-            case GrowthType.Linear: result = Functions.Linear(level - 1, m_levelData.value1, m_levelData.baseValue); break;
-            case GrowthType.Quadratic: result = Functions.Quadratic(level - 1, m_levelData.value1, m_levelData.value2, m_levelData.baseValue); break;
-            case GrowthType.Exponential: result = Functions.Exponential2(level - 1, m_levelData.value1, m_levelData.baseValue); break;
-            case GrowthType.Logistic: result = Functions.Logistic2(level - 1, m_levelData.value1, m_levelData.value2, m_levelData.baseValue); break;
-            case GrowthType.Gompertz: result = Functions.Gompertz2(level - 1, m_levelData.value1, m_levelData.value2, m_levelData.baseValue); break;
-        }
-        return result;
+        ExperienceToNextLevel = m_levelData.baseLevelGrowthCurve.Function(BaseLevel);
     }
 
     public void Initialize(LevelData levelData)
     {
+        // m_statusEffect = GetComponent<StatusEffect>();
         m_levelData = levelData;
+        m_statusInitializer = GetComponent<StatusInitializer>();
     }
     public void ResetToBase()
     {
         Level = BaseLevel;
-    }
-    public enum GrowthType
-    {
-        Linear,
-        Quadratic,
-        Exponential,
-        Logistic,
-        Gompertz,
     }
 }

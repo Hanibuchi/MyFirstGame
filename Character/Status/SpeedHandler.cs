@@ -7,6 +7,7 @@ using UnityEngine;
 [JsonObject(MemberSerialization.OptIn)]
 public class SpeedHandler : MonoBehaviour, ISerializeHandler
 {
+    [SerializeField] SpeedData m_speedData;
     [JsonProperty][SerializeField] float m_baseSpeed;
     public float BaseSpeed
     {
@@ -23,14 +24,24 @@ public class SpeedHandler : MonoBehaviour, ISerializeHandler
     }
     public event Action<float> OnSpeedChanged;
 
+    LevelHandler m_levelHandler;
+
     public void Initialize(SpeedData speedData)
     {
-        BaseSpeed = speedData.baseSpeed;
-        ResetToBase();
+        m_speedData = speedData;
+        if (TryGetComponent(out m_levelHandler))
+        {
+            m_levelHandler.OnLevelChanged += OnLevelChanged;
+        }
     }
 
     public void ResetToBase()
     {
         Speed = BaseSpeed;
+    }
+
+    public void OnLevelChanged(ulong level)
+    {
+        BaseSpeed = m_speedData.baseSpeedGrowthCurve.Function(level);
     }
 }
