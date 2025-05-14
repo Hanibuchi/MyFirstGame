@@ -11,7 +11,7 @@ using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
+public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
 {
     /// <summary>
     /// このオブジェクトのPoolの識別子。PrefabManagerで設定される。←生成時に設定されるようにする可能性←やっぱりProjectileManagerで設定。
@@ -22,8 +22,8 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
     [SerializeField] ChunkManager bossChunkManager;
     public ChunkManager BossChunkManager { get => bossChunkManager; set => bossChunkManager = value; }
 
-    [SerializeField] List<Status> statusList = new();
-    public List<Status> StatusList { get => statusList; }
+    [SerializeField] List<StatusEffectDurationStrategy> statusList = new();
+    public List<StatusEffectDurationStrategy> StatusList { get => statusList; }
     public Action<float> MoveAction { get; set; }
 
 
@@ -76,10 +76,10 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
 
     public void OnRelease()
     {
-        List<Status> statuses = new(StatusList);
+        List<StatusEffectDurationStrategy> statuses = new(StatusList);
         foreach (var status in statuses)
         {
-            status.Expire();
+            // status.Expire();
         }
     }
 
@@ -113,11 +113,11 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
     /// <returns></returns>
     protected virtual ObjectData FillObjectData(ObjectData objectData)
     {
-        objectData.StatusDataList.Clear();
-        foreach (var status in StatusList)
-        {
-            objectData.StatusDataList.Add(status.MakeData());
-        }
+        // objectData.StatusDataList.Clear();
+        // foreach (var status in StatusList)
+        // {
+        //     objectData.StatusDataList.Add(status.MakeData());
+        // }
 
         // BossChunkManagerを親にした時のローカル座標等を計算
         objectData.LocalPos = BossChunkManager.transform.InverseTransformPoint(transform.position);
@@ -134,10 +134,10 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
     }
     public void ApplyObjectData(ObjectData objectData)
     {
-        foreach (var data in objectData.StatusDataList)
-        {
-            ((IStatusAffectable)this).AddStatus(data);
-        }
+        // foreach (var data in objectData.StatusDataList)
+        // {
+        //     // ((IStatusAffectable)this).AddStatus(data);
+        // }
 
         transform.SetLocalPositionAndRotation(objectData.LocalPos, objectData.LocalRotate);
         transform.localScale = objectData.LocalScale;
@@ -152,8 +152,8 @@ public class ObjectManager : MonoBehaviour, IChunkHandler, IStatusAffectable
         }
     }
 
-    public virtual void OnStatusPowerBoost(Status status)
-    {
+    // public virtual void OnStatusPowerBoost(StatusEffectDurationStrategy status)
+    // {
 
-    }
+    // }
 }

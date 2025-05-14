@@ -69,7 +69,7 @@ public class Attack : MonoBehaviour, ISerializeHandler
     /// <param name="damage"></param>
     public void AddDamage(Damage damage)
     {
-        Damage.Add(damage);
+        Damage = Damage.Add(damage);
     }
 
     public void OnLevelChanged(ulong level)

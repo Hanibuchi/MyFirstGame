@@ -444,26 +444,5 @@ public class MobManager : ObjectManager, IItemOwner
             mobManager.ApplyMobData(mob);
         }
     }
-
-    public override void OnStatusPowerBoost(Status status)
-    {
-        base.OnStatusPowerBoost(status);
-        Damage damage = new()
-        {
-            physical = 5,
-        };
-        m_attack.AddDamage(damage);
-        status.RegisterExpireAction(OnStatusPowerBoostExpired);
-        Debug.Log("status was registerd");
-    }
-    void OnStatusPowerBoostExpired()
-    {
-        Debug.Log("PowerBoost was expired");
-        Damage damage = new()
-        {
-            physical = -5,
-        };
-        m_attack.AddDamage(damage);
-    }
 }
 

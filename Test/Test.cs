@@ -33,30 +33,9 @@ public class TestClass : MonoBehaviour
 UIManager.Instance.Open(UIManager.UIType.SaveMenu));
     }
     public ObjectManager objectManager;
-    public void Test_AddStatus()
-    {
-        if (objectManager is IStatusAffectable statusAffectable)
-        {
-            statusAffectable.AddStatus(Status.StatusID.PowerBoost);
-        }
-    }
-    public void Test_AddStatus2()
-    {
-        if (objectManager is IStatusAffectable statusAffectable)
-        {
-            var status = statusAffectable.AddStatus(Status.StatusID.PowerBoost, Status.StatusType.Wet, 1);
-        }
-    }
     void AAA()
     {
         Debug.Log("AAA");
-    }
-    public void Test_AddStatus3()
-    {
-        if (objectManager is IStatusAffectable statusAffectable)
-        {
-            statusAffectable.AddStatus(Status.StatusID.PowerBoost, Status.StatusType.Duration, 5);
-        }
     }
 
     private void Awake()

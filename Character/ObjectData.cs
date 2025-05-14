@@ -15,7 +15,7 @@ public class ObjectData
     public float CurrentHP;
     public Damage BaseDamageRate;
     public Damage CurrentDamageRate;
-    public List<StatusData> StatusDataList = new();
+    // public List<StatusData> StatusDataList = new();
 
     public Vector3 LocalPos;
     public Quaternion LocalRotate;
