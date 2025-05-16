@@ -57,7 +57,7 @@ public class AreaManager : MonoBehaviour
 
     public float GetHireAmount()
     {
-        return GameManager.Randoms[GameManager.RandomNames.HireAmount].NormalDistribution() * HiringCostStdDev + HiringCostMean;
+        return Random.Randoms[RandomName.HireAmount.ToString()].NormalDistribution() * HiringCostStdDev + HiringCostMean;
     }
 
     public bool Generate(Vector2Int pos)

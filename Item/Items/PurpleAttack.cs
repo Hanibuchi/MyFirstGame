@@ -12,7 +12,7 @@ public class PurpleAttack : TestAttackItem
 
         // 参照オブジェクトの位置と回転を取得
         Transform referenceTransform = shot.referenceObject.transform;
-        float aimingErrorAngle = GameManager.Randoms[GameManager.RandomNames.Diffusion].NormalDistribution() * shot.diffusion;
+        float aimingErrorAngle = Random.Randoms[RandomName.Diffusion.ToString()].NormalDistribution() * shot.diffusion;
 
         GameObject nextProjectileObj = ResourceManager.GetProjectile(projectileID);
         nextProjectileObj.transform.SetPositionAndRotation(referenceTransform.position, referenceTransform.rotation * Quaternion.Euler(0, 0, aimingErrorAngle));

@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-namespace MyGame
+/// <summary>
+/// ドロップのアイテムと確率を表す。
+/// </summary>
+[Serializable]
+public class DropItem
 {
-    /// <summary>
-    /// ドロップのアイテムと確率を表す。
-    /// </summary>
-    [Serializable]
-    public class DropItem
+    public DropItem(float dropRate, string itemName)
     {
-        public float DropRate;
-        public GameObject Item;
+        DropRate = dropRate;
+        ItemName = itemName;
     }
+    public float DropRate;
+    public string ItemName;
 }

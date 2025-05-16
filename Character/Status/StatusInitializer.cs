@@ -12,6 +12,7 @@ public class StatusInitializer : MonoBehaviour
     LevelHandler m_levelHandler;
     SpeedHandler m_speedHandler;
     JobHandler m_jobHandler;
+    DeathHandler m_deathHandler;
     private void Awake()
     {
         if (!isInitialized)
@@ -38,6 +39,7 @@ public class StatusInitializer : MonoBehaviour
         m_levelHandler = GetComponent<LevelHandler>();
         m_speedHandler = GetComponent<SpeedHandler>();
         m_jobHandler = GetComponent<JobHandler>();
+        m_deathHandler = GetComponent<DeathHandler>();
 
         m_health?.Initialize(m_initialStatusData.healthData);
         m_mana?.Initialize(m_initialStatusData.manaData);
@@ -45,8 +47,9 @@ public class StatusInitializer : MonoBehaviour
         m_levelHandler?.Initialize(m_initialStatusData.levelData);
         m_speedHandler?.Initialize(m_initialStatusData.speedData);
         m_jobHandler?.Initialize(m_initialStatusData.jobData);
+        m_deathHandler?.Initialize(m_initialStatusData.deathData);
 
-        m_levelHandler.SetBaseLevel(1);
+        m_levelHandler?.SetBaseLevel(1);
         ResetToBase();
         Restore();
 

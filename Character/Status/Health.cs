@@ -59,7 +59,7 @@ public class Health : MonoBehaviour, ISerializeHandler
 
 
     // DeathHandler作ったらコメントアウト外す。他にもある
-    // DeathHandler m_deathHandler;
+    DeathHandler m_deathHandler;
     // KnockbackHandler m_knockbackHandler;
     LevelHandler m_levelHandler;
 
@@ -70,7 +70,7 @@ public class Health : MonoBehaviour, ISerializeHandler
     public void Initialize(HealthData healthData)
     {
         m_healthData = healthData;
-        // m_deathHandler = GetComponent<DeathHandler>();
+        m_deathHandler = GetComponent<DeathHandler>();
         // m_knockbackHandler = GetComponent<KnockbackHandler>();
         if (TryGetComponent(out m_levelHandler))
         {
@@ -135,13 +135,13 @@ public class Health : MonoBehaviour, ISerializeHandler
 
     public virtual void TakeDamage(Damage damage, Attack user, Vector2 direction)
     {
-        // if (m_deathHandler != null)
-        // {
-        //     if (m_deathHandler.IsDead)
-        //         return;
+        if (m_deathHandler != null)
+        {
+            if (m_deathHandler.IsDead)
+                return;
 
-        //     m_deathHandler.m_lastDamageTaker = user;
-        // }
+            m_deathHandler.SetLastDamageTaker(user);
+        }
 
 
         Damage calculatedDamage = damage.CalculateDamageWithDamageRates(DamageRate);
@@ -191,9 +191,9 @@ public class Health : MonoBehaviour, ISerializeHandler
 
         // m_knockbackHandler?.Knockback(calculatedDamage.knockback, direction);
 
-        if (GameManager.Randoms[GameManager.RandomNames.InstantDeath].Value() < calculatedDamage.instantDeathRate)
+        if (Random.Randoms[RandomName.InstantDeath.ToString()].Value() < calculatedDamage.instantDeathRate)
         {
-            // m_deathHandler?.Die();
+            m_deathHandler?.Die();
         }
     }
     public void ChangeHP(float additionalHP)
@@ -201,7 +201,7 @@ public class Health : MonoBehaviour, ISerializeHandler
         HP = math.clamp(HP + additionalHP, 0, MaxHP);
         if (HP <= 0)
         {
-            // m_deathHandler?.Die();
+            m_deathHandler?.Die();
         }
     }
 

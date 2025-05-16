@@ -367,30 +367,6 @@ public class MobManager : ObjectManager, IItemOwner
         item.transform.position = (Vector2)gameObject.transform.position + gripPosition + wandPivotOffset;
     }
 
-    public override void Die()
-    {
-        Drop();
-        base.Die();
-    }
-
-    /// <summary>
-    /// アイテムドロップの処理
-    /// </summary>
-    protected void Drop()
-    {
-        foreach (DropItem dropItem in dropItems)
-        {
-            if (dropItem != null && GameManager.Randoms[GameManager.RandomNames.DropItem].Value() <= dropItem.DropRate)
-            {
-                GameObject droppedItem = Instantiate(dropItem.Item, transform.position, transform.rotation);
-                if (droppedItem.TryGetComponent(out Rigidbody2D rb))
-                {
-                    rb.velocity = transform.GetComponent<Rigidbody2D>().velocity;
-                }
-            }
-        }
-    }
-
 
     public MobData MakeMobData()
     {

@@ -40,7 +40,6 @@ public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
     /// </summary>
     protected virtual void ResetToBase()
     {
-        IsDead = false;
     }
 
     protected MobManager LastDamageTaker;
@@ -63,13 +62,13 @@ public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
 
     public virtual void Die()
     {
-        if (IsDead)
-            return;
+        // if (IsDead)
+        //     return;
 
-        IsDead = true;
+        // IsDead = true;
 
-        if (LastDamageTaker != null && LastDamageTaker != this)
-            if (LastDamageTaker.TryGetComponent(out LevelHandler levelHandelr))levelHandelr.AddExperience(CalculateExperience());
+        // if (LastDamageTaker != null && LastDamageTaker != this)
+        //     if (LastDamageTaker.TryGetComponent(out LevelHandler levelHandelr))levelHandelr.AddExperience(CalculateExperience());
         // Release();
     }
 

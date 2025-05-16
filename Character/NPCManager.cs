@@ -166,9 +166,8 @@ public class NPCManager : MobManager
 		transform.rotation = Quaternion.identity;
 	}
 
-	public override void Die()
+	public  void Die()
 	{
-		base.Die();
 		GetComponent<Rigidbody2D>().freezeRotation = false;
 		if (OwnerParty != null)
 		{
