@@ -6,6 +6,7 @@ public class StatusInitializer : MonoBehaviour
 {
     [SerializeField] InitialStatusData m_initialStatusData;
 
+    PoolableResourceComponent m_poolableResourceComponent;
     Health m_health;
     Mana m_mana;
     Attack m_attack;
@@ -33,6 +34,14 @@ public class StatusInitializer : MonoBehaviour
             return;
         }
 
+        if (TryGetComponent(out m_poolableResourceComponent))
+        {
+            m_poolableResourceComponent.ReleaseCallback += () =>
+            {
+                SetEnable(true);
+            };
+        }
+
         m_health = GetComponent<Health>();
         m_mana = GetComponent<Mana>();
         m_attack = GetComponent<Attack>();
@@ -48,6 +57,14 @@ public class StatusInitializer : MonoBehaviour
         m_speedHandler?.Initialize(m_initialStatusData.speedData);
         m_jobHandler?.Initialize(m_initialStatusData.jobData);
         m_deathHandler?.Initialize(m_initialStatusData.deathData);
+
+        if (m_deathHandler != null)
+        {
+            m_deathHandler.OnDead += () =>
+            {
+                SetEnable(false);
+            };
+        }
 
         m_levelHandler?.SetBaseLevel(1);
         ResetToBase();
@@ -70,5 +87,23 @@ public class StatusInitializer : MonoBehaviour
     {
         m_health?.RestoreHP();
         m_mana?.RestoreMP();
+    }
+
+    public void SetEnable(bool enable)
+    {
+        if (m_health != null)
+            m_health.enabled = enable;
+        if (m_mana != null)
+            m_mana.enabled = enable;
+        if (m_attack != null)
+            m_attack.enabled = enable;
+        if (m_levelHandler != null)
+            m_levelHandler.enabled = enable;
+        if (m_speedHandler != null)
+            m_speedHandler.enabled = enable;
+        if (m_jobHandler != null)
+            m_jobHandler.enabled = enable;
+        if (m_deathHandler != null)
+            m_deathHandler.enabled = enable;
     }
 }

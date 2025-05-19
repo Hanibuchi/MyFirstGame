@@ -60,7 +60,7 @@ public class Health : MonoBehaviour, ISerializeHandler
 
     // DeathHandler作ったらコメントアウト外す。他にもある
     DeathHandler m_deathHandler;
-    // KnockbackHandler m_knockbackHandler;
+    KnockbackHandler m_knockbackHandler;
     LevelHandler m_levelHandler;
 
     /// <summary>
@@ -71,7 +71,7 @@ public class Health : MonoBehaviour, ISerializeHandler
     {
         m_healthData = healthData;
         m_deathHandler = GetComponent<DeathHandler>();
-        // m_knockbackHandler = GetComponent<KnockbackHandler>();
+        m_knockbackHandler = GetComponent<KnockbackHandler>();
         if (TryGetComponent(out m_levelHandler))
         {
             m_levelHandler.OnLevelChanged += OnLevelChanged;
@@ -189,7 +189,7 @@ public class Health : MonoBehaviour, ISerializeHandler
 
         ChangeHP(-calculatedDamage.totalDamageRate * calculatedDamage.GetTotalDamage());
 
-        // m_knockbackHandler?.Knockback(calculatedDamage.knockback, direction);
+        m_knockbackHandler?.Knockback(calculatedDamage.knockback, direction);
 
         if (Random.Randoms[RandomName.InstantDeath.ToString()].Value() < calculatedDamage.instantDeathRate)
         {

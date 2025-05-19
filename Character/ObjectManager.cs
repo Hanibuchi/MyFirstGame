@@ -60,18 +60,6 @@ public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
         return 10;
     }
 
-    public virtual void Die()
-    {
-        // if (IsDead)
-        //     return;
-
-        // IsDead = true;
-
-        // if (LastDamageTaker != null && LastDamageTaker != this)
-        //     if (LastDamageTaker.TryGetComponent(out LevelHandler levelHandelr))levelHandelr.AddExperience(CalculateExperience());
-        // Release();
-    }
-
 
     public void OnRelease()
     {
