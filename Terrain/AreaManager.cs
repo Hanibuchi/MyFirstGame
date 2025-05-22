@@ -51,7 +51,7 @@ public class AreaManager : MonoBehaviour
         }
         foreach (var keyValue in ChunkDatas)
         {
-            ApplicationManager.SaveCompressedJson(ChunkManager.GetChunkDataPath(AreaDirectoryPath, keyValue.Key), keyValue.Value);
+            EditFile.SaveCompressedJson(ChunkManager.GetChunkDataPath(AreaDirectoryPath, keyValue.Key), keyValue.Value);
         }
     }
 

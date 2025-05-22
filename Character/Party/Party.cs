@@ -4,39 +4,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 using MyGame;
+using Newtonsoft.Json;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 
-// Partyの概要
-// このPartyコンポネントがくっついた空オブジェクトをメンバーの親オブジェクトにする。こうすることでリーダーの変更の度にPartyを消さなくて済むし，実際のPartyの感じに似ていて把握しやすい。
-public class Party : MonoBehaviour, IItemOwner
+[JsonObject(MemberSerialization.OptIn)]
+public class Party : MonoBehaviour, IItemOwner, ISerializableComponent
 {
-    [SerializeField] List<NPCManager> m_members = new();
-    public List<NPCManager> Members => m_members;
-    public NPCManager Leader => Members[0];
+    protected SerializeManager m_serializeHandler;
+    [JsonProperty][SerializeField] List<PartyMember> m_members = new();
+    public List<PartyMember> MemberList => m_members;
+    public PartyMember Leader => MemberList[0];
     /// <summary>
     /// PlayerのPartyかどうか。
     /// </summary>
     public virtual bool IsPlayerParty => false;
-    public int MaxMembers { get; private set; } = 20;
-
-    // public void Test()//デバッグ
-    // {
-    //     if (PartyMembers.Count == 0)
-    //     {
-    //         MemberPos = new List<Transform> { gameObject.transform };
-    //         AddMember(gameObject.GetComponent<NPCManager>());
-    //     }
-    //     else
-    //     {
-    //         GameObject test = Instantiate(testNPC);
-    //         AddMember(test.GetComponent<NPCManager>());
-    //     }
-    // }
+    [JsonProperty][field: SerializeField] public uint Capacity { get; private set; } = 20;
 
     private void Awake()
     {
+        m_serializeHandler = GetComponent<SerializeManager>();
         OwnerParty = this;
         Owner = this;
         InitItems();
@@ -49,37 +37,36 @@ public class Party : MonoBehaviour, IItemOwner
     /// 末尾に新規メンバーを追加。
     /// </summary>
     /// <param name="member"></param>
-    public void AddMember(NPCManager member)
+    public void AddMember(PartyMember member)
     {
-        AddMember(member, Members.Count);
+        AddMember(member, MemberList.Count);
     }
 
     /// <summary>
-    /// 新規メンバーをindex番目に追加する。
+    /// 新規メンバーをindex番目に追加する。既存メンバーなら何もしない
     /// </summary>
     /// <param name="index"></param>
     /// <param name="member"></param>
     /// <returns></returns>
-    public void AddMember(NPCManager member, int index)
+    public virtual void AddMember(PartyMember member, int index)
     {
-        if (Members.IndexOf(member) != -1)
+        if (MemberList.IndexOf(member) != -1)
         {
-            InsertMember(member, index);
+            Debug.LogWarning("member is already in this party");
             return;
         }
-        if (Members.Count >= MaxMembers)
+        if (MemberList.Count >= Capacity)
         {
             Debug.Log("Party is full");
+            return;
         }
 
-        if (0 <= index && index <= Members.Count)
+        if (0 <= index && index <= MemberList.Count)
         {
-            Members.Insert(index, member);
-            member.OnJoinParty(this, index);
-            // Debug.Log($"aaa index: {index}");
+            MemberList.Insert(index, member);
+            member.OnJoinParty(this);
             if (index == 0)
             {
-                // Debug.Log("bbb");
                 member.OnBecomeLeader();
             }
         }
@@ -87,22 +74,26 @@ public class Party : MonoBehaviour, IItemOwner
             Debug.LogWarning("idex is out of range");
     }
 
-    // 現リーダー(PartyMembers[0])と次のリーダーを交換する。
-    public void ChangeLeader(NPCManager nextLeader)
+    public void RemoveMember(PartyMember member)
     {
-        if (nextLeader.IsLeader)
+        if (!MemberList.Contains(member))
+        {
+            Debug.LogWarning("member is not this party member");
             return;
+        }
 
-        if (Members.Contains(nextLeader))
+        if (member.IsLeader) // もしリーダーの場合，２番目のメンバーをリーダーにする。
         {
-            nextLeader.OnBecomeLeader();
-            Members[0].OnResignLeader();
-            SwitchMembers(nextLeader, Members[0]);
+            if (MemberList.Count >= 2)
+                ChangeLeader(member, MemberList[1]);
+            else // 一人しかいない場合
+            {
+                member.OnResignLeader();
+            }
         }
-        else
-        {
-            Debug.Log("SwitchMembers do not contain the member");
-        }
+
+        MemberList.Remove(member);
+        member.OnLeaveParty();
     }
 
     /// <summary>
@@ -110,68 +101,71 @@ public class Party : MonoBehaviour, IItemOwner
     /// </summary>
     /// <param name="member"></param>
     /// <param name="index"></param>
-    public void InsertMember(NPCManager member, int index)
+    public void InsertMember(PartyMember member, int index)
     {
-        int currentIndex = Members.IndexOf(member);
+        int currentIndex = MemberList.IndexOf(member);
         if (currentIndex == -1) // もしメンバーでないなら追加する。
         {
-            AddMember(member, index);
+            Debug.LogWarning("member is not in this party");
             return;
         }
 
-        if (0 <= index && index < Members.Count)
+        if (0 <= index && index < MemberList.Count)
         {
-            Members.Remove(member);
-            // if (index > currentIndex) index--;
-            Members.Insert(index, member);
+            if (index == 0)
+            {
+                ChangeLeader(MemberList[0], member);
+            }
+            MemberList.Remove(member);
+            MemberList.Insert(index, member);
         }
     }
 
     /// <summary>
-    /// 2人のメンバーの場所を交代する。UIでスイッチする必要はない。代わりにInsertMemberを使う。
+    /// 2人のメンバーの場所を交代する。
     /// </summary>
     /// <param name="memberA"></param>
     /// <param name="memberB"></param>
     /// <returns></returns>
-    protected virtual bool SwitchMembers(NPCManager memberA, NPCManager memberB)
+    public virtual void SwitchMembers(PartyMember memberA, PartyMember memberB)
     {
-        if (!Members.Contains(memberA) || !Members.Contains(memberB))
+        if (!MemberList.Contains(memberA) || !MemberList.Contains(memberB))
         {
             Debug.LogWarning("SwitchMembers do not contain the member");
-            return false;
+            return;
         }
 
-        int indexA = Members.IndexOf(memberA);
-        int indexB = Members.IndexOf(memberB);
+        int indexA = MemberList.IndexOf(memberA);
+        int indexB = MemberList.IndexOf(memberB);
 
-        (Members[indexB], Members[indexA]) = (Members[indexA], Members[indexB]);
-        return true;
+        if (indexA == 0)
+            ChangeLeader(memberA, memberB);
+        if (indexB == 0)
+            ChangeLeader(memberB, memberA);
+
+        (MemberList[indexB], MemberList[indexA]) = (MemberList[indexA], MemberList[indexB]);
     }
 
-    public virtual bool RemoveMember(NPCManager member)
+    // 現リーダー(PartyMembers[0])と次のリーダーを交換する。
+    void ChangeLeader(PartyMember prevLeader, PartyMember nextLeader)
     {
-        if (!Members.Contains(member))
-        {
-            Debug.LogWarning("member is not this party member");
-            return false;
-        }
-
-        if (member.IsLeader) // もしリーダーの場合，２番目のメンバーをリーダーにする。
-        {
-            if (Members.Count >= 2)
-                ChangeLeader(Members[1]);
-            else // 一人しかいない場合
-            {
-                member.OnResignLeader();
-                PartyManager.Instance.Delete(this);
-            }
-        }
-
-        Members.Remove(member);
-        member.OnLeaveParty();
-
-        return true;
+        prevLeader.OnResignLeader();
+        nextLeader.OnBecomeLeader();
     }
+
+    // ゲームオーバーの処理。
+    public virtual void GameOver()
+    {
+        foreach (var member in MemberList)
+        {
+            member.Surrender();
+        }
+        Debug.Log("ゲームオーバー！！！Leader: " + MemberList[0].name);
+        PartyManager.Instance.ReleaseParty(this);
+    }
+
+
+
 
 
 
@@ -295,45 +289,4 @@ public class Party : MonoBehaviour, IItemOwner
 
 
 
-
-
-    // ゲームオーバーの処理。publicメソッドAreAllAlliesDeadを実行してPartyMembersが全員死んでいたら実行される。
-    public virtual void GameOver(string causeOfdeath)
-    {
-        foreach (var member in Members)
-        {
-            member.Surrender();
-        }
-        PartyManager.Instance.Delete(this);
-        Debug.Log("ゲームオーバー！！！Leader: " + Members[0].name);
-    }
-
-    public PartyData MakePartyData()
-    {
-        return FillPartyData(new());
-    }
-
-    protected PartyData FillPartyData(PartyData partyData)
-    {
-        for (int i = 0; i < Members.Count; i++)
-        {
-            partyData.Members.Add(Members[i].MakeNPCData());
-        }
-        return partyData;
-    }
-
-    public static void SpawnParty(PartyData partyData)
-    {
-        Party party = PartyManager.Instance.Add();
-        party.LoadPartyData(partyData);
-    }
-
-    protected void LoadPartyData(PartyData partyData)
-    {
-        var members = partyData.Members;
-        for (int i = 0; i < members.Count; i++)
-        {
-            AddMember(NPCManager.SpawnNPC(members[i]));
-        }
-    }
 }

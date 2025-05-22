@@ -25,6 +25,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private NPCManager playerNPCManager;
     public NPCManager PlayerNPCManager => playerNPCManager;
+    [SerializeField] GameObject m_player;
+    public GameObject Player => m_player;
 
     [SerializeField] private StatisticsManager statisticsManager;
     public StatisticsManager StatisticsManager => statisticsManager;
@@ -32,8 +34,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private EventFlagManager eventFlagManager;
     public EventFlagManager EventFlagManager => eventFlagManager;
 
-    [SerializeField] private PlayerParty playerParty;
-    public PlayerParty PlayerParty => playerParty;
+    [SerializeField] PartyManager m_partyManager;
+    public PartyManager PartyManager => m_partyManager;
 
 
     Vector3 respawnPoint;
@@ -75,8 +77,6 @@ public class GameManager : MonoBehaviour
         Seed = initGameData.Seed;
         GameMode = initGameData.GameMode;
 
-        TerrainManager.NewGame();
-        PlayerParty.NewGame();
 
         ApplicationManager.Instance.OnGameInitializationComplete();
         Debug.Log($"SaveSlotDirectoryPath: {SaveSlotDirectoryPath}");
@@ -92,8 +92,6 @@ public class GameManager : MonoBehaviour
         // ここでDirectoryPathからJsonファイルを取り出していろいろDataクラス取り出す。
         // SeedやGameModeも取り出して代入。
 
-        TerrainManager.LoadWorld(new());
-        PlayerParty.LoadWorld(new());
         ApplicationManager.Instance.OnGameInitializationComplete();
     }
 
@@ -113,11 +111,13 @@ public class GameManager : MonoBehaviour
         MyInputSystem.Instance.OnGameStart();
         AchievementsManager.Instance.OnGameStart();
         statisticsManager.OnGameStart();
+        PartyManager.OnGameStart();
+        TerrainManager.OnGameStart();
     }
 
     public void RespawnPlayer()
     {
-        PlayerNPCManager.transform.position = respawnPoint;
+        Player.transform.position = respawnPoint;
         PlayerNPCManager.OnRespawn();
         UIManager.Instance.Open(UIManager.UIType.PlayerStatusUI);
         UIManager.Instance.Open(UIManager.UIType.InventoryUI);
@@ -149,7 +149,7 @@ public class GameManager : MonoBehaviour
         AchievementsManager.Instance.Save();
         StatisticsManager.Save();
         EventFlagManager.Save();
-        PlayerParty.Save();
+        PartyManager.Save();
     }
 
     public void PauseGame()
@@ -173,8 +173,8 @@ public class GameManager : MonoBehaviour
         public static Vector3 GetMousePos()
         {
             Vector3 mousePos = Pointer.current.position.ReadValue();
-            if (Instance.PlayerNPCManager != null)
-                mousePos.z = Instance.PlayerNPCManager.transform.position.z - Camera.main.transform.position.z;
+            if (Instance.Player != null)
+                mousePos.z = Instance.Player.transform.position.z - Camera.main.transform.position.z;
             else
                 mousePos.z = -Camera.main.transform.position.z;
 
@@ -194,9 +194,9 @@ public class GameManager : MonoBehaviour
         GroundHitDetection,
     }
 
-    public void SetPlayerNPCManager(NPCManager nPCManager)
+    public void SetPlayer(GameObject player)
     {
-        playerNPCManager = nPCManager;
+        m_player = player;
     }
 }
 /// <summary>

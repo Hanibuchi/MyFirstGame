@@ -7,7 +7,7 @@ public class SerializeManager : MonoBehaviour
 {
     public string SaveState()
     {
-        var components = GetComponents<ISerializeHandler>();
+        var components = GetComponents<ISerializableComponent>();
 
         var dict = new Dictionary<string, string>();
 
@@ -25,7 +25,7 @@ public class SerializeManager : MonoBehaviour
 
     public void LoadState(string json)
     {
-        var components = GetComponents<ISerializeHandler>();
+        var components = GetComponents<ISerializableComponent>();
         var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
         foreach (var comp in components)
@@ -40,7 +40,7 @@ public class SerializeManager : MonoBehaviour
         }
     }
 }
-interface ISerializeHandler
+interface ISerializableComponent
 {
     /// <summary>
     /// シリアライズ前に実行される。特殊な処理が必要なときはこのときする。

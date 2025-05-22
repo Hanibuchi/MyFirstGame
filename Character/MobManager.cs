@@ -34,12 +34,6 @@ public class MobManager : ObjectManager, IItemOwner
         ((IItemOwner)this).ResetItems();
     }
 
-    // すべてのステータスをBaseに戻す
-    protected override void ResetToBase()
-    {
-        base.ResetToBase();
-    }
-
     /// <summary>
     /// バフを再計算する
     /// </summary>

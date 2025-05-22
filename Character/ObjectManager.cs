@@ -35,12 +35,6 @@ public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
     {
     }
 
-    /// <summary>
-    /// ステータスをBaseの値にする
-    /// </summary>
-    protected virtual void ResetToBase()
-    {
-    }
 
     protected MobManager LastDamageTaker;
 

@@ -3,38 +3,19 @@ using System.Collections.Generic;
 using MyGame;
 using UnityEngine;
 
-public class EquipmentMenuManager : UI
+public class EquipmentUI : UI, IEquipmentUI
 {
     /// <summary>
     /// EquipmentMenuが開いているか
     /// </summary>
     public bool IsOpen => gameObject.activeInHierarchy;
-    [SerializeField] EquipmentMenuFrame EquipmentMenuFrame;
+    [SerializeField] Transform m_memberEquipmentUIFrame;
 
     protected override void Awake()
     {
         base.Awake();
         UIManager.Instance.SetEquipmentMenuManager(this);
         Close();
-    }
-
-    public void InsertMember(NPCEquipmentMenu npcEquipmentMenu, int index)
-    {
-        EquipmentMenuFrame.InsertMember(npcEquipmentMenu, index);
-    }
-    public void InsertMember(NPCEquipmentMenu npcEquipmentMenu)
-    {
-        EquipmentMenuFrame.InsertMember(npcEquipmentMenu);
-    }
-
-    public void SwitchMembers(NPCEquipmentMenu npc1, NPCEquipmentMenu npc2)
-    {
-        EquipmentMenuFrame.SwitchMembers(npc1, npc2);
-    }
-
-    public void RemoveMember(NPCEquipmentMenu npcEquipmentMenu)
-    {
-        EquipmentMenuFrame.RemoveMember(npcEquipmentMenu);
     }
 
     /// <summary>
@@ -57,5 +38,15 @@ public class EquipmentMenuManager : UI
     public void Close()
     {
         gameObject.SetActive(false);
+    }
+
+    public void DetachMemberUIs()
+    {
+        m_memberEquipmentUIFrame.DetachChildren();
+    }
+
+    public void SetMemberUI(GameObject memberEquipmentUI)
+    {
+        memberEquipmentUI.transform.SetParent(m_memberEquipmentUIFrame);
     }
 }

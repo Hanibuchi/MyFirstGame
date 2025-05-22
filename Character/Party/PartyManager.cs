@@ -7,19 +7,43 @@ using UnityEngine;
 public class PartyManager : MonoBehaviour
 {
     static public PartyManager Instance { get; private set; }
-    private void Awake()
+    [SerializeField] PlayerParty m_playerParty;
+    public PlayerParty PlayerParty => m_playerParty;
+
+    List<Party> m_partyList = new();
+    public List<Party> PartyList => m_partyList;
+    public void OnGameStart()
     {
         Instance = this;
+        PlayerParty.OnGameStart();
     }
-    public Party Add()
+
+    public void Save()
     {
-        var party = gameObject.AddComponent<Party>();
+        PlayerParty.Save();
+    }
+
+    public Party GetParty()
+    {
+        GameObject partyObj = ResourceManager.GetOther(ResourceManager.OtherID.Party.ToString());
+        partyObj.transform.SetParent(transform);
+        Party party = partyObj.GetComponent<Party>();
         party.Init();
+        m_partyList.Add(party);
         return party;
     }
 
-    public void Delete(Party party)
+    public void ReleaseParty(Party party)
     {
-        Destroy(party);
+        if (m_partyList.Contains(party))
+        {
+            m_partyList.Remove(party);
+        }
+        else
+        {
+            Debug.LogError("Party not found in party list");
+            return;
+        }
+        ResourceManager.ReleaseOther(ResourceManager.OtherID.Party.ToString(), party.gameObject);
     }
 }

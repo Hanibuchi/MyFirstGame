@@ -23,14 +23,14 @@ public class NPCManager : MobManager
 	public event Action<Sprite> OnNPCImageChanged;
 
 
-	[SerializeField] NPCEquipmentMenu m_equipmentMenu;
-	public NPCEquipmentMenu EquipmentMenu
+	[SerializeField] MemberEquipmentUI m_equipmentMenu;
+	public MemberEquipmentUI EquipmentMenuUI
 	{
 		get
 		{
 			if (m_equipmentMenu == null)
 			{
-				m_equipmentMenu = ResourceManager.GetOther(ResourceManager.UIID.NPCEquipmentMenu.ToString()).GetComponent<NPCEquipmentMenu>();
+				m_equipmentMenu = ResourceManager.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString()).GetComponent<MemberEquipmentUI>();
 				m_equipmentMenu.SetItemParent(this);
 				m_equipmentMenu.RegisterStatus(gameObject);
 			}
@@ -48,58 +48,18 @@ public class NPCManager : MobManager
 
 	public void OnJoinParty(Party party, int index)
 	{
-		OwnerParty = party;
-		transform.SetParent(party.transform);
-
-		if (party.IsPlayerParty)
-		{
-			MoveEquipmentMenuUI(index);
-		}
 	}
 
 	public void OnBecomeLeader()
 	{
-		IsLeader = true;
-		// Debug.Log($"{IsPlayer}");
-		if (OwnerParty.IsPlayerParty)
-		{
-			if (GetComponent<PlayerController>() == null)
-			{
-				gameObject.AddComponent<PlayerController>();
-			}
-			UIManager.Instance.PlayerStatusUI.RegisterStatus(gameObject);
-			GameManager.Instance.SetPlayerNPCManager(this);
-		}
 	}
 
 	public void OnResignLeader()
 	{
-		IsLeader = false;
-		if (TryGetComponent(out PlayerController playerController))
-			Destroy(playerController);
 	}
 
 	public void OnLeaveParty()
 	{
-		OwnerParty = null;
-		transform.SetParent(null);
-	}
-
-	/// <summary>
-	/// NPCEquipmentMenuを移動させる。
-	/// </summary>
-	/// <param name="index">NPCEquipmentMenuを追加する位置</param>
-	/// <returns></returns>
-	public void MoveEquipmentMenuUI(int index)
-	{
-		if (index == -1)
-			UIManager.Instance.EquipmentMenuManager.InsertMember(EquipmentMenu);
-		else
-			UIManager.Instance.EquipmentMenuManager.InsertMember(EquipmentMenu, index);
-
-		// NPCの画像を取得
-		// NPCImage = GetImage();
-		// Debug.Log($"NPCImage: {NPCImage}");
 	}
 
 	Sprite GetImage()
@@ -127,7 +87,7 @@ public class NPCManager : MobManager
 	public override void RefreshItemSlotUIs()
 	{
 		Debug.Log("RefreshItemSlotUIs");
-		EquipmentMenu.DetachChildrenUI();
+		EquipmentMenuUI.DetachChildrenUI();
 
 		for (int i = 0; i < Items.Count; i++)
 		{
@@ -142,13 +102,13 @@ public class NPCManager : MobManager
 					itemSlot = Items[i].GetItemSlotUI();
 				}
 			}
-			EquipmentMenu.SetItemSlot(itemSlot, i);
+			EquipmentMenuUI.SetItemSlot(itemSlot, i);
 		}
 	}
 	public override void AddItemSlot()
 	{
 		base.AddItemSlot();
-		EquipmentMenu.AddSlot();
+		EquipmentMenuUI.AddSlot();
 	}
 
 
@@ -159,31 +119,15 @@ public class NPCManager : MobManager
 
 
 
-	protected override void ResetToBase()
-	{
-		base.ResetToBase();
-		GetComponent<Rigidbody2D>().freezeRotation = true;
-		transform.rotation = Quaternion.identity;
-	}
 
-	public  void Die()
+	public void Die()
 	{
 		GetComponent<Rigidbody2D>().freezeRotation = false;
-		if (OwnerParty != null)
-		{
-			if (IsLeader)
-				OwnerParty.GameOver(causeOfdeath);
-			else
-				OwnerParty.RemoveMember(this);
-		}
 	}
 	public void Surrender()
 	{
-		gameObject.layer = LayerMask.NameToLayer(GameManager.Layer.Ally.ToString());
-		OwnerParty = null;
 	}
 
-	LevelHandler levelHandler;
 
 	/// <summary>
 	/// 雇うのにかかる費用。新たに忠誠度というパラメータを増やし，PlayerPartyに長くいるほど増えるように，この値に追加する。
@@ -191,17 +135,12 @@ public class NPCManager : MobManager
 	/// <returns></returns>
 	public float GetHiringCost()
 	{
-		return levelHandler.BaseLevel * 10 + 100;
+		return 0;
 	}
 
 	// EquipmentMenu(UI)を削除。PartyMemberを削除するとき呼び出す。
 	public void DestroyEquipmentMenu()
 	{
-		if (EquipmentMenu == null)
-			return;
-
-		ResourceManager.ReleaseOther(ResourceManager.UIID.NPCEquipmentMenu.ToString(), EquipmentMenu.gameObject);
-		EquipmentMenu = null;
 	}
 
 	/// <summary>
@@ -218,7 +157,7 @@ public class NPCManager : MobManager
 			if (collider.TryGetComponent(out NPCManager opponentNPCManager))
 			{
 				// ここを変更
-				OwnerParty.AddMember(opponentNPCManager);
+				// OwnerParty.AddMember(opponentNPCManager);
 				return;
 			}
 		}
@@ -272,7 +211,6 @@ public class NPCManager : MobManager
 
 	public void OnRespawn()
 	{
-		ResetToBase();
 	}
 
 	public static NPCManager SpawnNPC(NPCData npc)

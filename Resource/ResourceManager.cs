@@ -53,8 +53,8 @@ public class ResourceManager : MonoBehaviour
     }
     public enum UIID
     {
-        EquipmentMenuCanvas,
-        NPCEquipmentMenu,
+        EquipmentUI,
+        MemberEquipmentUI,
         SlotSpacing,
         InventoryCanvas,
         PlayerStatusUI,
@@ -83,6 +83,7 @@ public class ResourceManager : MonoBehaviour
     public enum OtherID
     {
         TerrainGrid,
+        Party,
     }
 
     public enum ChunkID

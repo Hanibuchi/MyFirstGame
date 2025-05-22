@@ -3,65 +3,83 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MyGame;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerParty : Party
 {
     public static string PlayerPartyPath => Path.Combine(GameManager.PlayerDataPath, "PlayerParty");
     public override bool IsPlayerParty => true;
-    NPCManager PlayerManager => Leader;
+    PartyMember Player => Leader;
+    InventoryUI m_inventoryUI;
+    IEquipmentUI m_equipmentUI;
 
-    // 以下2つをいつか統合したい
-    public void NewGame()
+    public void OnGameStart()
     {
-        NPCManager player = ResourceManager.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<NPCManager>();
-        AddMember(player);
-        Init();
-    }
-    public void LoadWorld(PlayerPartyData playerPartyData)
-    {
-        LoadPartyData(playerPartyData);
+        if (File.Exists(PlayerPartyPath))
+        {
+            string json = EditFile.ReadAndDecompressJson(PlayerPartyPath);
+            if (m_serializeHandler == null)
+                m_serializeHandler = GetComponent<SerializeManager>();
+            m_serializeHandler.LoadState(json);
+        }
+        else
+        {
+            PartyMember player = ResourceManager.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<PartyMember>();
+            AddMember(player);
+        }
         Init();
     }
 
     public override void Init()
     {
-        UIManager.Instance.InventoryUI.SetItemParent(this);
-        UIManager.Instance.InventoryUI.InitSlots(ItemCapacity);
+        m_equipmentUI = UIManager.Instance.EquipmentUI;
+        m_inventoryUI = UIManager.Instance.InventoryUI;
+        m_inventoryUI.SetItemParent(this);
+        m_inventoryUI.InitSlots(ItemCapacity);
     }
 
-    public override void GameOver(string causeOfdeath)
+    public void Save()
     {
-        float hiringCost = PlayerManager.BossChunkManager.BossAreaManager.GetHireAmount();
-        var traitors = HireMembersForEnemy(hiringCost);
-        AreaManager area = Leader.BossChunkManager.BossAreaManager;
-        Vector2Int chunkPos = Leader.BossChunkManager.ChunkPos;
-        Vector3 pos = Leader.transform.position;
-
-        List<HiredMemberData> traitorDatas = traitors.Select(traitorAndCost =>
-        {
-            (NPCManager traitor, float cost) = traitorAndCost;
-            RemoveMember(traitor);
-            return new HiredMemberData()
-            {
-                NPCData = traitor.MakeNPCDataAndRelease(),
-                HiredArea = area,
-                HiredChunkPos = chunkPos,
-                HiringCost = cost,
-            };
-        }).ToList();
-        GameManager.Instance.GameOver(causeOfdeath, area, chunkPos, pos, hiringCost, traitorDatas);
+        if (TryGetComponent(out SerializeManager serializeManager))
+            EditFile.CompressAndSaveJson(PlayerPartyPath, serializeManager.SaveState());
+        else
+            Debug.LogError($"SerializeManager not found on {gameObject.name}");
     }
 
-    List<(NPCManager, float)> HireMembersForEnemy(float hiringCost)
+    public override void GameOver()
     {
-        var sortedList = Members
+        // Vector3 pos = Player.transform.position;
+        // AreaManager area = TerrainManager.GetAreaFromPos(pos);
+        // Vector2Int chunkPos = TerrainManager.GetChunkFromPos(pos);
+        // float hiringCost = area.GetHireAmount();
+        // var traitors = HireMembersForEnemy(hiringCost);
+
+        // List<HiredMemberData> traitorDatas = traitors.Select(traitorAndCost =>
+        // {
+        //     (PartyMember traitor, float cost) = traitorAndCost;
+        //     RemoveMember(traitor);
+        //     return new HiredMemberData()
+        //     {
+        //         memberData = traitor.GetComponent<SerializeManager>().SaveState(),
+        // hiredArea = area,
+        // hiredChunkPos = chunkPos,
+        //         hiringCost = cost,
+        //     };
+        // }).ToList();
+        // string causeOfDeath = Player.GetComponent<DeathHandler>().CreateCauseOfDeath();
+        // GameManager.Instance.GameOver(causeOfDeath, area, chunkPos, pos, hiringCost, traitorDatas);
+    }
+
+    List<(PartyMember, float)> HireMembersForEnemy(float hiringCost)
+    {
+        var sortedList = MemberList
             .Skip(1)
             .Select(item => new { member = item, cost = item.GetHiringCost() })
             .OrderByDescending(item => item.cost)
             .ToList();
 
-        List<(NPCManager, float)> result = new();
+        List<(PartyMember, float)> result = new();
         float remaining = hiringCost;
 
         foreach (var item in sortedList)
@@ -79,37 +97,25 @@ public class PlayerParty : Party
         return result;
     }
 
-    protected override bool SwitchMembers(NPCManager memberA, NPCManager memberB)
+    public override void AddMember(PartyMember member, int index)
     {
-        if (!base.SwitchMembers(memberA, memberB))
-            return false;
-        UIManager.Instance.EquipmentMenuManager.SwitchMembers(memberA.EquipmentMenu, memberB.EquipmentMenu);
-        return true;
+        base.AddMember(member, index);
+        RefreshEquipmentUI();
     }
 
-    public override bool RemoveMember(NPCManager member)
+    public override void SwitchMembers(PartyMember memberA, PartyMember memberB)
     {
-        if (!base.RemoveMember(member))
+        base.SwitchMembers(memberA, memberB);
+        RefreshEquipmentUI();
+    }
+    public void RefreshEquipmentUI()
+    {
+        m_equipmentUI.DetachMemberUIs();
+        foreach (var member in MemberList)
         {
-            return false;
+            var equipmentUI = member.GetMemberUI();
+            m_equipmentUI.SetMemberUI(equipmentUI);
         }
-        member.DestroyEquipmentMenu();
-        return true;
-    }
-    public void Save()
-    {
-        ApplicationManager.SaveCompressedJson(PlayerPartyPath, MakePlayerPartyData());
-    }
-
-    public PlayerPartyData MakePlayerPartyData()
-    {
-        return FillPlayerPartyData(new());
-    }
-
-    protected PlayerPartyData FillPlayerPartyData(PlayerPartyData playerPartyData)
-    {
-        FillPartyData(playerPartyData);
-        return playerPartyData;
     }
 
 
@@ -120,8 +126,7 @@ public class PlayerParty : Party
     public override void RefreshItemSlotUIs()
     {
         base.RefreshItemSlotUIs();
-        var inventory = UIManager.Instance.InventoryUI;
-        inventory.DetachChildrenUI();
+        m_inventoryUI.DetachChildrenUI();
 
         for (int i = 0; i < Items.Count; i++)
         {
@@ -137,7 +142,7 @@ public class PlayerParty : Party
                     itemSlot = Items[i].GetItemSlotUI();
                 }
             }
-            inventory.SetItemSlot(itemSlot, i);
+            m_inventoryUI.SetItemSlot(itemSlot, i);
         }
     }
     public override void RegisterItemAsParty(IItemOwner owner, Item item)
@@ -152,6 +157,6 @@ public class PlayerParty : Party
     public override void AddItemSlot()
     {
         base.AddItemSlot();
-        UIManager.Instance.InventoryUI.AddSlot();
+        m_inventoryUI.AddSlot();
     }
 }

@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
-public class NPCEquipmentMenu : UI, IItemParentUI
+public class MemberEquipmentUI : UI, IItemParentUI
 {
     public IItemParent ItemParent { get; private set; }
     public void SetItemParent(IItemParent itemParent)
@@ -116,9 +116,9 @@ public class NPCEquipmentMenu : UI, IItemParentUI
     /// <summary>
     /// NPCEquipmentMenuを初期化し，ステータスが表示されるよう登録する。
     /// </summary>
-    /// <param name="newNPCManager"></param>
     public void RegisterStatus(GameObject obj)
     {
+        UnregisterStatus();
         m_npcManager = obj.GetComponent<NPCManager>();
 
         GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1); // なぜかscaleが(0,0)になるため対症療法的にこうしてる。
@@ -144,15 +144,15 @@ public class NPCEquipmentMenu : UI, IItemParentUI
             UpdateMP(m_mana.MP);
         }
 
-        // if (obj.TryGetComponent(out m_level))
-        // {
-        //     UpdateNPCLevel(m_level.Level);
-        // }
+        if (obj.TryGetComponent(out m_level))
+        {
+            UpdateNPCLevel(m_level.Level);
+        }
 
-        // if (obj.TryGetComponent(out m_job))
-        // {
-        //     UpdateNPCJob(m_job.Job);
-        // }
+        if (obj.TryGetComponent(out m_job))
+        {
+            UpdateNPCJob(m_job.Job);
+        }
 
         SetCallbacks(true);
 
@@ -172,14 +172,13 @@ public class NPCEquipmentMenu : UI, IItemParentUI
     {
         base.OnRelease();
         UnregisterStatus();
-        UIManager.Instance.EquipmentMenuManager.RemoveMember(this);
     }
 
     /// <summary>
     /// 登録を解除する。
     /// </summary>
     /// <param name="equipmentMenu"></param>
-    public void UnregisterStatus()
+    void UnregisterStatus()
     {
         SetCallbacks(false);
     }
@@ -199,10 +198,10 @@ public class NPCEquipmentMenu : UI, IItemParentUI
                 m_mana.OnMaxMPChanged += UpdateMaxtMP;
                 m_mana.OnMPChanged += UpdateMP;
             }
-            // if (m_level != null)
-            //     m_level.OnLevelChanged += UpdateNPCLevel;
-            // if (m_job != null)
-            //     m_job.OnJobChanged += UpdateNPCJob;
+            if (m_level != null)
+                m_level.OnLevelChanged += UpdateNPCLevel;
+            if (m_job != null)
+                m_job.OnJobChanged += UpdateNPCJob;
         }
         else
         {
@@ -218,10 +217,10 @@ public class NPCEquipmentMenu : UI, IItemParentUI
                 m_mana.OnMaxMPChanged -= UpdateMaxtMP;
                 m_mana.OnMPChanged -= UpdateMP;
             }
-            // if (m_level != null)
-            //     m_level.OnLevelChanged -= UpdateNPCLevel;
-            // if (m_job != null)
-            //     m_job.OnJobChanged -= UpdateNPCJob;
+            if (m_level != null)
+                m_level.OnLevelChanged -= UpdateNPCLevel;
+            if (m_job != null)
+                m_job.OnJobChanged -= UpdateNPCJob;
         }
     }
 

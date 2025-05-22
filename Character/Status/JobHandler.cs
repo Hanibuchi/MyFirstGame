@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class JobHandler : MonoBehaviour, ISerializeHandler
+public class JobHandler : MonoBehaviour, ISerializableComponent
 {
     [SerializeField] JobData m_jobData;
     [JsonProperty][SerializeField] JobType m_baseJob;

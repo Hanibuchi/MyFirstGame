@@ -8,8 +8,8 @@ using UnityEngine.PlayerLoop;
 public class UIManager : MonoBehaviour
 {
 	public static UIManager Instance { get; private set; }
-	EquipmentMenuManager equipmentMenuManager;
-	public EquipmentMenuManager EquipmentMenuManager => equipmentMenuManager;
+	EquipmentUI equipmentMenuManager;
+	public EquipmentUI EquipmentUI => equipmentMenuManager;
 
 	PlayerStatusUI playerStatusUI;
 	/// <summary>
@@ -45,7 +45,7 @@ public class UIManager : MonoBehaviour
 	{
 	}
 
-	public void SetEquipmentMenuManager(EquipmentMenuManager equipmentMenuManager)
+	public void SetEquipmentMenuManager(EquipmentUI equipmentMenuManager)
 	{
 		this.equipmentMenuManager = equipmentMenuManager;
 	}
@@ -64,7 +64,7 @@ public class UIManager : MonoBehaviour
 		switch (ui)
 		{
 			case UIType.PlayerStatusUI: PlayerStatusUI.Open(); break;
-			case UIType.EquipmentMenu: EquipmentMenuManager.Open(); break;
+			case UIType.EquipmentMenu: EquipmentUI.Open(); break;
 			case UIType.InventoryUI: InventoryUI.Open(); break;
 
 			case UIType.TitleUI:
@@ -109,7 +109,7 @@ public class UIManager : MonoBehaviour
 		switch (ui)
 		{
 			case UIType.PlayerStatusUI: PlayerStatusUI?.Close(); break;
-			case UIType.EquipmentMenu: EquipmentMenuManager?.Close(); break;
+			case UIType.EquipmentMenu: EquipmentUI?.Close(); break;
 			case UIType.InventoryUI: InventoryUI?.Close(); break;
 			case UIType.SaveMenu: saveMenuUI?.Close(); break;
 			case UIType.TitleUI: titleUI?.Close(); break;

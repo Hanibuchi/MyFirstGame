@@ -97,9 +97,9 @@ public class MyInputSystem : MonoBehaviour
 
     void OnEquipmentMenuButtonPushed(InputAction.CallbackContext context)
     {
-        UIManager.Instance.EquipmentMenuManager.ToggleEquipmentMenu();
+        UIManager.Instance.EquipmentUI.ToggleEquipmentMenu();
 
-        if (UIManager.Instance.EquipmentMenuManager.IsOpen) // 開けるとき
+        if (UIManager.Instance.EquipmentUI.IsOpen) // 開けるとき
         {
             PlayerController.OnEquipmentMenuOpenEventHandler?.Invoke();
 

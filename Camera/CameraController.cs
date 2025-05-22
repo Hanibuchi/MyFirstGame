@@ -19,8 +19,8 @@ namespace MyGame
 
         void LateUpdate()
         {
-            if (player == null && GameManager.Instance.PlayerNPCManager != null)
-                player = GameManager.Instance.PlayerNPCManager.transform;
+            if (player == null && GameManager.Instance.Player != null)
+                player = GameManager.Instance.Player.transform;
 
             Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
             mouseWorldPos.z = 0;

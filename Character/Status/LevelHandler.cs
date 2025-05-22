@@ -7,7 +7,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class LevelHandler : MonoBehaviour, ISerializeHandler
+public class LevelHandler : MonoBehaviour, ISerializableComponent
 {
     [SerializeField] LevelData m_levelData;
     [SerializeField] StatusInitializer m_statusInitializer;

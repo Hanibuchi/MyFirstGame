@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class Mana : MonoBehaviour, ISerializeHandler
+public class Mana : MonoBehaviour, ISerializableComponent
 {
     [SerializeField] ManaData m_manaData;
     [JsonProperty][SerializeField] private float m_baseMaxMP;

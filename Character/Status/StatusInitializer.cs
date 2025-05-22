@@ -36,10 +36,7 @@ public class StatusInitializer : MonoBehaviour
 
         if (TryGetComponent(out m_poolableResourceComponent))
         {
-            m_poolableResourceComponent.ReleaseCallback += () =>
-            {
-                SetEnable(true);
-            };
+            m_poolableResourceComponent.ReleaseCallback += OnRelease;
         }
 
         m_health = GetComponent<Health>();
@@ -60,10 +57,7 @@ public class StatusInitializer : MonoBehaviour
 
         if (m_deathHandler != null)
         {
-            m_deathHandler.OnDead += () =>
-            {
-                SetEnable(false);
-            };
+            m_deathHandler.OnDead += OnDead;
         }
 
         m_levelHandler?.SetBaseLevel(1);
@@ -71,6 +65,14 @@ public class StatusInitializer : MonoBehaviour
         Restore();
 
         isInitialized = true;
+    }
+    void OnRelease()
+    {
+        SetEnabled(true);
+    }
+    void OnDead()
+    {
+        SetEnabled(false);
     }
 
     public void ResetToBase()
@@ -89,21 +91,21 @@ public class StatusInitializer : MonoBehaviour
         m_mana?.RestoreMP();
     }
 
-    public void SetEnable(bool enable)
+    public void SetEnabled(bool enabled)
     {
         if (m_health != null)
-            m_health.enabled = enable;
+            m_health.enabled = enabled;
         if (m_mana != null)
-            m_mana.enabled = enable;
+            m_mana.enabled = enabled;
         if (m_attack != null)
-            m_attack.enabled = enable;
+            m_attack.enabled = enabled;
         if (m_levelHandler != null)
-            m_levelHandler.enabled = enable;
+            m_levelHandler.enabled = enabled;
         if (m_speedHandler != null)
-            m_speedHandler.enabled = enable;
+            m_speedHandler.enabled = enabled;
         if (m_jobHandler != null)
-            m_jobHandler.enabled = enable;
+            m_jobHandler.enabled = enabled;
         if (m_deathHandler != null)
-            m_deathHandler.enabled = enable;
+            m_deathHandler.enabled = enabled;
     }
 }

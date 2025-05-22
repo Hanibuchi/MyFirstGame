@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class Health : MonoBehaviour, ISerializeHandler
+public class Health : MonoBehaviour, ISerializableComponent
 {
     [SerializeField] HealthData m_healthData;
     [JsonProperty][SerializeField] float m_baseMaxHP;

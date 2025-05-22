@@ -23,7 +23,6 @@ public class DeathHandler : MonoBehaviour
 	RigidbodyConstraints2D m_originalConstraints;
 	LevelHandler m_levelHandler;
 	// ItemUseHandler m_itemUseHandler;
-	// PartyMember m_partyMember;
 
 	private void Awake()
 	{
@@ -35,7 +34,6 @@ public class DeathHandler : MonoBehaviour
 			m_originalConstraints = m_rigidbody2D.constraints;
 		m_levelHandler = GetComponent<LevelHandler>();
 		// m_itemUseHandler = GetComponent<ItemUseHandler>();
-		// m_partyMember = GetComponent<PartyMember>();
 	}
 
 	public void Initialize(DeathData deathData)
@@ -74,11 +72,6 @@ public class DeathHandler : MonoBehaviour
 		Drop();
 
 		HandleDeadBody();
-
-		// if (m_partyMember != null)
-		// {
-		// 	m_partyMember.OnDead(CreateCauseOfDeath());
-		// }
 
 		OnDead?.Invoke();
 	}
@@ -155,5 +148,6 @@ public class DeathHandler : MonoBehaviour
 		if (m_rigidbody2D != null)
 			m_rigidbody2D.constraints = m_originalConstraints;
 		m_isDead = false;
+		transform.rotation = Quaternion.identity;
 	}
 }

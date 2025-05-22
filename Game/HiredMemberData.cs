@@ -6,8 +6,8 @@ using UnityEngine;
 [Serializable]
 public class HiredMemberData
 {
-    public NPCData NPCData;
-    public AreaManager HiredArea;
-    public Vector2Int HiredChunkPos;
-    public float HiringCost;
+    public string memberData;
+    public AreaManager hiredArea;
+    public Vector2Int hiredChunkPos;
+    public float hiringCost;
 }

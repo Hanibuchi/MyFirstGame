@@ -76,15 +76,14 @@ namespace MyGame
         /// </summary>
         bool isReady;
 
-        public void NewGame()
+        public void OnGameStart()
         {
-            Init();
-        }
+            if (File.Exists(TerrainDataDirectoryPath))
+            {
+                TerrainData terrainData = EditFile.LoadCompressedJson<TerrainData>(TerrainDataDirectoryPath);
+            }
 
-        public void LoadWorld(MyTerrainData terrainData)
-        {
             Init();
-            // ここでterrainDataから生成済みの地形を生成する。
         }
 
         void Init()

@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class SpeedHandler : MonoBehaviour, ISerializeHandler
+public class SpeedHandler : MonoBehaviour, ISerializableComponent
 {
     [SerializeField] SpeedData m_speedData;
     [JsonProperty][SerializeField] float m_baseSpeed;

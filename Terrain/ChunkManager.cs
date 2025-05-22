@@ -75,7 +75,7 @@ public class ChunkManager : MonoBehaviour
         // Debug.Log($"Chunk at {ChunkPos} was Activated");
         if (File.Exists(ChunkDataPath))
         {
-            chunkData = ApplicationManager.LoadCompressedJson<ChunkData>(ChunkDataPath);
+            chunkData = EditFile.LoadCompressedJson<ChunkData>(ChunkDataPath);
             // Debug.Log("chunk was generated");
         }
         else
@@ -206,8 +206,8 @@ public class ChunkManager : MonoBehaviour
             {
                 if (npc.OwnerParty != null)
                 {
-                    if (npc.IsLeader)
-                        chunkData.partys.Add(npc.OwnerParty.MakePartyData());
+                    // if (npc.IsLeader)
+                        // chunkData.partys.Add(npc.OwnerParty.MakePartyData());
                 }
                 else
                 {
@@ -259,7 +259,7 @@ public class ChunkManager : MonoBehaviour
 
         foreach (var party in chunkData.partys)
         {
-            Party.SpawnParty(party);
+            // Party.SpawnParty(party);
         }
         foreach (var npc in chunkData.npcs)
         {

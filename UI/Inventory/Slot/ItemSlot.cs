@@ -169,7 +169,7 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
         SetRayCastTarget(false);
         // ドラッグ開始時にzを前に出して前に描画されるようにする。
         SetZPos(10);
-        transform.SetParent(UIManager.Instance.EquipmentMenuManager.transform);
+        transform.SetParent(UIManager.Instance.EquipmentUI.transform);
     }
 
     /// <summary>

@@ -5,7 +5,7 @@ using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
 [RequireComponent(typeof(Rigidbody2D))]
-public class Rigidbody2DSerializer : MonoBehaviour, ISerializeHandler
+public class Rigidbody2DSerializer : MonoBehaviour, ISerializableComponent
 {
     Rigidbody2D rb;
     [JsonProperty] Vector3 m_velocity;

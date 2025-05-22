@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class Attack : MonoBehaviour, ISerializeHandler
+public class Attack : MonoBehaviour, ISerializableComponent
 {
     [SerializeField] AttackData m_attackData;
     [JsonProperty][SerializeField] Damage m_baseDamage;

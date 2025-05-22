@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class SaveMenuUI : BackableMenuUI
 {
-    string SaveHeaderName => ApplicationManager.GetCompressedJsonName("SaveHeader");
+    string SaveHeaderName => EditFile.GetCompressedJsonName("SaveHeader");
     [SerializeField] Transform saveSlotFrame;
     [SerializeField] Button newGameButton;
     int slotNumber;
@@ -35,7 +35,7 @@ public class SaveMenuUI : BackableMenuUI
             // Debug.Log($"saveHeaderPath: {saveHeaderPath}");
             if (File.Exists(saveHeaderPath))
             {
-                SaveHeaderData saveHeaderData = ApplicationManager.LoadCompressedJson<SaveHeaderData>(saveHeaderPath);
+                SaveHeaderData saveHeaderData = EditFile.LoadCompressedJson<SaveHeaderData>(saveHeaderPath);
                 // Debug.Log($"saveHeaderData: {saveHeaderData}");
                 if (saveHeaderData == null)
                 {

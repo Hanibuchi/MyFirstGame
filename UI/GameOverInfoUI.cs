@@ -31,7 +31,7 @@ public class GameOverInfoUI : UI
         string traitorsTxt = "";
         foreach (var traitorData in traitorDatas)
         {
-            traitorsTxt += "Lv." + traitorData.NPCData.BaseLevel + "の" + traitorData.NPCData.Job.ToString() + " $" + traitorData.HiringCost + "\n";
+            traitorsTxt += " $" + traitorData.hiringCost + "\n";
         }
         this.traitors.text = traitorsTxt != "" ? "別のパーティーに雇われた仲間: " + traitorsTxt : "";
     }

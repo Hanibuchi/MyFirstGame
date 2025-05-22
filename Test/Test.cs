@@ -62,11 +62,11 @@ UIManager.Instance.Open(UIManager.UIType.SaveMenu));
         ResourceManager.GetOther(otherID);
     }
     public Party party;
-    public NPCManager nextLeader;
-    public void ChangeLeader()
-    {
-        party.ChangeLeader(nextLeader);
-    }
+    // public NPCManager nextLeader;
+    // public void ChangeLeader()
+    // {
+    //     party.ChangeLeader(nextLeader);
+    // }
 
     public void Test_GameStart()
     {

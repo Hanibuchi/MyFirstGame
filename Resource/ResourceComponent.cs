@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class ResourceComponent : MonoBehaviour, IResourceComponent, ISerializeHandler
+public class ResourceComponent : MonoBehaviour, IResourceComponent, ISerializableComponent
 {
 	[JsonProperty] ResourceType m_type;
 	public ResourceType Type => m_type;

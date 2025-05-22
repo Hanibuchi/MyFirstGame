@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class TransformSerializer : MonoBehaviour, ISerializeHandler
+public class TransformSerializer : MonoBehaviour, ISerializableComponent
 {
     [JsonProperty] Vector3 m_position;
     [JsonProperty] Quaternion m_rotation;
