@@ -41,15 +41,14 @@ public class SaveSlotUI : UI
 
     public void ConfirmDelete()
     {
-        saveMenuUI.Close();
-        DeleteCautionUI deleteCautionUI = ResourceManager.GetOther(ResourceManager.UIID.DeleteCautionUI.ToString()).GetComponent<DeleteCautionUI>();
-        deleteCautionUI.Open(this, saveSlotName, saveHeaderData);
+        UIManager.Instance.Show(UIPageType.DeleteCautionUI);
+        UIManager.Instance.GetDeleteCautionUI().SetStats(this, saveSlotName, saveHeaderData);
     }
 
     public void Delete()
     {
         ApplicationManager.Instance.DeleteSaveSlot(saveSlotName);
-        ResourceManager.ReleaseOther(ResourceManager.UIID.SaveSlotUI.ToString(), gameObject);
+        UIManager.Instance.Back();
     }
 
     public override void OnRelease()

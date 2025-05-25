@@ -5,8 +5,10 @@ using UnityEngine.UI;
 using TMPro;
 using MyGame;
 
-public class PlayerStatusUI : UI
+public class PlayerStatusUI : UIPageBase, IPlayerStatusUI
 {
+    override public bool IsPermanent => true;
+
     GameObject m_obj;
     [SerializeField] protected Image npcImage;
     [SerializeField] protected TextMeshProUGUI npcName;
@@ -24,23 +26,6 @@ public class PlayerStatusUI : UI
     Mana m_mana;
     LevelHandler m_level;
     JobHandler m_job;
-
-
-    protected override void Awake()
-    {
-        base.Awake();
-        UIManager.Instance.SetPlayerStatusUI(this);
-
-    }
-
-    public void Open()
-    {
-        gameObject.SetActive(true);
-    }
-    public void Close()
-    {
-        gameObject.SetActive(false);
-    }
 
     /// <summary>
     /// NPCEquipmentMenuを初期化し，ステータスが表示されるよう登録する。
@@ -64,20 +49,20 @@ public class PlayerStatusUI : UI
             UpdateMP(m_mana.MP);
         }
 
-        // if (m_obj.TryGetComponent(out m_level))
-        // {
-        //     UpdateNPCLevel(m_level.Level);
-        // }
+        if (m_obj.TryGetComponent(out m_level))
+        {
+            UpdateNPCLevel(m_level.Level);
+        }
 
-        // if (m_obj.TryGetComponent(out m_job))
-        // {
-        //     UpdateNPCJob(m_job.Job);
-        // }
+        if (m_obj.TryGetComponent(out m_job))
+        {
+            UpdateNPCJob(m_job.Job);
+        }
 
         SetCallbacks(true);
     }
 
-    void OnDestroy()
+    protected override void OnDestroy()
     {
         UnregisterStatus();
     }
@@ -106,10 +91,10 @@ public class PlayerStatusUI : UI
                 m_mana.OnMaxMPChanged += UpdateMaxtMP;
                 m_mana.OnMPChanged += UpdateMP;
             }
-            // if (m_level != null)
-            //     m_level.OnLevelChanged += UpdateNPCLevel;
-            // if (m_job != null)
-            //     m_job.OnJobChanged += UpdateNPCJob;
+            if (m_level != null)
+                m_level.OnLevelChanged += UpdateNPCLevel;
+            if (m_job != null)
+                m_job.OnJobChanged += UpdateNPCJob;
         }
         else
         {
@@ -123,10 +108,10 @@ public class PlayerStatusUI : UI
                 m_mana.OnMaxMPChanged -= UpdateMaxtMP;
                 m_mana.OnMPChanged -= UpdateMP;
             }
-            // if (m_level != null)
-            //     m_level.OnLevelChanged -= UpdateNPCLevel;
-            // if (m_job != null)
-            //     m_job.OnJobChanged -= UpdateNPCJob;
+            if (m_level != null)
+                m_level.OnLevelChanged -= UpdateNPCLevel;
+            if (m_job != null)
+                m_job.OnJobChanged -= UpdateNPCJob;
         }
     }
 

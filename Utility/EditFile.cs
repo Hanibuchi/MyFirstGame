@@ -42,6 +42,8 @@ public class EditFile : MonoBehaviour
     public static T LoadCompressedJson<T>(string filePath) where T : class
     {
         string json = ReadAndDecompressJson(filePath);
+        if (json == "")
+            return null;
         return FromJson<T>(json);
     }
 
@@ -58,7 +60,7 @@ public class EditFile : MonoBehaviour
         filePath = GetCompressedJsonName(filePath);
         if (!File.Exists(filePath))
         {
-            return null;
+            return "";
         }
         using FileStream fileStream = new(filePath, FileMode.Open);
         using BrotliStream brotliStream = new(fileStream, CompressionMode.Decompress);

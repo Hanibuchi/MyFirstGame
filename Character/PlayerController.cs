@@ -14,7 +14,7 @@ public class PlayerController : MonoBehaviour
     NPCManager m_npcManager;
     Rigidbody2D m_rb;
     public bool CanAttack => !IsEquipmentMenuOpen && !DragSystem.Instance.IsDragging; // アタックできるかを表す。使ってないが，例えばFireの返り値から次打てる時までfalseにすることで処理を軽くできたり，敵の攻撃でfalseにすることで攻撃ができなくさせたりできる。
-    bool IsEquipmentMenuOpen => UIManager.Instance.EquipmentUI.IsOpen; // 装備画面開いてるかどうか。trueならFireできない。装備画面を開いている間もFireできる設定なら，falseにならない。
+    bool IsEquipmentMenuOpen => UIManager.Instance.GetEquipmentUI().IsOpen; // 装備画面開いてるかどうか。trueならFireできない。装備画面を開いている間もFireできる設定なら，falseにならない。
     public bool m_autoFire = false;
 
     float m_rightInput;

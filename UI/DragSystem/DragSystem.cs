@@ -66,7 +66,7 @@ public class DragSystem : MonoBehaviour
         m_draggingItem = item; // ItemSlotはなくてもいいがItemは常になければならない。
         itemSlot.BeginDrag();
 
-        if (!UIManager.Instance.EquipmentUI.IsOpen)
+        if (!UIManager.Instance.GetEquipmentUI().IsOpen)
         {
             OnCloseEquipmentMenu();
         }

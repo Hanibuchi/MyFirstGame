@@ -2,12 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum GameMode
+public interface INewGameUI
 {
-    None,
-    Normal,
-    Hard,
-    Impossible,
-    Story,
-
+    void SetSaveSlotName(string saveSlotName);
 }

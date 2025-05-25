@@ -91,22 +91,22 @@ public class MyInputSystem : MonoBehaviour
         if (GameManager.Instance.GameState == GameManager.GameStateType.Playing)
         {
             Debug.Log("aaa");
-            UIManager.Instance.Open(UIManager.UIType.PauseUI);
+            UIManager.Instance.Show(UIPageType.PauseUI);
         }
     }
 
     void OnEquipmentMenuButtonPushed(InputAction.CallbackContext context)
     {
-        UIManager.Instance.EquipmentUI.ToggleEquipmentMenu();
-
-        if (UIManager.Instance.EquipmentUI.IsOpen) // 開けるとき
+        if (UIManager.Instance.GetEquipmentUI().IsOpen)
         {
+            UIManager.Instance.Show(UIPageType.EquipmentUI);
             PlayerController.OnEquipmentMenuOpenEventHandler?.Invoke();
 
             DragSystem.Instance.OnOpenEquipmentMenu();
         }
-        else // 閉じるとき
+        else
         {
+            UIManager.Instance.Hide(UIPageType.EquipmentUI);
             DragSystem.Instance.OnCloseEquipmentMenu();
         }
     }
@@ -158,7 +158,7 @@ public class MyInputSystem : MonoBehaviour
         })
         .OnCancel(_ =>
         {
-            Cancel(inputAction, index);
+            OnCancel(inputAction, index);
             OnFinished();
         })
         .Start();
@@ -190,7 +190,7 @@ public class MyInputSystem : MonoBehaviour
         endRebindCallback.Invoke(inputAction, index);
     }
 
-    public void Cancel(InputAction inputAction, int index)
+    public void OnCancel(InputAction inputAction, int index)
     {
         cancelCallback.Invoke(inputAction, index);
     }
@@ -217,5 +217,15 @@ public class MyInputSystem : MonoBehaviour
         inputAction.RemoveBindingOverride(index);
 
         resetCallback.Invoke(inputAction, index);
+    }
+
+    public void CancelRebinding()
+    {
+        if (rebindingOperation != null)
+        {
+            rebindingOperation.Cancel();
+            CleanUpOperation();
+            State = StateType.None;
+        }
     }
 }

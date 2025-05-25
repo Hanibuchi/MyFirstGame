@@ -1,12 +1,12 @@
 using System;
 using UnityEngine;
 
-public class StatisticsUI : BackableMenuUI
+public class StatisticsUI : UIPageBase
 {
     [SerializeField] Transform statEntryFrame;
-    public override void Open()
+    public override void Show()
     {
-        base.Open();
+        base.Show();
         foreach (StatisticsManager.StatType stat in Enum.GetValues(typeof(StatisticsManager.StatType)))
         {
             object value = StatisticsManager.Instance.Get(stat.ToString());

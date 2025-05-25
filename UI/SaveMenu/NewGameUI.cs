@@ -4,7 +4,7 @@ using MyGame;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class NewGameUI : BackableMenuUI
+public class NewGameUI : UIPageBase, INewGameUI
 {
     string saveSlotName;
     [SerializeField] Button Normal;
@@ -32,40 +32,45 @@ public class NewGameUI : BackableMenuUI
             Seed = Functions.GenerateSeed(),
         };
     }
-    public void NewGameNormal()
+    protected override void OnOpenCompleted()
     {
-        NewGame(GameMode.Normal);
+        base.OnOpenCompleted();
+        m_gameMode = GameMode.None;
     }
-    public void NewGameHard()
+    void NewGameNormal()
     {
-        NewGame(GameMode.Hard);
+        m_gameMode = GameMode.Normal;
+        NewGame();
     }
-    public void NewGameImpossible()
+    void NewGameHard()
     {
-        NewGame(GameMode.Impossible);
+        m_gameMode = GameMode.Hard;
+        NewGame();
     }
-    public void NewGameStory()
+    void NewGameImpossible()
     {
-        NewGame(GameMode.Story);
+        m_gameMode = GameMode.Impossible;
+        NewGame();
     }
-    void NewGame(GameMode gameMode)
+    void NewGameStory()
     {
-        Close(() =>
-        {
-            var initGameData = GetInitGameData(gameMode);
-            Debug.Log($"NewGame!!! SaveSlotName:{initGameData.SaveSlotName}, GameMode:{initGameData.GameMode.ToString()}, Seed:{initGameData.Seed}");
-            ApplicationManager.Instance.CreateNewWorld(GetInitGameData(gameMode));
-        });
+        m_gameMode = GameMode.Story;
+        NewGame();
     }
-    public override void Back()
+    GameMode m_gameMode;
+    void NewGame()
     {
-        Close(() =>
-        {
-            UIManager.Instance.Open(UIManager.UIType.SaveMenu);
-        });
+        UIManager.Instance.CloseAll();
     }
     protected override void OnCloseCompleted()
     {
-        ResourceManager.ReleaseOther(ResourceManager.UIID.NewGameUI.ToString(), gameObject);
+        base.OnCloseCompleted();
+        if (m_gameMode == GameMode.None)
+        {
+            return;
+        }
+        var initGameData = GetInitGameData(m_gameMode);
+        Debug.Log($"NewGame!!! SaveSlotName:{initGameData.SaveSlotName}, GameMode:{initGameData.GameMode.ToString()}, Seed:{initGameData.Seed}");
+        ApplicationManager.Instance.CreateNewWorld(GetInitGameData(m_gameMode));
     }
 }

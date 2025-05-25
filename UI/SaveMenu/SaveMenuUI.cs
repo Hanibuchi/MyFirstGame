@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SaveMenuUI : BackableMenuUI
+public class SaveMenuUI : UIPageBase
 {
     string SaveHeaderName => EditFile.GetCompressedJsonName("SaveHeader");
     [SerializeField] Transform saveSlotFrame;
@@ -17,9 +17,13 @@ public class SaveMenuUI : BackableMenuUI
         base.Awake();
         newGameButton.onClick.AddListener(OpenNewGameUI);
     }
-    public override void Open()
+    protected override void OnOpenCompleted()
     {
-        base.Open();
+        base.OnOpenCompleted();
+        m_closeActionType = CloseActionType.Back;
+    }
+    public override void Show()
+    {
         int childCount = saveSlotFrame.transform.childCount;
         for (int i = 0; i < childCount - 1; i++)
         {
@@ -49,6 +53,7 @@ public class SaveMenuUI : BackableMenuUI
                 MakeSaveSlotUI(saveHeaderData, saveSlotName);
             }
         }
+        base.Show();
     }
 
     void MakeSaveSlotUI(SaveHeaderData saveHeaderData, string saveSlotName)
@@ -61,20 +66,37 @@ public class SaveMenuUI : BackableMenuUI
 
     public void Restart(string saveSlotName)
     {
-        Close();
-        Debug.Log($"GameRestart!!! directoryPath:{saveSlotName}");
-        ApplicationManager.Instance.LoadWorld(saveSlotName);
+        m_saveSlotName = saveSlotName;
+        m_closeActionType = CloseActionType.Restart;
+        UIManager.Instance.CloseAll();
     }
+    string m_saveSlotName;
 
     public void OpenNewGameUI()
     {
-        Close(() =>
+        UIManager.Instance.Show(UIPageType.NewGameUI);
+        INewGameUI newGameUI = UIManager.Instance.GetNewGameUI();
+        newGameUI.SetSaveSlotName(GetSaveSlotName(slotNumber));
+    }
+    CloseActionType m_closeActionType;
+    enum CloseActionType
+    {
+        Back,
+        NewGame,
+        Restart,
+    }
+    protected override void OnCloseCompleted()
+    {
+        base.OnCloseCompleted();
+        switch (m_closeActionType)
         {
-            NewGameUI newGameUI = ResourceManager.GetOther(ResourceManager.UIID.NewGameUI.ToString()).GetComponent<NewGameUI>();
-            newGameUI.Open();
-            newGameUI.SetSaveSlotName(GetSaveSlotName(slotNumber));
+            case CloseActionType.Restart:
+                Debug.Log($"GameRestart!!! directoryPath:{m_saveSlotName}");
+                ApplicationManager.Instance.LoadWorld(m_saveSlotName);
+                break;
+            default:
+                break;
         }
-        );
     }
 
     string GetSaveSlotName(int i)

@@ -36,7 +36,6 @@ public class ApplicationManager : MonoBehaviour
     [SerializeField] UIManager uIManager;
     [SerializeField] AchievementsManager achievementsManager;
     [SerializeField] MyInputSystem inputSystem;
-    [SerializeField] KeyBindingsController keyBindingsController;
     [SerializeField] SettingsManager settingsManager;
     bool isNewGame;
     InitGameData initWorldData;
@@ -98,12 +97,11 @@ public class ApplicationManager : MonoBehaviour
         achievementsManager.OnAppStart();
         inputSystem.OnAppStart();
         uIManager.OnAppStart();
-        keyBindingsController.OnAppStart();
         settingsManager.OnAppStart();
 
         StartCoroutine(WaitMinTime(startTime, () =>
         {
-            UIManager.Instance.Open(UIManager.UIType.TitleUI);
+            UIManager.Instance.Show(UIPageType.TitleUI);
         }));
     }
 
@@ -205,7 +203,7 @@ public class ApplicationManager : MonoBehaviour
             Debug.Log(message);
             var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
             messageUI.Open(message, () =>
-    UIManager.Instance.Open(UIManager.UIType.SaveMenu));
+    UIManager.Instance.Show(UIPageType.SaveMenuUI));
         }
     }
 }

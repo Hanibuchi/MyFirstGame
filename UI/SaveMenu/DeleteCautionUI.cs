@@ -4,18 +4,18 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class DeleteCautionUI : MonoBehaviour
+public class DeleteCautionUI : UIPageBase, IDeleteCautionUI
 {
     SaveSlotUI saveSlotUI;
     [SerializeField] TMP_Text discription;
     [SerializeField] Button yesButton;
     [SerializeField] Button noButton;
-    public void Awake()
+    protected override void Awake()
     {
         yesButton.onClick.AddListener(Yes);
         noButton.onClick.AddListener(No);
     }
-    public void Open(SaveSlotUI saveSlotUI, string slotName, SaveHeaderData saveHeaderData)
+    public void SetStats(SaveSlotUI saveSlotUI, string slotName, SaveHeaderData saveHeaderData)
     {
         this.saveSlotUI = saveSlotUI;
         discription.text = $@"{slotName} を本当に削除しますか？
@@ -25,17 +25,11 @@ public class DeleteCautionUI : MonoBehaviour
     }
     public void Yes()
     {
+        UIManager.Instance.Back();
         saveSlotUI.Delete();
-        Close();
     }
     public void No()
     {
-        UIManager.Instance.Open(UIManager.UIType.SaveMenu);
-        Close();
-    }
-
-    void Close()
-    {
-        ResourceManager.ReleaseOther(ResourceManager.UIID.DeleteCautionUI.ToString(), gameObject);
+        UIManager.Instance.Back();
     }
 }

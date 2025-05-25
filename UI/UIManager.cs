@@ -3,29 +3,16 @@ using System.Collections.Generic;
 using MyGame;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.PlayerLoop;
 
 public class UIManager : MonoBehaviour
 {
 	public static UIManager Instance { get; private set; }
-	EquipmentUI equipmentMenuManager;
-	public EquipmentUI EquipmentUI => equipmentMenuManager;
+	UIStackManager m_uistackManager = new();
 
-	PlayerStatusUI playerStatusUI;
-	/// <summary>
-	/// プレイヤーのステータスを表示する画面。
-	/// </summary>
-	public PlayerStatusUI PlayerStatusUI => playerStatusUI;
+	Dictionary<string, IUIPage> m_uiPages = new();
 
-	InventoryUI inventory;
-	public InventoryUI InventoryUI => inventory;
-
-	TitleUI titleUI;
-	PauseUI pauseUI;
-	SaveMenuUI saveMenuUI;
-	AchievementsUI achievementsUI;
-	SettingsUI settingsUI;
-	StatisticsUI statisticsUI;
 
 	/// <summary>
 	/// アプリ開始時呼び出される
@@ -36,6 +23,7 @@ public class UIManager : MonoBehaviour
 		{
 			Instance = this;
 		}
+		MyInputSystem.GameInputs.UI.Cancel.canceled += OnCancelButtonPushed;
 	}
 
 	public void OnGameStart()
@@ -45,91 +33,144 @@ public class UIManager : MonoBehaviour
 	{
 	}
 
-	public void SetEquipmentMenuManager(EquipmentUI equipmentMenuManager)
-	{
-		this.equipmentMenuManager = equipmentMenuManager;
-	}
-	public void SetPlayerStatusUI(PlayerStatusUI playerStatusUI)
-	{
-		this.playerStatusUI = playerStatusUI;
-	}
-	public void SetInventory(InventoryUI inventory)
-	{
-		this.inventory = inventory;
-	}
 
-
-	public void Open(UIType ui)
+	public void Show(UIPageType ui)
 	{
-		switch (ui)
+		if (!m_uiPages.TryGetValue(ui.ToString(), out var page))
 		{
-			case UIType.PlayerStatusUI: PlayerStatusUI.Open(); break;
-			case UIType.EquipmentMenu: EquipmentUI.Open(); break;
-			case UIType.InventoryUI: InventoryUI.Open(); break;
+			var obj = ResourceManager.GetOther(ui.ToString());
+			if (obj.TryGetComponent(out page))
+			{
+				page.Init();
+				page.HideImd();
+				if (page is MonoBehaviour mono)
+				{
+					DontDestroyOnLoad(mono.gameObject);
+				}
+				m_uiPages.Add(ui.ToString(), page);
+			}
+			else
+			{
+				Debug.LogWarning($"UIPage {ui.ToString()} does not have IUIPage component");
+				return;
+			}
+		}
+		if (!page.IsPermanent) // IsPermanentがfalseのUIの処理はUIStackManagerに任せる。
+			m_uistackManager.PushPage(page);
+		else
+			page.Show();
+	}
 
-			case UIType.TitleUI:
-				if (titleUI == null)
-					titleUI = ResourceManager.GetOther(ResourceManager.UIID.TitleUI.ToString()).GetComponent<TitleUI>();
-				titleUI.Open();
-				break;
+	public void Hide(UIPageType ui)
+	{
+		if (!m_uiPages.TryGetValue(ui.ToString(), out var page))
+		{
+			Debug.LogWarning($"UIPage {ui.ToString()} does not exist");
+			return;
+		}
 
-			case UIType.PauseUI:
-				if (pauseUI == null)
-					pauseUI = ResourceManager.GetOther(ResourceManager.UIID.PauseUI.ToString()).GetComponent<PauseUI>();
-				pauseUI.Open();
-				break;
+		if (page.IsPermanent)
+		{
+			page.Hide();
+		}
+		else
+			Debug.LogWarning($"UIPage {ui.ToString()} is not permanent. Cannot hide it directly. Please use Back() method.");
+	}
+	protected virtual void OnCancelButtonPushed(InputAction.CallbackContext callback)
+	{
+		Back();
+	}
+	public void Back()
+	{
+		m_uistackManager.CurrentPage?.OnBack();
+		m_uistackManager.PopPage();
+	}
 
-			case UIType.SaveMenu:
-				if (saveMenuUI == null)
-					saveMenuUI = ResourceManager.GetOther(ResourceManager.UIID.SaveMenuUI.ToString()).GetComponent<SaveMenuUI>();
-				saveMenuUI.Open();
-				break;
+	public void CloseAll()
+	{
+		m_uistackManager.CloseAll();
+	}
 
-			case UIType.AchievementsUI:
-				if (achievementsUI == null)
-					achievementsUI = ResourceManager.GetOther(ResourceManager.UIID.AchievementsUI.ToString()).GetComponent<AchievementsUI>();
-				achievementsUI.Open();
-				break;
-
-			case UIType.SettingsUI:
-				if (settingsUI == null)
-					settingsUI = ResourceManager.GetOther(ResourceManager.UIID.SettingsUI.ToString()).GetComponent<SettingsUI>();
-				settingsUI.Open();
-				break;
-
-			case UIType.StatisticsUI:
-				if (statisticsUI == null)
-					statisticsUI = ResourceManager.GetOther(ResourceManager.UIID.StatisticsUI.ToString()).GetComponent<StatisticsUI>();
-				statisticsUI.Open();
-				break;
+	public IPlayerStatusUI GetPlayerStatusUI()
+	{
+		if (m_uiPages.TryGetValue(UIPageType.PlayerStatusUI.ToString(), out var page))
+		{
+			return page as IPlayerStatusUI;
+		}
+		else
+		{
+			Debug.LogWarning($"UIPage {UIPageType.PlayerStatusUI.ToString()} does not have IPlayerStatusUI component");
+			return null;
 		}
 	}
-	public void Close(UIType ui)
+
+	public IEquipmentUI GetEquipmentUI()
 	{
-		switch (ui)
+		if (m_uiPages.TryGetValue(UIPageType.EquipmentUI.ToString(), out var page))
 		{
-			case UIType.PlayerStatusUI: PlayerStatusUI?.Close(); break;
-			case UIType.EquipmentMenu: EquipmentUI?.Close(); break;
-			case UIType.InventoryUI: InventoryUI?.Close(); break;
-			case UIType.SaveMenu: saveMenuUI?.Close(); break;
-			case UIType.TitleUI: titleUI?.Close(); break;
-			case UIType.PauseUI: pauseUI?.Close(); break;
-			case UIType.AchievementsUI: achievementsUI?.Close(); break;
-			case UIType.SettingsUI: settingsUI.Close(); break;
-			case UIType.StatisticsUI: statisticsUI.Close(); break;
+			return page as IEquipmentUI;
+		}
+		else
+		{
+			Debug.LogWarning($"UIPage {UIPageType.EquipmentUI.ToString()} does not have IEquipmentUI component");
+			return null;
 		}
 	}
-	public enum UIType
+
+	public InventoryUI GetInventoryUI()
 	{
-		None,
-		PlayerStatusUI,
-		EquipmentMenu,
-		InventoryUI,
-		SaveMenu,
-		TitleUI,
-		PauseUI,
-		AchievementsUI,
-		SettingsUI,
-		StatisticsUI,
+		if (m_uiPages.TryGetValue(UIPageType.InventoryUI.ToString(), out var page))
+		{
+			return page as InventoryUI;
+		}
+		else
+		{
+			Debug.LogWarning($"UIPage {UIPageType.InventoryUI.ToString()} does not have IItemParentUI component");
+			return null;
+		}
 	}
+
+	public INewGameUI GetNewGameUI()
+	{
+		if (m_uiPages.TryGetValue(UIPageType.NewGameUI.ToString(), out var page))
+		{
+			return page as INewGameUI;
+		}
+		else
+		{
+			Debug.LogWarning($"UIPage {UIPageType.NewGameUI.ToString()} does not have INewGameUI component");
+			return null;
+		}
+	}
+	public IDeleteCautionUI GetDeleteCautionUI()
+	{
+		if (m_uiPages.TryGetValue(UIPageType.DeleteCautionUI.ToString(), out var page))
+		{
+			return page as IDeleteCautionUI;
+		}
+		else
+		{
+			Debug.LogWarning($"UIPage {UIPageType.DeleteCautionUI.ToString()} does not have IDeleteCautionUI component");
+			return null;
+		}
+	}
+}
+
+
+public enum UIPageType
+{
+	None,
+	PlayerStatusUI,
+	EquipmentUI,
+	InventoryUI,
+	SaveMenuUI,
+	TitleUI,
+	PauseUI,
+	AchievementsUI,
+	SettingsUI,
+	StatisticsUI,
+	KeyBindingsUI,
+	NewGameUI,
+	LanguageUI,
+	DeleteCautionUI,
 }

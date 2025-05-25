@@ -6,10 +6,9 @@ using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
-public class KeyBindingsUI : MonoBehaviour
+public class KeyBindingsUI : UIPageBase, IKeyBindingsUI
 {
 	public int MaxKeyNum { get; private set; } = 4;
-	public delegate void RebindUIDelegate(MyInputSystem.ActionType actionName, int index);
 	[Serializable]
 	class ActionNamesAndKeyBindUIPair
 	{
@@ -22,12 +21,11 @@ public class KeyBindingsUI : MonoBehaviour
 	RebindUIDelegate OnStartRebind;
 	KeyBindingEntryUI rebindingActionUI;
 
-	// このインスタンスが生成されるタイミングをControllerが制御できないため致し方なくUIのほうからControllerを参照した。MVC的にはよくない。
-	private void Awake()
+	public override void Init()
 	{
-		KeyBindingsController.Instance.SetUI(this);
+		base.Init();
+		KeyBindingsController.Instance.SetKeybindingsUI(this);
 	}
-
 	/// <summary>
 	/// 初期化する。一度しか実行しない
 	/// </summary>
@@ -79,5 +77,14 @@ public class KeyBindingsUI : MonoBehaviour
 	void CleanUpOperation()
 	{
 		rebindingActionUI = null;
+	}
+
+	public void Open()
+	{
+		gameObject.SetActive(true);
+	}
+	public void Close()
+	{
+		gameObject.SetActive(false);
 	}
 }

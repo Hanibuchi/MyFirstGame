@@ -1412,3 +1412,6 @@ GameManager -> TerrainManager : LoadWorld(TerrainData terrainData)
 GameManager -> PlayerParty : LoadWorld(PlayerPartyData playerPartyData)
 GameManager -> ApplicationManager : OnGameInitializationComplete()
 @enduml
+
+@startuml 主要コンポネントのクラス図
+@enduml

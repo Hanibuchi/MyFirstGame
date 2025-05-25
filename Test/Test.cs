@@ -30,7 +30,7 @@ public class TestClass : MonoBehaviour
         string message = "aaaaaaaaaaaaa";
         var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
         messageUI.Open(message, () =>
-UIManager.Instance.Open(UIManager.UIType.SaveMenu));
+UIManager.Instance.Show(UIPageType.SaveMenuUI));
     }
     public ObjectManager objectManager;
     void AAA()
@@ -80,7 +80,7 @@ UIManager.Instance.Open(UIManager.UIType.SaveMenu));
 
     public void Test_OpenSaveNemu()
     {
-        UIManager.Instance.Open(UIManager.UIType.SaveMenu);
+        UIManager.Instance.Show(UIPageType.SaveMenuUI);
     }
     public string achievementName;
     public bool isEnableAchievement;

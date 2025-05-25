@@ -51,29 +51,22 @@ public class ResourceManager : MonoBehaviour
         InventorySlot,
         BagSlot,
     }
+    /// <summary>
+    /// UIのリソースの名前を管理するためのenum。UIPageはUIPageTypeで管理されてる。
+    /// </summary>
     public enum UIID
     {
         EquipmentUI,
         MemberEquipmentUI,
         SlotSpacing,
-        InventoryCanvas,
-        PlayerStatusUI,
         KeyBindingsUI,
         KeyBindingKeyUI,
         KeyBindingEntryUI,
         SaveSlotUI,
-        NewGameUI,
-        SaveMenuUI,
-        DeleteCautionUI,
         MessageUI,
         GameOverUI,
         GameOverInfoUI,
-        TitleUI,
-        PauseUI,
         AchievementEntryUI,
-        AchievementsUI,
-        SettingsUI,
-        StatisticsUI,
         StatisticsEntryUI,
     }
     public enum DecorObjectID

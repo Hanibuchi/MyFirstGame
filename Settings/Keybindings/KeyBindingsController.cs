@@ -6,28 +6,23 @@ using MyGame;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class KeyBindingsController : MonoBehaviour
+public class KeyBindingsController : MonoBehaviour, IKeyBindingsController
 {
 	string KeyBindingsPath => Path.Combine(ApplicationManager.ConfigDirectoryPath, "KeyBindings");
-	public static KeyBindingsController Instance { get; private set; }
-	 KeyBindingsUI KeyBindingsUI;
-
-	private void Awake()
-	{
-		Instance = this;
-	}
-
-	public void SetUI(KeyBindingsUI keyBindingsUI)
-	{
-		KeyBindingsUI = keyBindingsUI;
-		KeyBindingsUI.Init(StartRebind);
-	}
+	[SerializeField] IKeyBindingsUI m_keyBindingsUI;
+	public static IKeyBindingsController Instance { get; private set; }
 
 	/// <summary>
 	/// 初期化する。一度しか実行しない
 	/// </summary>
 	public void OnAppStart()
 	{
+		Instance = this;
+	}
+	public void SetKeybindingsUI(IKeyBindingsUI keyBindingsUI)
+	{
+		m_keyBindingsUI = keyBindingsUI;
+		m_keyBindingsUI.Init(StartRebind);
 	}
 
 	public void StartRebind(MyInputSystem.ActionType action, int index)
@@ -43,21 +38,21 @@ public class KeyBindingsController : MonoBehaviour
 
 	void EndRebind(InputAction inputAction, int index)
 	{
-		KeyBindingsUI.EndRebind(inputAction.bindings[index].effectivePath);
+		m_keyBindingsUI.EndRebind(inputAction.bindings[index].effectivePath);
 	}
 
 	void Cancel(InputAction inputAction, int index)
 	{
-		KeyBindingsUI.Cancel();
+		m_keyBindingsUI.Cancel();
 	}
 
 	void Delete(InputAction inputAction, int index)
 	{
-		KeyBindingsUI.Delete();
+		m_keyBindingsUI.Delete();
 	}
 
 	void ResetKeyBind(InputAction inputAction, int index)
 	{
-		KeyBindingsUI.ResetKeyBind(inputAction.bindings[index].effectivePath);
+		m_keyBindingsUI.ResetKeyBind(inputAction.bindings[index].effectivePath);
 	}
 }

@@ -9,6 +9,7 @@ public class SettingsManager : MonoBehaviour
 {
     string SettingDataPath => Path.Combine(ApplicationManager.ConfigDirectoryPath, "SettingsData");
     public static SettingsManager Instance { get; private set; }
+    [SerializeField] KeyBindingsController m_keyBindingsController;
 
     [SerializeField] SettingsData settingsData;
 
@@ -50,6 +51,7 @@ public class SettingsManager : MonoBehaviour
 
     public void OnAppStart()
     {
+        m_keyBindingsController.OnAppStart();
         settingsData = new();
     }
 

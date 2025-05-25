@@ -4,8 +4,9 @@ using System.IO;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class InventoryUI : MonoBehaviour, IItemParentUI
+public class InventoryUI : UIPageBase, IItemParentUI
 {
+	public override bool IsPermanent => true;
 	public IItemParent ItemParent { get; private set; }
 	[SerializeField] Transform m_itemSlotFrame;
 
@@ -81,23 +82,5 @@ public class InventoryUI : MonoBehaviour, IItemParentUI
 		slot.SetID(index);
 		slot.SetItemParentUI(this);
 		slot.transform.SetParent(m_itemSlotFrame);
-	}
-
-
-
-
-	private void Awake()
-	{
-		UIManager.Instance.SetInventory(this);
-	}
-
-	public void Open()
-	{
-		gameObject.SetActive(true);
-	}
-
-	public void Close()
-	{
-		gameObject.SetActive(false);
 	}
 }

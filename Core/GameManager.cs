@@ -119,14 +119,13 @@ public class GameManager : MonoBehaviour
     {
         Player.transform.position = respawnPoint;
         PlayerNPCManager.OnRespawn();
-        UIManager.Instance.Open(UIManager.UIType.PlayerStatusUI);
-        UIManager.Instance.Open(UIManager.UIType.InventoryUI);
+        UIManager.Instance.Show(UIPageType.PlayerStatusUI);
+        UIManager.Instance.Show(UIPageType.InventoryUI);
     }
 
     public void GameOver(string causeOfDeath, AreaManager areaManager, Vector2Int chunkPos, Vector3 pos, float hiringCost, List<HiredMemberData> traitorDatas)
     {
-        UIManager.Instance.Close(UIManager.UIType.PlayerStatusUI);
-        UIManager.Instance.Close(UIManager.UIType.InventoryUI);
+        UIManager.Instance.CloseAll();
 
         ResourceManager.GetOther(ResourceManager.UIID.GameOverUI.ToString()).GetComponent<GameOverUI>().Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
     }

@@ -5,7 +5,7 @@ using MyGame;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AchievementsUI : BackableMenuUI
+public class AchievementsUI : UIPageBase
 {
     [SerializeField] Toggle common;
     [SerializeField] Toggle uncommon;
@@ -22,16 +22,16 @@ public class AchievementsUI : BackableMenuUI
         epic.onValueChanged.AddListener(UpdateAchievementsDisplay);
         legendary.onValueChanged.AddListener(UpdateAchievementsDisplay);
     }
-    public override void Open()
+    public override void Show()
     {
-        base.Open();
+        base.Show();
         UpdateAchievementsDisplay(true);
     }
 
 
-    public override void Close()
+    public override void Hide()
     {
-        base.Close();
+        base.Hide();
         ResetToggles();
     }
     protected override void OnDestroy()

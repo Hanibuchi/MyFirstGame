@@ -33,8 +33,8 @@ public class PlayerParty : Party
 
     public override void Init()
     {
-        m_equipmentUI = UIManager.Instance.EquipmentUI;
-        m_inventoryUI = UIManager.Instance.InventoryUI;
+        m_equipmentUI = UIManager.Instance.GetEquipmentUI();
+        m_inventoryUI = UIManager.Instance.GetInventoryUI();
         m_inventoryUI.SetItemParent(this);
         m_inventoryUI.InitSlots(ItemCapacity);
     }

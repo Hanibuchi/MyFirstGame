@@ -41,7 +41,7 @@ public class PartyMember : MonoBehaviour
             {
                 gameObject.AddComponent<PlayerController>();
             }
-            UIManager.Instance.PlayerStatusUI.RegisterStatus(gameObject);
+            UIManager.Instance.GetPlayerStatusUI()?.RegisterStatus(gameObject);
             GameManager.Instance.SetPlayer(gameObject);
         }
     }
@@ -58,7 +58,7 @@ public class PartyMember : MonoBehaviour
         if (m_memberEquipmentUI == null)
         {
             m_memberEquipmentUI = ResourceManager.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString());
-            
+
             // アイテム所持するコンポネントを分離したらこれも分離する。
             var memberEquipmentUI = m_memberEquipmentUI.GetComponent<MemberEquipmentUI>();
             IItemParent itemParent = GetComponent<IItemParent>();

@@ -4,7 +4,7 @@ using MyGame;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TitleUI : BaseMenuUI
+public class TitleUI : UIPageBase
 {
     [SerializeField] Button playButton;
     [SerializeField] Button settingsButton;
@@ -26,7 +26,7 @@ public class TitleUI : BaseMenuUI
         // Close();
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         playButton.onClick.RemoveAllListeners();
         settingsButton.onClick.RemoveAllListeners();
@@ -34,26 +34,39 @@ public class TitleUI : BaseMenuUI
         quitButton.onClick.RemoveAllListeners();
         languageButton.onClick.RemoveAllListeners();
     }
+    protected override void OnOpenCompleted()
+    {
+        base.OnOpenCompleted();
+        isQuit = false;
+    }
 
     void Play()
     {
-        Close(() => UIManager.Instance.Open(UIManager.UIType.SaveMenu));
+        UIManager.Instance.Show(UIPageType.SaveMenuUI);
     }
     void Settings()
     {
-        Close(() => UIManager.Instance.Open(UIManager.UIType.SettingsUI));
+        UIManager.Instance.Show(UIPageType.SettingsUI);
     }
     void Achievements()
     {
-        Close(() => UIManager.Instance.Open(UIManager.UIType.AchievementsUI));
-    }
-    void Quit()
-    {
-        Close(() => ApplicationManager.Instance.Quit());
+        UIManager.Instance.Show(UIPageType.AchievementsUI);
     }
     void Language()
     {
-        Close();
-        // UIManager.Instance.Open(UIManager.UIType.LanguageUI);
+        UIManager.Instance.Show(UIPageType.LanguageUI);
+    }
+    void Quit()
+    {
+        isQuit = true;
+        UIManager.Instance.CloseAll();
+    }
+    bool isQuit;
+    protected override void OnCloseCompleted()
+    {
+        base.OnCloseCompleted();
+        if (isQuit)
+            ApplicationManager.Instance.Quit();
+
     }
 }

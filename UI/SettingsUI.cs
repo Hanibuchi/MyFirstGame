@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class SettingsUI : BackableMenuUI
+public class SettingsUI : UIPageBase
 {
     // ゲーム設定
     [SerializeField] TMP_Dropdown language;
@@ -67,16 +67,18 @@ public class SettingsUI : BackableMenuUI
         SettingsManager.Instance.OnScreenShakeChanged += SetScreenShakeST;
     }
 
-    public override void Open()
+    public override void Show()
     {
-        base.Open();
+        base.Show();
         SetValues();
     }
-
-    protected override void OnCancelButtonPushed(InputAction.CallbackContext callback)
+    public override void OnBack()
     {
-        if (MyInputSystem.Instance.State == MyInputSystem.StateType.None)
-            base.OnCancelButtonPushed(callback);
+        base.OnBack();
+        if (MyInputSystem.Instance.State != MyInputSystem.StateType.None)
+        {
+            MyInputSystem.Instance.CancelRebinding();
+        }
     }
     void SetValues()
     {

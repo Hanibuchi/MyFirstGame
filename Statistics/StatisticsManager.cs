@@ -8,15 +8,20 @@ public class StatisticsManager : MonoBehaviour
 {
     public static StatisticsManager Instance { get; private set; }
     string StatisticsPath => Path.Combine(GameManager.PlayerDataPath, "Statistics");
-    [SerializeField] StatisticsData statisticsData = new();
+    [SerializeField] StatisticsData m_statisticsData = new();
     public void OnGameStart()
     {
         Instance = this;
-        Load();
+        if (File.Exists(StatisticsPath))
+        {
+            Load();
+        }
+        else
+            m_statisticsData = new();
     }
     public void Set(string name, object num)
     {
-        statisticsData.statistics[name] = num;
+        m_statisticsData.statistics[name] = num;
     }
     // public void Set(string name, DateTime dateTime)
     // {
@@ -24,9 +29,9 @@ public class StatisticsManager : MonoBehaviour
     // }
     public object Get(string name)
     {
-        if (statisticsData.statistics.ContainsKey(name))
+        if (m_statisticsData.statistics.ContainsKey(name))
         {
-            return statisticsData.statistics[name];
+            return m_statisticsData.statistics[name];
         }
         else
         {
@@ -35,7 +40,7 @@ public class StatisticsManager : MonoBehaviour
     }
     public void Increase(string name, ulong num = (ulong)1)
     {
-        var statistics = statisticsData.statistics;
+        var statistics = m_statisticsData.statistics;
         if (statistics.TryGetValue(name, out object value))
         {
             if (value is ulong ulongValue)
@@ -43,21 +48,18 @@ public class StatisticsManager : MonoBehaviour
         }
         else
         {
-            statisticsData.statistics[name] = num;
+            m_statisticsData.statistics[name] = num;
         }
     }
     public void Save()
     {
-        EditFile.SaveCompressedJson(StatisticsPath, statisticsData);
+        EditFile.SaveCompressedJson(StatisticsPath, m_statisticsData);
     }
     public void Load()
     {
         StatisticsData data = EditFile.LoadCompressedJson<StatisticsData>(StatisticsPath);
-        if (data == null)
-        {
-            return;
-        }
-        statisticsData = data;
+        if (data != null)
+            m_statisticsData = data;
     }
 
     public enum StatType
