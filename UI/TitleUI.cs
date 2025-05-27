@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class TitleUI : UIPageBase
 {
+    public override bool IsRoot => true;
     [SerializeField] Button playButton;
     [SerializeField] Button settingsButton;
     [SerializeField] Button achievementButton;

@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine.EventSystems;
+using Zenject;
 
 [RequireComponent(typeof(ObjectManager))]
 [RequireComponent(typeof(Rigidbody2D))]
@@ -114,13 +115,13 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <returns></returns>
 	protected string m_slotID;
 
-	ObjectManager m_manager;
+	DeathHandler m_deathHandler;
 
 	private void Awake()
 	{
 		TryGetComponent(out m_rb);
 		m_gravity = m_rb.gravityScale;
-		TryGetComponent(out m_manager);
+		m_deathHandler = GetComponent<DeathHandler>();
 		InitItems();
 	}
 
@@ -219,7 +220,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <param name="shot"></param>
 	public virtual void FirstFire(Shot shot)
 	{
-		if (CoolDownTime != 0 || m_manager.IsDead)
+		if (CoolDownTime != 0 || m_deathHandler.IsDead)
 			return;
 
 		ProcessReloadAndMP(shot); // MPとリロードの設定
@@ -347,7 +348,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <returns></returns>
 	public bool CanBePickedUp()
 	{
-		return !m_manager.IsDead;
+		return !m_deathHandler.IsDead;
 	}
 
 
@@ -573,6 +574,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	{
 		return m_itemSlotUI;
 	}
+	[Inject] protected IResourceManager m_resourceManager;
 	/// <summary>
 	/// m_itemSlotUIを生成して取得する。すでにあるなら無視される。
 	/// </summary>
@@ -581,7 +583,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	{
 		if (m_itemSlotUI == null)
 		{
-			m_itemSlotUI = ResourceManager.GetOther(m_slotID).GetComponent<ItemSlot>();
+			m_itemSlotUI = m_resourceManager.GetOther(m_slotID).GetComponent<ItemSlot>();
 			m_itemSlotUI.Init(this, gameObject.GetComponentInChildren<SpriteRenderer>().sprite);
 			m_itemSlotUI.SetItemParent(this);
 			m_itemSlotUI.InitSlots(m_itemCapacity);

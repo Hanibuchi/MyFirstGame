@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Dynamic;
 using UnityEngine;
 using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
+using Zenject;
 
 [RequireComponent(typeof(PoolableResourceComponent))]
 public class UI : MonoBehaviour
 {
+    [Inject] protected IResourceManager m_resourceManager;
     protected PoolableResourceComponent m_poolableResourceComponent;
 
     protected virtual void Awake()

@@ -12,6 +12,7 @@ using System;
 public class PlayerController : MonoBehaviour
 {
     NPCManager m_npcManager;
+    DeathHandler m_deathHandler;
     Rigidbody2D m_rb;
     public bool CanAttack => !IsEquipmentMenuOpen && !DragSystem.Instance.IsDragging; // アタックできるかを表す。使ってないが，例えばFireの返り値から次打てる時までfalseにすることで処理を軽くできたり，敵の攻撃でfalseにすることで攻撃ができなくさせたりできる。
     bool IsEquipmentMenuOpen => UIManager.Instance.GetEquipmentUI().IsOpen; // 装備画面開いてるかどうか。trueならFireできない。装備画面を開いている間もFireできる設定なら，falseにならない。
@@ -51,6 +52,7 @@ public class PlayerController : MonoBehaviour
 
         m_rb = GetComponent<Rigidbody2D>();
         m_npcManager = GetComponent<NPCManager>();
+        m_deathHandler = GetComponent<DeathHandler>();
 
         if (TryGetComponent(out m_speedHandler))
         {
@@ -159,28 +161,28 @@ public class PlayerController : MonoBehaviour
 
     void OnRightMove(InputAction.CallbackContext context)
     {
-        if (m_npcManager.IsDead)
+        if (m_deathHandler.IsDead)
             return;
         m_rightInput = context.ReadValue<float>();
     }
 
     void OnLeftMove(InputAction.CallbackContext context)
     {
-        if (m_npcManager.IsDead)
+        if (m_deathHandler.IsDead)
             return;
         m_leftInput = context.ReadValue<float>();
     }
 
     void OnJump(InputAction.CallbackContext context)
     {
-        if (m_npcManager.IsDead)
+        if (m_deathHandler.IsDead)
             return;
         m_upInput = context.ReadValue<float>();
     }
 
     void OnDown(InputAction.CallbackContext context)
     {
-        if (m_npcManager.IsDead)
+        if (m_deathHandler.IsDead)
             return;
         m_downInput = context.ReadValue<float>();
     }

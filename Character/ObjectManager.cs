@@ -9,23 +9,17 @@ using UnityEditor.Callbacks;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
+using Zenject;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
 {
-    /// <summary>
-    /// このオブジェクトのPoolの識別子。PrefabManagerで設定される。←生成時に設定されるようにする可能性←やっぱりProjectileManagerで設定。
-    /// </summary>
-    [SerializeField] bool isDead;
-    public bool IsDead { get => isDead; private set => isDead = value; } // 死んだかどうか。
 
     [SerializeField] ChunkManager bossChunkManager;
     public ChunkManager BossChunkManager { get => bossChunkManager; set => bossChunkManager = value; }
 
-    [SerializeField] List<StatusEffectDurationStrategy> statusList = new();
-    public List<StatusEffectDurationStrategy> StatusList { get => statusList; }
-    public Action<float> MoveAction { get; set; }
 
+    [Inject] protected IResourceManager m_resourceManager;
 
 
     /// <summary>
@@ -36,33 +30,6 @@ public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
     }
 
 
-    protected MobManager LastDamageTaker;
-
-    public void ApplyKnockback(float knockback, Vector2 direction)
-    {
-        if (TryGetComponent(out Rigidbody2D rb))
-        {
-            if (direction != null)
-                rb.AddForce(knockback * direction.normalized, ForceMode2D.Impulse);
-        }
-    }
-
-
-    // 倒されたときに相手に与える経験値を計算する
-    private float CalculateExperience()
-    {
-        return 10;
-    }
-
-
-    public void OnRelease()
-    {
-        List<StatusEffectDurationStrategy> statuses = new(StatusList);
-        foreach (var status in statuses)
-        {
-            // status.Expire();
-        }
-    }
 
     public void OnChunkGenerate()
     {
@@ -123,15 +90,15 @@ public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
         transform.SetLocalPositionAndRotation(objectData.LocalPos, objectData.LocalRotate);
         transform.localScale = objectData.LocalScale;
     }
-    public static void SpawnItem(ObjectData item)
-    {
-        var itemObj = ResourceManager.GetItem(item.ItemID);
-        if (itemObj == null) { Debug.LogWarning("item is null"); return; }
-        if (itemObj.TryGetComponent(out ObjectManager objectManager))
-        {
-            objectManager.ApplyObjectData(item);
-        }
-    }
+    // public static void SpawnItem(ObjectData item)
+    // {
+    //     var itemObj = m_resourceManager.GetItem(item.ItemID);
+    //     if (itemObj == null) { Debug.LogWarning("item is null"); return; }
+    //     if (itemObj.TryGetComponent(out ObjectManager objectManager))
+    //     {
+    //         objectManager.ApplyObjectData(item);
+    //     }
+    // }
 
     // public virtual void OnStatusPowerBoost(StatusEffectDurationStrategy status)
     // {

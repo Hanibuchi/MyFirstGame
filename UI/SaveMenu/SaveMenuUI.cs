@@ -27,7 +27,7 @@ public class SaveMenuUI : UIPageBase
         int childCount = saveSlotFrame.transform.childCount;
         for (int i = 0; i < childCount - 1; i++)
         {
-            ResourceManager.ReleaseOther(ResourceManager.UIID.SaveSlotUI.ToString(), saveSlotFrame.transform.GetChild(i).gameObject);
+            m_resourceManager.ReleaseOther(ResourceManager.UIID.SaveSlotUI.ToString(), saveSlotFrame.transform.GetChild(i).gameObject);
         }
         slotNumber = 1;
         // Debug.Log($"SaveMenu Open");
@@ -58,16 +58,16 @@ public class SaveMenuUI : UIPageBase
 
     void MakeSaveSlotUI(SaveHeaderData saveHeaderData, string saveSlotName)
     {
-        SaveSlotUI saveSlotUI = ResourceManager.GetOther(ResourceManager.UIID.SaveSlotUI.ToString()).GetComponent<SaveSlotUI>();
+        SaveSlotUI saveSlotUI = m_resourceManager.GetOther(ResourceManager.UIID.SaveSlotUI.ToString()).GetComponent<SaveSlotUI>();
         saveSlotUI.transform.SetParent(saveSlotFrame);
         saveSlotUI.transform.SetSiblingIndex(transform.childCount - 1);
         saveSlotUI.Init(this, saveHeaderData, saveSlotName);
     }
 
-    public void Restart(string saveSlotName)
+    public void LoadGame(string saveSlotName)
     {
         m_saveSlotName = saveSlotName;
-        m_closeActionType = CloseActionType.Restart;
+        m_closeActionType = CloseActionType.LoadGame;
         UIManager.Instance.CloseAll();
     }
     string m_saveSlotName;
@@ -83,16 +83,16 @@ public class SaveMenuUI : UIPageBase
     {
         Back,
         NewGame,
-        Restart,
+        LoadGame,
     }
     protected override void OnCloseCompleted()
     {
         base.OnCloseCompleted();
         switch (m_closeActionType)
         {
-            case CloseActionType.Restart:
+            case CloseActionType.LoadGame:
                 Debug.Log($"GameRestart!!! directoryPath:{m_saveSlotName}");
-                ApplicationManager.Instance.LoadWorld(m_saveSlotName);
+                ApplicationManager.Instance.LoadGame(m_saveSlotName);
                 break;
             default:
                 break;

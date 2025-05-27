@@ -36,7 +36,7 @@ public class SaveSlotUI : UI
     }
     public void Restart()
     {
-        saveMenuUI.Restart(saveSlotName);
+        saveMenuUI.LoadGame(saveSlotName);
     }
 
     public void ConfirmDelete()

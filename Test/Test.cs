@@ -8,6 +8,7 @@ using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using Zenject;
 
 public class TestClass : MonoBehaviour
 {
@@ -27,10 +28,10 @@ public class TestClass : MonoBehaviour
     }
     public void Test_Message()
     {
-        string message = "aaaaaaaaaaaaa";
-        var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
-        messageUI.Open(message, () =>
-UIManager.Instance.Show(UIPageType.SaveMenuUI));
+//         string message = "aaaaaaaaaaaaa";
+//         var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
+//         messageUI.Open(message, () =>
+// UIManager.Instance.Show(UIPageType.SaveMenuUI));
     }
     public ObjectManager objectManager;
     void AAA()
@@ -44,22 +45,23 @@ UIManager.Instance.Show(UIPageType.SaveMenuUI));
         Instance = this;
     }
 
+    [Inject] IResourceManager m_resourceManager;
     [SerializeField] string itemID = ResourceManager.ItemID.PurpleFurball.ToString();
     public void SpawnItem()
     {
-        ResourceManager.GetItem(itemID);
+        m_resourceManager.GetItem(itemID);
     }
     [SerializeField] string mobID = ResourceManager.MobID.Enemy.ToString();
     [SerializeField] string otherID;
     public void SpawnMob()
     {
-        var enemy = ResourceManager.GetMob(mobID);
+        var enemy = m_resourceManager.GetMob(mobID);
         if (enemy != null)
             enemy.transform.position = Vector2.zero;
     }
     public void SpawnOther()
     {
-        ResourceManager.GetOther(otherID);
+        m_resourceManager.GetOther(otherID);
     }
     public Party party;
     // public NPCManager nextLeader;
@@ -70,12 +72,12 @@ UIManager.Instance.Show(UIPageType.SaveMenuUI));
 
     public void Test_GameStart()
     {
-        ApplicationManager.Instance.CreateNewWorld(new InitGameData()
-        {
-            SaveSlotName = "",
-            Seed = 0,
-            GameMode = GameMode.Hard,
-        });
+        // ApplicationManager.Instance.CreateNewWorld(new InitGameData()
+        // {
+        //     SaveSlotName = "",
+        //     Seed = 0,
+        //     GameMode = GameMode.Hard,
+        // });
     }
 
     public void Test_OpenSaveNemu()

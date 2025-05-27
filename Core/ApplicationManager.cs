@@ -17,6 +17,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
+using Zenject;
 
 public class ApplicationManager : MonoBehaviour
 {
@@ -30,16 +31,16 @@ public class ApplicationManager : MonoBehaviour
     /// </summary>
     public static ApplicationManager Instance { get; private set; }
 
-    GameManager gameManager;
+    GameManager m_gameManager;
 
-    [SerializeField] ResourceManager resourceManager;
-    [SerializeField] UIManager uIManager;
-    [SerializeField] AchievementsManager achievementsManager;
-    [SerializeField] MyInputSystem inputSystem;
-    [SerializeField] SettingsManager settingsManager;
+    [Inject] IInitializableResourceManager m_resourceManager;
+    [SerializeField] UIManager m_uiManager;
+    [SerializeField] AchievementsManager m_achievementsManager;
+    [SerializeField] MyInputSystem m_inputSystem;
+    [SerializeField] SettingsManager m_settingsManager;
     bool isNewGame;
-    InitGameData initWorldData;
-    string saveSlotName;
+    InitGameData m_initWorldData;
+    string m_saveSlotName;
     /// <summary>
     /// ゲーム開始しているかどうか。CurrentSceneができたためそれほど使わない。
     /// </summary>
@@ -75,11 +76,11 @@ public class ApplicationManager : MonoBehaviour
 
     private void Awake()
     {
-        OnAppStart();
+        AppStart();
     }
 
 
-    void OnAppStart()
+    void AppStart()
     {
         if (Instance == null)
         {
@@ -89,15 +90,15 @@ public class ApplicationManager : MonoBehaviour
 
         startTime = Time.time;
 
-        resourceManager.OnAppStart(OnResourceReady);
+        m_resourceManager.OnAppStart(OnResourceReady);
     }
 
     public void OnResourceReady()
     {
-        achievementsManager.OnAppStart();
-        inputSystem.OnAppStart();
-        uIManager.OnAppStart();
-        settingsManager.OnAppStart();
+        m_achievementsManager.OnAppStart();
+        m_inputSystem.OnAppStart();
+        m_uiManager.OnAppStart();
+        m_settingsManager.OnAppStart();
 
         StartCoroutine(WaitMinTime(startTime, () =>
         {
@@ -108,13 +109,10 @@ public class ApplicationManager : MonoBehaviour
     IEnumerator WaitMinTime(float startTime, Action callback)
     {
         float elapsedTime = Time.time - startTime;
-        // Debug.Log($"elapsedTime: {elapsedTime}");
-        // Debug.Log($"minWaitTime - elapsedTime: {minWaitTime - elapsedTime}");
         if (elapsedTime < minWaitTime)
         {
             yield return new WaitForSeconds(minWaitTime - elapsedTime);
         }
-        // Debug.Log("elapsedTime is minWaitTime");
         callback?.Invoke();
     }
 
@@ -122,27 +120,27 @@ public class ApplicationManager : MonoBehaviour
     /// ゲームを新規作成。
     /// </summary>
     /// <param name="initWorldData"></param>
-    public void CreateNewWorld(InitGameData initWorldData)
+    public void NewGame(InitGameData initWorldData)
     {
         isNewGame = true;
-        this.initWorldData = initWorldData;
+        m_initWorldData = initWorldData;
         CurrentScene = SceneType.MainGameScene;
         SceneManager.LoadScene(SceneType.MainGameScene.ToString());
     }
-    public void LoadWorld(string saveSlotName)
+    public void LoadGame(string saveSlotName)
     {
         isNewGame = false;
-        this.saveSlotName = saveSlotName;
+        m_saveSlotName = saveSlotName;
         CurrentScene = SceneType.MainGameScene;
         SceneManager.LoadScene(SceneType.MainGameScene.ToString());
     }
     public void SetGameManager(GameManager gameManager)
     {
-        this.gameManager = gameManager;
+        m_gameManager = gameManager;
         if (isNewGame)
-            this.gameManager.CreateNewWorld(initWorldData);
+            m_gameManager.NewGame(m_initWorldData);
         else
-            this.gameManager.LoadWorld(saveSlotName);
+            m_gameManager.LoadGame(m_saveSlotName);
     }
 
     /// <summary>
@@ -156,10 +154,9 @@ public class ApplicationManager : MonoBehaviour
     public void ReturnToTitle()
     {
         IsGameRunning = false;
-        gameManager.OnReturnToTitle();
-        uIManager.OnReturnToTitle();
-        CurrentScene = SceneType.TitleScene;
+        m_gameManager.OnReturnToTitle();
         SceneManager.LoadScene(SceneType.TitleScene.ToString());
+        CurrentScene = SceneType.TitleScene;
     }
 
 
@@ -167,7 +164,7 @@ public class ApplicationManager : MonoBehaviour
     {
         if (CurrentScene == SceneType.MainGameScene)
         {
-            gameManager.Save();
+            m_gameManager.Save();
         }
         Save();
 #if UNITY_EDITOR
@@ -201,9 +198,8 @@ public class ApplicationManager : MonoBehaviour
             }
             string message = saveSlotName + "was deleted";
             Debug.Log(message);
-            var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
-            messageUI.Open(message, () =>
-    UIManager.Instance.Show(UIPageType.SaveMenuUI));
+            UIManager.Instance.GetMessageUI().SetMessage(message);
+            UIManager.Instance.Show(UIPageType.MessageUI);
         }
     }
 }

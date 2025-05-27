@@ -30,7 +30,7 @@ public class NPCManager : MobManager
 		{
 			if (m_equipmentMenu == null)
 			{
-				m_equipmentMenu = ResourceManager.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString()).GetComponent<MemberEquipmentUI>();
+				m_equipmentMenu = m_resourceManager.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString()).GetComponent<MemberEquipmentUI>();
 				m_equipmentMenu.SetItemParent(this);
 				m_equipmentMenu.RegisterStatus(gameObject);
 			}
@@ -39,27 +39,9 @@ public class NPCManager : MobManager
 		private set => m_equipmentMenu = value;
 	}
 
-	string causeOfdeath;
-
 	protected override void ResetToGeneratedStatus()
 	{
 		base.ResetToGeneratedStatus();
-	}
-
-	public void OnJoinParty(Party party, int index)
-	{
-	}
-
-	public void OnBecomeLeader()
-	{
-	}
-
-	public void OnResignLeader()
-	{
-	}
-
-	public void OnLeaveParty()
-	{
 	}
 
 	Sprite GetImage()
@@ -117,16 +99,6 @@ public class NPCManager : MobManager
 
 
 
-
-
-
-	public void Die()
-	{
-		GetComponent<Rigidbody2D>().freezeRotation = false;
-	}
-	public void Surrender()
-	{
-	}
 
 
 	/// <summary>
@@ -213,14 +185,14 @@ public class NPCManager : MobManager
 	{
 	}
 
-	public static NPCManager SpawnNPC(NPCData npc)
-	{
-		var npcObj = ResourceManager.GetMob(npc.MobID);
-		if (npcObj == null) { Debug.LogWarning("npc is null"); return null; }
-		if (npcObj.TryGetComponent(out NPCManager npcManager))
-		{
-			npcManager.ApplyNPCData(npc);
-		}
-		return npcManager;
-	}
+	// public static NPCManager SpawnNPC(NPCData npc)
+	// {
+	// 	var npcObj = m_resourceManager.GetMob(npc.MobID);
+	// 	if (npcObj == null) { Debug.LogWarning("npc is null"); return null; }
+	// 	if (npcObj.TryGetComponent(out NPCManager npcManager))
+	// 	{
+	// 		npcManager.ApplyNPCData(npc);
+	// 	}
+	// 	return npcManager;
+	// }
 }

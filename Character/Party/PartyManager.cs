@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using MyGame;
 using Unity.VisualScripting;
 using UnityEngine;
+using Zenject;
 
 public class PartyManager : MonoBehaviour
 {
     static public PartyManager Instance { get; private set; }
+    [Inject] IResourceManager m_resourceManager;
     [SerializeField] PlayerParty m_playerParty;
     public PlayerParty PlayerParty => m_playerParty;
 
@@ -25,7 +27,7 @@ public class PartyManager : MonoBehaviour
 
     public Party GetParty()
     {
-        GameObject partyObj = ResourceManager.GetOther(ResourceManager.OtherID.Party.ToString());
+        GameObject partyObj = m_resourceManager.GetOther(ResourceManager.OtherID.Party.ToString());
         partyObj.transform.SetParent(transform);
         Party party = partyObj.GetComponent<Party>();
         party.Init();
@@ -44,6 +46,6 @@ public class PartyManager : MonoBehaviour
             Debug.LogError("Party not found in party list");
             return;
         }
-        ResourceManager.ReleaseOther(ResourceManager.OtherID.Party.ToString(), party.gameObject);
+        m_resourceManager.ReleaseOther(ResourceManager.OtherID.Party.ToString(), party.gameObject);
     }
 }

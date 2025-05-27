@@ -5,13 +5,42 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.PlayerLoop;
+using Zenject;
 
 public class UIManager : MonoBehaviour
 {
 	public static UIManager Instance { get; private set; }
 	UIStackManager m_uistackManager = new();
 
+	/// <summary>
+	/// 直接ここから取得してはいけない。GetUIPageを介す。
+	/// </summary>
 	Dictionary<string, IUIPage> m_uiPages = new();
+    [Inject] IResourceManager m_resourceManager;
+
+	IUIPage GetUIPage(UIPageType ui)
+	{
+		if (!m_uiPages.TryGetValue(ui.ToString(), out var page))
+		{
+			var obj = m_resourceManager.GetOther(ui.ToString());
+			if (obj.TryGetComponent(out page))
+			{
+				page.Init();
+				page.HideImd();
+				if (page is MonoBehaviour mono)
+				{
+					DontDestroyOnLoad(mono.gameObject);
+				}
+				m_uiPages.Add(ui.ToString(), page);
+			}
+			else
+			{
+				Debug.LogWarning($"UIPage {ui.ToString()} does not have IUIPage component");
+				return null;
+			}
+		}
+		return page;
+	}
 
 
 	/// <summary>
@@ -26,35 +55,10 @@ public class UIManager : MonoBehaviour
 		MyInputSystem.GameInputs.UI.Cancel.canceled += OnCancelButtonPushed;
 	}
 
-	public void OnGameStart()
-	{
-	}
-	public void OnReturnToTitle()
-	{
-	}
-
 
 	public void Show(UIPageType ui)
 	{
-		if (!m_uiPages.TryGetValue(ui.ToString(), out var page))
-		{
-			var obj = ResourceManager.GetOther(ui.ToString());
-			if (obj.TryGetComponent(out page))
-			{
-				page.Init();
-				page.HideImd();
-				if (page is MonoBehaviour mono)
-				{
-					DontDestroyOnLoad(mono.gameObject);
-				}
-				m_uiPages.Add(ui.ToString(), page);
-			}
-			else
-			{
-				Debug.LogWarning($"UIPage {ui.ToString()} does not have IUIPage component");
-				return;
-			}
-		}
+		var page = GetUIPage(ui);
 		if (!page.IsPermanent) // IsPermanentがfalseのUIの処理はUIStackManagerに任せる。
 			m_uistackManager.PushPage(page);
 		else
@@ -63,7 +67,8 @@ public class UIManager : MonoBehaviour
 
 	public void Hide(UIPageType ui)
 	{
-		if (!m_uiPages.TryGetValue(ui.ToString(), out var page))
+		var page = GetUIPage(ui);
+		if (page == null)
 		{
 			Debug.LogWarning($"UIPage {ui.ToString()} does not exist");
 			return;
@@ -82,7 +87,6 @@ public class UIManager : MonoBehaviour
 	}
 	public void Back()
 	{
-		m_uistackManager.CurrentPage?.OnBack();
 		m_uistackManager.PopPage();
 	}
 
@@ -93,66 +97,54 @@ public class UIManager : MonoBehaviour
 
 	public IPlayerStatusUI GetPlayerStatusUI()
 	{
-		if (m_uiPages.TryGetValue(UIPageType.PlayerStatusUI.ToString(), out var page))
-		{
+		var page = GetUIPage(UIPageType.PlayerStatusUI);
+		if (page != null)
 			return page as IPlayerStatusUI;
-		}
 		else
-		{
-			Debug.LogWarning($"UIPage {UIPageType.PlayerStatusUI.ToString()} does not have IPlayerStatusUI component");
 			return null;
-		}
 	}
 
 	public IEquipmentUI GetEquipmentUI()
 	{
-		if (m_uiPages.TryGetValue(UIPageType.EquipmentUI.ToString(), out var page))
-		{
-			return page as IEquipmentUI;
-		}
+		var page = GetUIPage(UIPageType.EquipmentUI);
+		if (page != null)
+			return page as EquipmentUI;
 		else
-		{
-			Debug.LogWarning($"UIPage {UIPageType.EquipmentUI.ToString()} does not have IEquipmentUI component");
 			return null;
-		}
 	}
 
 	public InventoryUI GetInventoryUI()
 	{
-		if (m_uiPages.TryGetValue(UIPageType.InventoryUI.ToString(), out var page))
-		{
+		var page = GetUIPage(UIPageType.InventoryUI);
+		if (page != null)
 			return page as InventoryUI;
-		}
 		else
-		{
-			Debug.LogWarning($"UIPage {UIPageType.InventoryUI.ToString()} does not have IItemParentUI component");
 			return null;
-		}
 	}
 
 	public INewGameUI GetNewGameUI()
 	{
-		if (m_uiPages.TryGetValue(UIPageType.NewGameUI.ToString(), out var page))
-		{
-			return page as INewGameUI;
-		}
+		var page = GetUIPage(UIPageType.NewGameUI);
+		if (page != null)
+			return page as NewGameUI;
 		else
-		{
-			Debug.LogWarning($"UIPage {UIPageType.NewGameUI.ToString()} does not have INewGameUI component");
 			return null;
-		}
 	}
 	public IDeleteCautionUI GetDeleteCautionUI()
 	{
-		if (m_uiPages.TryGetValue(UIPageType.DeleteCautionUI.ToString(), out var page))
-		{
-			return page as IDeleteCautionUI;
-		}
+		var page = GetUIPage(UIPageType.DeleteCautionUI);
+		if (page != null)
+			return page as DeleteCautionUI;
 		else
-		{
-			Debug.LogWarning($"UIPage {UIPageType.DeleteCautionUI.ToString()} does not have IDeleteCautionUI component");
 			return null;
-		}
+	}
+	public IMessageUI GetMessageUI()
+	{
+		var page = GetUIPage(UIPageType.MessageUI);
+		if (page != null)
+			return page as IMessageUI;
+		else
+			return null;
 	}
 }
 
@@ -173,4 +165,5 @@ public enum UIPageType
 	NewGameUI,
 	LanguageUI,
 	DeleteCautionUI,
+	MessageUI,
 }

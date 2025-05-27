@@ -34,13 +34,6 @@ public class MobManager : ObjectManager, IItemOwner
         ((IItemOwner)this).ResetItems();
     }
 
-    /// <summary>
-    /// バフを再計算する
-    /// </summary>
-    private void RecalculateBuffs()
-    {
-    }
-
     public void SetSelectedSlotNumber(int num)
     {
         SelectedSlotNumber = num;
@@ -59,8 +52,8 @@ public class MobManager : ObjectManager, IItemOwner
     /// <returns>次に攻撃できるまでの時間(s)を返す</returns>
     public void Fire(Vector2 target)
     {
-        if (IsDead)
-            return;
+        // if (IsDead)
+        //     return;
 
         if (target == null)
             Debug.LogWarning("target is null");
@@ -396,7 +389,7 @@ public class MobManager : ObjectManager, IItemOwner
         for (int i = 0; i < mobData.ItemCapacity; i++)
         {
             var itemData = mobData.Items[i];
-            var itemObj = ResourceManager.GetItem(itemData.ItemID);
+            var itemObj = m_resourceManager.GetItem(itemData.ItemID);
             if (itemObj != null && itemObj.TryGetComponent(out ObjectManager itemMng))
             {
                 itemMng.ApplyObjectData(itemData);
@@ -405,14 +398,14 @@ public class MobManager : ObjectManager, IItemOwner
         }
 
     }
-    public static void SpawnMob(MobData mob)
-    {
-        var mobObj = ResourceManager.GetMob(mob.MobID);
-        if (mobObj == null) { Debug.LogWarning("mob is null"); return; }
-        if (mobObj.TryGetComponent(out MobManager mobManager))
-        {
-            mobManager.ApplyMobData(mob);
-        }
-    }
+    // public static void SpawnMob(MobData mob)
+    // {
+    //     var mobObj = ResourceManager.GetMob(mob.MobID);
+    //     if (mobObj == null) { Debug.LogWarning("mob is null"); return; }
+    //     if (mobObj.TryGetComponent(out MobManager mobManager))
+    //     {
+    //         mobManager.ApplyMobData(mob);
+    //     }
+    // }
 }
 

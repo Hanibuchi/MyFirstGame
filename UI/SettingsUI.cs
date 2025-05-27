@@ -72,9 +72,9 @@ public class SettingsUI : UIPageBase
         base.Show();
         SetValues();
     }
-    public override void OnBack()
+    protected override void OnCloseCompleted()
     {
-        base.OnBack();
+        base.OnCloseCompleted();
         if (MyInputSystem.Instance.State != MyInputSystem.StateType.None)
         {
             MyInputSystem.Instance.CancelRebinding();

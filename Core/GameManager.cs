@@ -7,6 +7,7 @@ using MyGame;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
+using Zenject;
 
 public class GameManager : MonoBehaviour
 {
@@ -39,6 +40,7 @@ public class GameManager : MonoBehaviour
 
 
     Vector3 respawnPoint;
+    [Inject] IResourceManager m_resourceManager;
 
     public enum GameStateType
     {
@@ -69,7 +71,7 @@ public class GameManager : MonoBehaviour
     /// 新規作成時実行される。
     /// </summary>
     /// <param name="initGameData"></param>
-    public void CreateNewWorld(InitGameData initGameData)
+    public void NewGame(InitGameData initGameData)
     {
         Init();
         StatisticsManager.Instance.Set(StatisticsManager.StatType.GameStart.ToString(), DateTime.Now);
@@ -85,7 +87,7 @@ public class GameManager : MonoBehaviour
     /// 作成済みのワールドを生成するとき使われる。
     /// </summary>
     /// <param name="saveSlotName"></param>
-    public void LoadWorld(string saveSlotName)
+    public void LoadGame(string saveSlotName)
     {
         Init();
         SaveSlotName = saveSlotName;
@@ -107,7 +109,6 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject); // 既にインスタンスが存在する場合、このオブジェクトを破棄
         }
         InitRandoms();
-        UIManager.Instance.OnGameStart();
         MyInputSystem.Instance.OnGameStart();
         AchievementsManager.Instance.OnGameStart();
         statisticsManager.OnGameStart();
@@ -127,7 +128,7 @@ public class GameManager : MonoBehaviour
     {
         UIManager.Instance.CloseAll();
 
-        ResourceManager.GetOther(ResourceManager.UIID.GameOverUI.ToString()).GetComponent<GameOverUI>().Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
+        m_resourceManager.GetOther(ResourceManager.UIID.GameOverUI.ToString()).GetComponent<GameOverUI>().Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
     }
 
     public void OnReturnToTitle()

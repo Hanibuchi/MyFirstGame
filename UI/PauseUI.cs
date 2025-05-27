@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -30,37 +31,33 @@ public class PauseUI : UIPageBase
         base.OnOpenCompleted();
         GameManager.Instance.PauseGame();
     }
-    public override void OnBack()
+    void Continu()
     {
-        base.OnBack();
-        Debug.Log($"GameManager.Instance.GameState: {GameManager.Instance.GameState.ToString()}");
-        if (GameManager.Instance.GameState == GameManager.GameStateType.Paused)
-            Continu();
-    }
-    public override void Hide()
-    {
-        base.Hide();
-        GameManager.Instance.ResumeGame();
-    }
-    public void Continu()
-    {
+        m_closeCallback = GameManager.Instance.ResumeGame;
         UIManager.Instance.Back();
     }
-    public void Achievements()
+    void Achievements()
     {
         UIManager.Instance.Show(UIPageType.AchievementsUI);
     }
-    public void Settings()
+    void Settings()
     {
         UIManager.Instance.Show(UIPageType.SettingsUI);
     }
-    public void Statistics()
+    void Statistics()
     {
         UIManager.Instance.Show(UIPageType.StatisticsUI);
     }
-    public void ReturnToTitle()
+    void ReturnToTitle()
     {
-        ApplicationManager.Instance.ReturnToTitle();
+        m_closeCallback = ApplicationManager.Instance.ReturnToTitle;
+        UIManager.Instance.Back();
+    }
+    event Action m_closeCallback;
+    protected override void OnCloseCompleted()
+    {
+        base.OnCloseCompleted();
+        m_closeCallback?.Invoke();
     }
     protected override void OnDestroy()
     {

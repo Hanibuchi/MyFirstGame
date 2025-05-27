@@ -53,10 +53,19 @@ public class StatusEffectManager : MonoBehaviour
 
     private void Awake()
     {
+        if (TryGetComponent(out PoolableResourceComponent component))
+        {
+            component.ReleaseCallback += OnRelease;
+        }
         m_rb = GetComponent<Rigidbody2D>();
         m_statusInitializer = GetComponent<StatusInitializer>();
     }
 
+    protected virtual void OnRelease()
+    {
+        StatusEffectList.Clear();
+        Recalculate();
+    }
     private void Update()
     {
         OnTimePassed?.Invoke(Time.deltaTime);

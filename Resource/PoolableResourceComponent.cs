@@ -1,4 +1,5 @@
 using System;
+using Zenject;
 
 public class PoolableResourceComponent : ResourceComponent, IPoolableResourceComponent
 {
@@ -11,14 +12,15 @@ public class PoolableResourceComponent : ResourceComponent, IPoolableResourceCom
 		ReleaseCallback?.Invoke();
 	}
 
+    [Inject] IResourceManager m_resourceManager;
 	public void Release()
 	{
 		switch (Type)
 		{
-			case ResourceType.Item: ResourceManager.ReleaseItem(this); break;
-			case ResourceType.Projectile: ResourceManager.ReleaseProjectile(this); break;
-			case ResourceType.Mob: ResourceManager.ReleaseMob(this); break;
-			case ResourceType.Other: ResourceManager.ReleaseOther(this); break;
+			case ResourceType.Item: m_resourceManager.ReleaseItem(this); break;
+			case ResourceType.Projectile: m_resourceManager.ReleaseProjectile(this); break;
+			case ResourceType.Mob: m_resourceManager.ReleaseMob(this); break;
+			case ResourceType.Other: m_resourceManager.ReleaseOther(this); break;
 		}
 	}
 }//

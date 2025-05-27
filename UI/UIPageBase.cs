@@ -6,10 +6,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 using UnityEngine.UI;
+using Zenject;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class UIPageBase : UI, IUIPage
 {
+    public virtual bool IsRoot => false;
     public virtual bool IsPermanent => false;
     CanvasGroup canvasGroup;
     [SerializeField] float showDuration = 0.2f;
@@ -32,7 +34,7 @@ public class UIPageBase : UI, IUIPage
         canvasGroup.blocksRaycasts = true;
     }
 
-    public virtual void Hide()
+    public void Hide()
     {
         if (gameObject.activeSelf == false)
         {
@@ -42,7 +44,7 @@ public class UIPageBase : UI, IUIPage
         canvasGroup.blocksRaycasts = false;
         StartCoroutine(FadeUI(1f, 0f, showDuration, OnCloseCompleted));
     }
-    public virtual void HideImd()
+    public void HideImd()
     {
         OnCloseCompleted();
         canvasGroup.blocksRaycasts = false;
@@ -64,11 +66,6 @@ public class UIPageBase : UI, IUIPage
 
         canvasGroup.alpha = endAlpha;
         callback.Invoke();
-    }
-
-    public virtual void OnBack()
-    {
-
     }
 
     [SerializeField] Button m_backButton;

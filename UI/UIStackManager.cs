@@ -21,6 +21,7 @@ public class UIStackManager
     public void PopPage()
     {
         if (pageStack.Count == 0) return;
+        if (pageStack.Peek().IsRoot) return;
 
         pageStack.Pop().Hide();
 

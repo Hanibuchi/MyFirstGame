@@ -5,6 +5,7 @@ using System.Linq;
 using MyGame;
 using Unity.VisualScripting;
 using UnityEngine;
+using Zenject;
 
 public class PlayerParty : Party
 {
@@ -13,9 +14,11 @@ public class PlayerParty : Party
     PartyMember Player => Leader;
     InventoryUI m_inventoryUI;
     IEquipmentUI m_equipmentUI;
+    [Inject] IResourceManager m_resourceManager;
 
     public void OnGameStart()
     {
+        Init();
         if (File.Exists(PlayerPartyPath))
         {
             string json = EditFile.ReadAndDecompressJson(PlayerPartyPath);
@@ -25,10 +28,9 @@ public class PlayerParty : Party
         }
         else
         {
-            PartyMember player = ResourceManager.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<PartyMember>();
+            PartyMember player = m_resourceManager.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<PartyMember>();
             AddMember(player);
         }
-        Init();
     }
 
     public override void Init()

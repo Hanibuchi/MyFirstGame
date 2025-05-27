@@ -78,7 +78,7 @@ public class InventoryUI : UIPageBase, IItemParentUI
 	}
 	void GenAndSetSlot(int index)
 	{
-		var slot = ResourceManager.GetOther(ResourceManager.ItemSlotID.InventorySlot.ToString()).GetComponent<InventorySlot>();
+		var slot = m_resourceManager.GetOther(ResourceManager.ItemSlotID.InventorySlot.ToString()).GetComponent<InventorySlot>();
 		slot.SetID(index);
 		slot.SetItemParentUI(this);
 		slot.transform.SetParent(m_itemSlotFrame);

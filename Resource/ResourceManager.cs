@@ -1,22 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MyGame;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-public class ResourceManager : MonoBehaviour
+public class ResourceManager : IInitializableResourceManager, IResourceManager
 {
-    static readonly Dictionary<string, GameObjectPool> itemPools = new();
-    static readonly Dictionary<string, GameObjectPool> projectilePools = new();
-    static readonly Dictionary<string, GameObjectPool> mobPools = new();
-    static readonly Dictionary<string, GameObjectPool> otherPools = new();
-
-    static readonly Dictionary<string, ChunkData> chunkDatas = new();
-    static readonly Dictionary<string, BaseTile> baseTiles = new();
-    static readonly ShotPool shotPool = new(30, 50);
-
     // 以下のIDは直接には使用されず，.ToString()で文字列に変換されて使用される．
     public enum ItemID
     {
@@ -89,6 +79,14 @@ public class ResourceManager : MonoBehaviour
         None,
         DefaultTile,
     }
+    readonly Dictionary<string, GameObjectPool> itemPools = new();
+    readonly Dictionary<string, GameObjectPool> projectilePools = new();
+    readonly Dictionary<string, GameObjectPool> mobPools = new();
+    readonly Dictionary<string, GameObjectPool> otherPools = new();
+
+    readonly Dictionary<string, ChunkData> chunkDatas = new();
+    readonly Dictionary<string, BaseTile> baseTiles = new();
+    readonly ShotPool shotPool = new(30, 50);
 
     /// <summary>
     /// いつでも使用するアセットなどをロードする。
@@ -291,76 +289,76 @@ public class ResourceManager : MonoBehaviour
     }
 
 
-    public static GameObject GetItem(string id)
+    public GameObject GetItem(string id)
     {
         return GetFromObjectPool(ResourceType.Item, itemPools, id);
     }
-    public static void ReleaseItem(IPoolableResourceComponent poolable)
+    public void ReleaseItem(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(itemPools, poolable.ID, mono.gameObject);
         else
             Debug.LogWarning("IPoolable must extend MonoBehaviour");
     }
-    public static void ClearItemPool(string id)
+    public void ClearItemPool(string id)
     {
         Clear(itemPools, id);
     }
 
 
-    public static GameObject GetProjectile(string id)
+    public GameObject GetProjectile(string id)
     {
         return GetFromObjectPool(ResourceType.Projectile, projectilePools, id);
     }
-    public static void ReleaseProjectile(IPoolableResourceComponent poolable)
+    public void ReleaseProjectile(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(projectilePools, poolable.ID, mono.gameObject);
         else
             Debug.LogWarning("IPoolable must extend MonoBehaviour");
     }
-    public static void ClearProjectilePool(string id)
+    public void ClearProjectilePool(string id)
     {
         Clear(projectilePools, id);
     }
 
-    public static GameObject GetMob(string id)
+    public GameObject GetMob(string id)
     {
         return GetFromObjectPool(ResourceType.Mob, mobPools, id);
     }
-    public static void ReleaseMob(IPoolableResourceComponent poolable)
+    public void ReleaseMob(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(mobPools, poolable.ID, mono.gameObject);
         else
             Debug.LogWarning("IPoolable must extend MonoBehaviour");
     }
-    public static void ClearMobPool(string id)
+    public void ClearMobPool(string id)
     {
         Clear(mobPools, id);
     }
 
-    public static GameObject GetOther(string id)
+    public GameObject GetOther(string id)
     {
         return GetFromObjectPool(ResourceType.Other, otherPools, id);
     }
-    public static void ReleaseOther(string id, GameObject obj)
+    public void ReleaseOther(string id, GameObject obj)
     {
         Release(otherPools, id, obj);
     }
-    public static void ReleaseOther(IPoolableResourceComponent poolable)
+    public void ReleaseOther(IPoolableResourceComponent poolable)
     {
         if (poolable is MonoBehaviour mono)
             Release(otherPools, poolable.ID, mono.gameObject);
         else
             Debug.LogWarning("IPoolable must extend MonoBehaviour");
     }
-    public static void ClearOtherPool(string id)
+    public void ClearOtherPool(string id)
     {
         Clear(otherPools, id);
     }
 
-    public static ChunkData GetChunkData(string id)
+    public ChunkData GetChunkData(string id)
     {
         if (!chunkDatas.ContainsKey(id) || chunkDatas[id] == null)
         {
@@ -375,7 +373,7 @@ public class ResourceManager : MonoBehaviour
         return chunkData;
     }
 
-    public static BaseTile GetTile(string id)
+    public BaseTile GetTile(string id)
     {
         if (!baseTiles.ContainsKey(id) || baseTiles[id] == null)
         {
@@ -390,7 +388,7 @@ public class ResourceManager : MonoBehaviour
         return baseTile;
     }
 
-    static GameObject GetFromObjectPool(ResourceType type, Dictionary<string, GameObjectPool> dictionary, string id)
+    GameObject GetFromObjectPool(ResourceType type, Dictionary<string, GameObjectPool> dictionary, string id)
     {
         if (!dictionary.ContainsKey(id) || dictionary[id] == null)
         {
@@ -405,7 +403,7 @@ public class ResourceManager : MonoBehaviour
         }
         return gameObj;
     }
-    static void Release(Dictionary<string, GameObjectPool> dictionary, string id, GameObject item)
+    void Release(Dictionary<string, GameObjectPool> dictionary, string id, GameObject item)
     {
         if (!dictionary.ContainsKey(id) || dictionary[id] == null)
         {
@@ -418,7 +416,7 @@ public class ResourceManager : MonoBehaviour
         }
         dictionary[id].Release(item);
     }
-    static void Clear(Dictionary<string, GameObjectPool> dictionary, string id)
+    void Clear(Dictionary<string, GameObjectPool> dictionary, string id)
     {
         if (!dictionary.ContainsKey(id) || dictionary[id] == null)
         {
@@ -428,11 +426,11 @@ public class ResourceManager : MonoBehaviour
         dictionary[id].Clear();
     }
 
-    public static Shot GetShot()
+    public Shot GetShot()
     {
         return shotPool.Get();
     }
-    public static void ReleaseShot(Shot shot)
+    public void ReleaseShot(Shot shot)
     {
         shotPool.Release(shot);
     }

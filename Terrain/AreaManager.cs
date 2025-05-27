@@ -6,6 +6,7 @@ using System.Threading;
 using MyGame;
 using UnityEditor.Build.Pipeline;
 using UnityEngine;
+using Zenject;
 
 [RequireComponent(typeof(PoolableResourceComponent))]
 public class AreaManager : MonoBehaviour
@@ -94,6 +95,7 @@ public class AreaManager : MonoBehaviour
         return cm.Activate(pos, ChunkDatas[pos]);
     }
 
+    [Inject] IResourceManager m_resourceManager;
     /// <summary>
     /// チャンク位置に対応するChunkManagerを生成して返す。生成した後initするのを忘れそうなためわざわざメソッドにした。取得できなかったらnullを返す。
     /// </summary>
@@ -101,7 +103,7 @@ public class AreaManager : MonoBehaviour
     /// <returns></returns>
     ChunkManager GetChunk(Vector2Int pos)
     {
-        ChunkManager chunkManager = ResourceManager.GetOther(GetChunkID(pos).ToString()).GetComponent<ChunkManager>();
+        ChunkManager chunkManager = m_resourceManager.GetOther(GetChunkID(pos).ToString()).GetComponent<ChunkManager>();
 
         chunkManager?.Init(this);
         return chunkManager;
@@ -125,7 +127,7 @@ public class AreaManager : MonoBehaviour
         foreach (var kv in ChunkManagers)
         {
             kv.Value.Reset();
-            ResourceManager.ReleaseOther(GetChunkID(kv.Key).ToString(), kv.Value.gameObject);
+            m_resourceManager.ReleaseOther(GetChunkID(kv.Key).ToString(), kv.Value.gameObject);
         }
         ChunkManagers.Clear();
 

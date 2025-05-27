@@ -22,7 +22,7 @@ public class BagSlot : ItemSlot
         else
             invSlotName = ResourceManager.ItemSlotID.InventorySlot.ToString();
 
-        var slot = ResourceManager.GetOther(invSlotName).GetComponent<InventorySlot>();
+        var slot = m_resourceManager.GetOther(invSlotName).GetComponent<InventorySlot>();
         slot.SetID(index);
         slot.SetItemParentUI(this);
         slot.transform.SetParent(m_itemSlotFrame);

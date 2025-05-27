@@ -8,6 +8,7 @@ using System;
 using Newtonsoft.Json;
 using UnityEditor.iOS;
 using UnityEditor;
+using Zenject;
 
 [RequireComponent(typeof(PoolableResourceComponent))]
 [RequireComponent(typeof(Rigidbody2D))]
@@ -237,6 +238,7 @@ public class ChunkManager : MonoBehaviour
         return new(pos, ChunkSize);
     }
 
+    [Inject] IResourceManager m_resourceManager;
     /// <summary>
     /// ChunkDataからチャンクを生成
     /// </summary>
@@ -253,7 +255,7 @@ public class ChunkManager : MonoBehaviour
         BaseTile[] tiles = new BaseTile[tileIDs.Length];
         for (int i = 0; i < tileIDs.Length; i++)
         {
-            tiles[i] = ResourceManager.GetTile(tileIDs[i]);
+            tiles[i] = m_resourceManager.GetTile(tileIDs[i]);
         }
         TerrainManager.Instance.TerrainTilemap.SetTilesBlock(GetBoundsInt(), tiles);
 
@@ -263,15 +265,15 @@ public class ChunkManager : MonoBehaviour
         }
         foreach (var npc in chunkData.npcs)
         {
-            NPCManager.SpawnNPC(npc);
+            // NPCManager.SpawnNPC(npc);
         }
         foreach (var mob in chunkData.mobs)
         {
-            MobManager.SpawnMob(mob);
+            // MobManager.SpawnMob(mob);
         }
         foreach (var item in chunkData.items)
         {
-            ObjectManager.SpawnItem(item);
+            // ObjectManager.SpawnItem(item);
         }
     }
 

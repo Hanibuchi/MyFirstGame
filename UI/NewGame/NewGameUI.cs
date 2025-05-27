@@ -71,6 +71,6 @@ public class NewGameUI : UIPageBase, INewGameUI
         }
         var initGameData = GetInitGameData(m_gameMode);
         Debug.Log($"NewGame!!! SaveSlotName:{initGameData.SaveSlotName}, GameMode:{initGameData.GameMode.ToString()}, Seed:{initGameData.Seed}");
-        ApplicationManager.Instance.CreateNewWorld(GetInitGameData(m_gameMode));
+        ApplicationManager.Instance.NewGame(GetInitGameData(m_gameMode));
     }
 }
