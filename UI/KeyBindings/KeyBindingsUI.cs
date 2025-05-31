@@ -6,7 +6,7 @@ using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
-public class KeyBindingsUI : UIPageBase, IKeyBindingsUI
+public class KeyBindingsUI : UI, IKeyBindingsUI
 {
 	public int MaxKeyNum { get; private set; } = 4;
 	[Serializable]
@@ -20,11 +20,15 @@ public class KeyBindingsUI : UIPageBase, IKeyBindingsUI
 
 	RebindUIDelegate OnStartRebind;
 	KeyBindingEntryUI rebindingActionUI;
-
-	public override void Init()
+	protected override void Awake()
 	{
-		base.Init();
-		KeyBindingsController.Instance.SetKeybindingsUI(this);
+		base.Awake();
+		Init();
+	}
+
+	void Init()
+	{
+		SettingsManager.Instance.GetKeyBindingsController().SetKeybindingsUI(this);
 	}
 	/// <summary>
 	/// 初期化する。一度しか実行しない

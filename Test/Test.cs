@@ -28,10 +28,10 @@ public class TestClass : MonoBehaviour
     }
     public void Test_Message()
     {
-//         string message = "aaaaaaaaaaaaa";
-//         var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
-//         messageUI.Open(message, () =>
-// UIManager.Instance.Show(UIPageType.SaveMenuUI));
+        //         string message = "aaaaaaaaaaaaa";
+        //         var messageUI = ResourceManager.GetOther(ResourceManager.UIID.MessageUI.ToString()).GetComponent<MessageUI>();
+        //         messageUI.Open(message, () =>
+        // UIManager.Instance.Show(UIPageType.SaveMenuUI));
     }
     public ObjectManager objectManager;
     void AAA()
@@ -45,23 +45,22 @@ public class TestClass : MonoBehaviour
         Instance = this;
     }
 
-    [Inject] IResourceManager m_resourceManager;
     [SerializeField] string itemID = ResourceManager.ItemID.PurpleFurball.ToString();
     public void SpawnItem()
     {
-        m_resourceManager.GetItem(itemID);
+        ResourceManager.Instance.GetItem(itemID);
     }
     [SerializeField] string mobID = ResourceManager.MobID.Enemy.ToString();
     [SerializeField] string otherID;
     public void SpawnMob()
     {
-        var enemy = m_resourceManager.GetMob(mobID);
+        var enemy = ResourceManager.Instance.GetMob(mobID);
         if (enemy != null)
             enemy.transform.position = Vector2.zero;
     }
     public void SpawnOther()
     {
-        m_resourceManager.GetOther(otherID);
+        ResourceManager.Instance.GetOther(otherID);
     }
     public Party party;
     // public NPCManager nextLeader;

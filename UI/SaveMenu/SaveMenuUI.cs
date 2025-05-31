@@ -27,7 +27,7 @@ public class SaveMenuUI : UIPageBase
         int childCount = saveSlotFrame.transform.childCount;
         for (int i = 0; i < childCount - 1; i++)
         {
-            m_resourceManager.ReleaseOther(ResourceManager.UIID.SaveSlotUI.ToString(), saveSlotFrame.transform.GetChild(i).gameObject);
+            ResourceManager.Instance.ReleaseOther(ResourceManager.UIID.SaveSlotUI.ToString(), saveSlotFrame.transform.GetChild(i).gameObject);
         }
         slotNumber = 1;
         // Debug.Log($"SaveMenu Open");
@@ -58,7 +58,7 @@ public class SaveMenuUI : UIPageBase
 
     void MakeSaveSlotUI(SaveHeaderData saveHeaderData, string saveSlotName)
     {
-        SaveSlotUI saveSlotUI = m_resourceManager.GetOther(ResourceManager.UIID.SaveSlotUI.ToString()).GetComponent<SaveSlotUI>();
+        SaveSlotUI saveSlotUI = ResourceManager.Instance.GetOther(ResourceManager.UIID.SaveSlotUI.ToString()).GetComponent<SaveSlotUI>();
         saveSlotUI.transform.SetParent(saveSlotFrame);
         saveSlotUI.transform.SetSiblingIndex(transform.childCount - 1);
         saveSlotUI.Init(this, saveHeaderData, saveSlotName);
@@ -68,7 +68,7 @@ public class SaveMenuUI : UIPageBase
     {
         m_saveSlotName = saveSlotName;
         m_closeActionType = CloseActionType.LoadGame;
-        UIManager.Instance.CloseAll();
+        UIManager.Instance.CloseAllStack();
     }
     string m_saveSlotName;
 

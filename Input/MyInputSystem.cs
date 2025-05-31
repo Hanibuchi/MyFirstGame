@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class MyInputSystem : MonoBehaviour
+public class MyInputSystem : MonoBehaviour, IInitializableMyInputSystem
 {
     public static MyInputSystem Instance { get; private set; }
     public static GameInputs GameInputs { get; private set; }
@@ -56,6 +56,7 @@ public class MyInputSystem : MonoBehaviour
         Instance = this;
         GameInputs = new GameInputs();
         GameInputs.Enable();
+        RegisterCallbacksOnAppStart(true);
     }
 
     /// <summary>
@@ -66,38 +67,53 @@ public class MyInputSystem : MonoBehaviour
         RegisterCallbacksOnGameStart(true);
     }
 
-    int ccgs = 0;
+    bool isRegistAppCallbacks = false;
+    void RegisterCallbacksOnAppStart(bool doRegist)
+    {
+        if (doRegist)
+        {
+            if (isRegistAppCallbacks)
+                return;
+            isRegistAppCallbacks = true;
+            // ここにAppStartした時から登録しておきたいコールバックを登録する処理を記述してく。
+        }
+        else
+        {
+            if (!isRegistAppCallbacks)
+                return;
+            isRegistAppCallbacks = false;
+        }
+    }
+
+    bool isRegistGameCallbacks = false;
     void RegisterCallbacksOnGameStart(bool doRegist)
     {
         if (doRegist)
         {
-            if (ccgs >= 1)
+            if (isRegistGameCallbacks)
                 return;
-            ccgs++;
-            GameInputs.UI.Pause.canceled += OnPauseButtonPushed;
+            isRegistGameCallbacks = true;
             GameInputs.UI.EquipmentMenu.performed += OnEquipmentMenuButtonPushed;
-            Debug.Log("register callback");
+            GameInputs.UI.Escape.canceled += OnEscapeButtonPushed;
         }
         else
         {
-            ccgs = Math.Max(0, ccgs - 1);
+            if (!isRegistGameCallbacks)
+                return;
+            isRegistGameCallbacks = false;
             GameInputs.UI.EquipmentMenu.performed -= OnEquipmentMenuButtonPushed;
-            GameInputs.UI.Pause.canceled -= OnPauseButtonPushed;
+            GameInputs.UI.Escape.canceled -= OnEscapeButtonPushed;
         }
     }
 
-    void OnPauseButtonPushed(InputAction.CallbackContext context)
+    void OnEscapeButtonPushed(InputAction.CallbackContext context)
     {
-        if (GameManager.Instance.GameState == GameManager.GameStateType.Playing)
-        {
-            Debug.Log("aaa");
-            UIManager.Instance.Show(UIPageType.PauseUI);
-        }
+        UIManager.Instance.OnEscapeButtonPushed();
     }
 
     void OnEquipmentMenuButtonPushed(InputAction.CallbackContext context)
     {
-        if (UIManager.Instance.GetEquipmentUI().IsOpen)
+        if (!UIManager.Instance.GetEquipmentUI().IsOpen)
         {
             UIManager.Instance.Show(UIPageType.EquipmentUI);
             PlayerController.OnEquipmentMenuOpenEventHandler?.Invoke();

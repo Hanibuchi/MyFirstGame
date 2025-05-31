@@ -1233,24 +1233,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Pause",
-                    "type": "Button",
-                    "id": "747d9d5c-42d8-4fb9-904d-802c9cc11772",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "RebindCancel",
-                    "type": "Button",
-                    "id": "ec32dd26-ffac-471a-8be9-5321d67529a1",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "RebindDelete",
                     "type": "Button",
                     "id": "e36e6bb7-c5f9-4f7d-9bf2-39f3495353cb",
@@ -1287,9 +1269,9 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Cancel",
+                    "name": "Escape",
                     "type": "Button",
-                    "id": "6e49d58e-e9a7-41cd-a255-282514ce0bf3",
+                    "id": "3579da36-cdc7-4764-b4ad-8b51b30bddbe",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -1406,67 +1388,12 @@
                 },
                 {
                     "name": "",
-                    "id": "91ed003c-b9c5-4d32-a1ac-1081500a1b65",
-                    "path": "<Keyboard>/escape",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Pause",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "f75f86ab-1a86-4764-978e-0393f17acf7f",
-                    "path": "",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Pause",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "d13ecf9a-2688-4d36-9975-a99d7f3c6cd6",
-                    "path": "",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Pause",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "bfce46b5-7a70-46af-8bfa-63c0816cfc0b",
-                    "path": "",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Pause",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "03f32497-082f-4e5d-befe-70e98bbf1e6c",
                     "path": "<Keyboard>/f9",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "RebindReset",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "383c8195-bde4-4d32-8b0e-63b634c50b33",
-                    "path": "<Keyboard>/escape",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "RebindCancel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -1802,17 +1729,6 @@
                 },
                 {
                     "name": "",
-                    "id": "040054d5-9250-49cf-9e89-195fb4dfae46",
-                    "path": "<Keyboard>/escape",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse;Gamepad;Touch;Joystick;XR",
-                    "action": "Cancel",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "646958a8-b0ef-4fcf-b56f-4626fd0e1cd4",
                     "path": "<Mouse>/position",
                     "interactions": "",
@@ -1940,6 +1856,17 @@
                     "processors": "",
                     "groups": "XR",
                     "action": "TrackedDeviceOrientation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "43f1db3d-b6d4-4b90-b328-33bdb1063a32",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Escape",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

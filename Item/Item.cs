@@ -574,7 +574,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	{
 		return m_itemSlotUI;
 	}
-	[Inject] protected IResourceManager m_resourceManager;
 	/// <summary>
 	/// m_itemSlotUIを生成して取得する。すでにあるなら無視される。
 	/// </summary>
@@ -583,7 +582,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	{
 		if (m_itemSlotUI == null)
 		{
-			m_itemSlotUI = m_resourceManager.GetOther(m_slotID).GetComponent<ItemSlot>();
+			m_itemSlotUI = ResourceManager.Instance.GetOther(m_slotID).GetComponent<ItemSlot>();
 			m_itemSlotUI.Init(this, gameObject.GetComponentInChildren<SpriteRenderer>().sprite);
 			m_itemSlotUI.SetItemParent(this);
 			m_itemSlotUI.InitSlots(m_itemCapacity);

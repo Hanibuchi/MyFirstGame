@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.PlayerLoop;
 using Zenject;
 
-public class UIManager : MonoBehaviour
+public class UIManager : MonoBehaviour, IInitializableUIManager
 {
 	public static UIManager Instance { get; private set; }
 	UIStackManager m_uistackManager = new();
@@ -16,13 +16,12 @@ public class UIManager : MonoBehaviour
 	/// 直接ここから取得してはいけない。GetUIPageを介す。
 	/// </summary>
 	Dictionary<string, IUIPage> m_uiPages = new();
-    [Inject] IResourceManager m_resourceManager;
 
 	IUIPage GetUIPage(UIPageType ui)
 	{
 		if (!m_uiPages.TryGetValue(ui.ToString(), out var page))
 		{
-			var obj = m_resourceManager.GetOther(ui.ToString());
+			var obj = ResourceManager.Instance.GetOther(ui.ToString());
 			if (obj.TryGetComponent(out page))
 			{
 				page.Init();
@@ -52,17 +51,16 @@ public class UIManager : MonoBehaviour
 		{
 			Instance = this;
 		}
-		MyInputSystem.GameInputs.UI.Cancel.canceled += OnCancelButtonPushed;
 	}
 
 
 	public void Show(UIPageType ui)
 	{
 		var page = GetUIPage(ui);
-		if (!page.IsPermanent) // IsPermanentがfalseのUIの処理はUIStackManagerに任せる。
-			m_uistackManager.PushPage(page);
-		else
+		if (page.IsPermanent) // IsPermanentがfalseのUIの処理はUIStackManagerに任せる。
 			page.Show();
+		else
+			m_uistackManager.PushPage(page);
 	}
 
 	public void Hide(UIPageType ui)
@@ -81,16 +79,26 @@ public class UIManager : MonoBehaviour
 		else
 			Debug.LogWarning($"UIPage {ui.ToString()} is not permanent. Cannot hide it directly. Please use Back() method.");
 	}
-	protected virtual void OnCancelButtonPushed(InputAction.CallbackContext callback)
+	public bool escapeButtonMask;
+	public virtual void OnEscapeButtonPushed()
 	{
-		Back();
+		Debug.Log("escape button pushed");
+		if (escapeButtonMask)
+		{
+			Debug.Log("escapeButton masked");
+			return;
+		}
+		if (m_uistackManager.CurrentPage == null)
+			Show(UIPageType.PauseUI);
+		else
+			Back();
 	}
 	public void Back()
 	{
 		m_uistackManager.PopPage();
 	}
 
-	public void CloseAll()
+	public void CloseAllStack()
 	{
 		m_uistackManager.CloseAll();
 	}
@@ -161,7 +169,6 @@ public enum UIPageType
 	AchievementsUI,
 	SettingsUI,
 	StatisticsUI,
-	KeyBindingsUI,
 	NewGameUI,
 	LanguageUI,
 	DeleteCautionUI,

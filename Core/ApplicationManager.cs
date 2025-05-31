@@ -31,13 +31,14 @@ public class ApplicationManager : MonoBehaviour
     /// </summary>
     public static ApplicationManager Instance { get; private set; }
 
-    GameManager m_gameManager;
+    IInitializableGameManager m_gameManager;
 
-    [Inject] IInitializableResourceManager m_resourceManager;
-    [SerializeField] UIManager m_uiManager;
-    [SerializeField] AchievementsManager m_achievementsManager;
-    [SerializeField] MyInputSystem m_inputSystem;
-    [SerializeField] SettingsManager m_settingsManager;
+    IInitializableResourceManager m_resourceManager;
+    IInitializableUIManager m_uiManager;
+    IInitializableAchievementsManager m_achievementsManager;
+    IInitializableMyInputSystem m_inputSystem;
+    IInitializableSettingsManager m_settingsManager;
+
     bool isNewGame;
     InitGameData m_initWorldData;
     string m_saveSlotName;
@@ -90,15 +91,20 @@ public class ApplicationManager : MonoBehaviour
 
         startTime = Time.time;
 
-        m_resourceManager.OnAppStart(OnResourceReady);
+        if (TryGetComponent(out m_resourceManager))
+            m_resourceManager.OnAppStart(OnResourceReady);
     }
 
     public void OnResourceReady()
     {
-        m_achievementsManager.OnAppStart();
-        m_inputSystem.OnAppStart();
-        m_uiManager.OnAppStart();
-        m_settingsManager.OnAppStart();
+        if (TryGetComponent(out m_achievementsManager))
+            m_achievementsManager.OnAppStart();
+        if (TryGetComponent(out m_inputSystem))
+            m_inputSystem.OnAppStart();
+        if (TryGetComponent(out m_uiManager))
+            m_uiManager.OnAppStart();
+        if (TryGetComponent(out m_settingsManager))
+            m_settingsManager.OnAppStart();
 
         StartCoroutine(WaitMinTime(startTime, () =>
         {

@@ -60,7 +60,11 @@ public class TitleUI : UIPageBase
     void Quit()
     {
         isQuit = true;
-        UIManager.Instance.CloseAll();
+        UIManager.Instance.Hide(UIPageType.InventoryUI);
+        UIManager.Instance.Hide(UIPageType.PlayerStatusUI);
+        if (UIManager.Instance.GetEquipmentUI().IsOpen)
+            UIManager.Instance.Hide(UIPageType.EquipmentUI);
+        UIManager.Instance.CloseAllStack();
     }
     bool isQuit;
     protected override void OnCloseCompleted()

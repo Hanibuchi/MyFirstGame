@@ -14,7 +14,7 @@ public class PurpleAttack : TestAttackItem
         Transform referenceTransform = shot.referenceObject.transform;
         float aimingErrorAngle = Random.Randoms[RandomName.Diffusion.ToString()].NormalDistribution() * shot.diffusion;
 
-        GameObject nextProjectileObj = m_resourceManager.GetProjectile(projectileID);
+        GameObject nextProjectileObj = ResourceManager.Instance.GetProjectile(projectileID);
         nextProjectileObj.transform.SetPositionAndRotation(referenceTransform.position, referenceTransform.rotation * Quaternion.Euler(0, 0, aimingErrorAngle));
         // Debug.Log("projectile thrown");
         if (nextProjectileObj.TryGetComponent(out Rigidbody2D rb))

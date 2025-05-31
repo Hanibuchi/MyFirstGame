@@ -6,7 +6,7 @@ using Microsoft.Unity.VisualStudio.Editor;
 using MyGame;
 using UnityEngine;
 
-public class AchievementsManager : MonoBehaviour
+public class AchievementsManager : MonoBehaviour, IInitializableAchievementsManager
 {
     public static AchievementsManager Instance { get; private set; }
     string AchievementsPath => GetAchievementsPath(GameManager.PlayerDataPath);
@@ -56,11 +56,11 @@ public class AchievementsManager : MonoBehaviour
             Achievements[name].isAchieved = true;
         }
     }
-/// <summary>
-/// 報酬を設定する。達成済みなら自由に設定でき，そうでないなら無効にはできるが有効にはできない。
-/// </summary>
-/// <param name="name"></param>
-/// <param name="isEnabled"></param>
+    /// <summary>
+    /// 報酬を設定する。達成済みなら自由に設定でき，そうでないなら無効にはできるが有効にはできない。
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="isEnabled"></param>
     public void EnableReward(string name, bool isEnabled)
     {
         if (Achievements.ContainsKey(name))

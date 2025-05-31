@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using Zenject;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IInitializableGameManager
 {
     public static string SaveSlotName = "SaveSlot_";
     public static string SaveSlotDirectoryPath => Path.Combine(ApplicationManager.SaveDirectoryPath, SaveSlotName);
@@ -40,7 +40,6 @@ public class GameManager : MonoBehaviour
 
 
     Vector3 respawnPoint;
-    [Inject] IResourceManager m_resourceManager;
 
     public enum GameStateType
     {
@@ -82,7 +81,12 @@ public class GameManager : MonoBehaviour
 
         ApplicationManager.Instance.OnGameInitializationComplete();
         Debug.Log($"SaveSlotDirectoryPath: {SaveSlotDirectoryPath}");
+
+
+        UIManager.Instance.Show(UIPageType.PlayerStatusUI);
+        UIManager.Instance.Show(UIPageType.InventoryUI);
     }
+
     /// <summary>
     /// 作成済みのワールドを生成するとき使われる。
     /// </summary>
@@ -95,6 +99,9 @@ public class GameManager : MonoBehaviour
         // SeedやGameModeも取り出して代入。
 
         ApplicationManager.Instance.OnGameInitializationComplete();
+
+        UIManager.Instance.Show(UIPageType.PlayerStatusUI);
+        UIManager.Instance.Show(UIPageType.InventoryUI);
     }
 
     void Init()
@@ -126,9 +133,13 @@ public class GameManager : MonoBehaviour
 
     public void GameOver(string causeOfDeath, AreaManager areaManager, Vector2Int chunkPos, Vector3 pos, float hiringCost, List<HiredMemberData> traitorDatas)
     {
-        UIManager.Instance.CloseAll();
+        UIManager.Instance.CloseAllStack();
+        UIManager.Instance.Hide(UIPageType.InventoryUI);
+        UIManager.Instance.Hide(UIPageType.PlayerStatusUI);
+        if (UIManager.Instance.GetEquipmentUI().IsOpen)
+            UIManager.Instance.Hide(UIPageType.EquipmentUI);
 
-        m_resourceManager.GetOther(ResourceManager.UIID.GameOverUI.ToString()).GetComponent<GameOverUI>().Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
+        ResourceManager.Instance.GetOther(ResourceManager.UIID.GameOverUI.ToString()).GetComponent<GameOverUI>().Open(causeOfDeath, areaManager, chunkPos, pos, hiringCost, traitorDatas);
     }
 
     public void OnReturnToTitle()

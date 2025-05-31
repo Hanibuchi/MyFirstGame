@@ -6,19 +6,10 @@ using MyGame;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class KeyBindingsController : MonoBehaviour, IKeyBindingsController
+public class KeyBindingsController : IKeyBindingsController
 {
 	string KeyBindingsPath => Path.Combine(ApplicationManager.ConfigDirectoryPath, "KeyBindings");
 	[SerializeField] IKeyBindingsUI m_keyBindingsUI;
-	public static IKeyBindingsController Instance { get; private set; }
-
-	/// <summary>
-	/// 初期化する。一度しか実行しない
-	/// </summary>
-	public void OnAppStart()
-	{
-		Instance = this;
-	}
 	public void SetKeybindingsUI(IKeyBindingsUI keyBindingsUI)
 	{
 		m_keyBindingsUI = keyBindingsUI;

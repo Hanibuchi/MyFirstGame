@@ -60,7 +60,7 @@ public class NewGameUI : UIPageBase, INewGameUI
     GameMode m_gameMode;
     void NewGame()
     {
-        UIManager.Instance.CloseAll();
+        UIManager.Instance.CloseAllStack();
     }
     protected override void OnCloseCompleted()
     {

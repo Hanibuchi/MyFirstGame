@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-public class ResourceManager : IInitializableResourceManager, IResourceManager
+public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IResourceManager
 {
     // 以下のIDは直接には使用されず，.ToString()で文字列に変換されて使用される．
     public enum ItemID
@@ -88,11 +88,13 @@ public class ResourceManager : IInitializableResourceManager, IResourceManager
     readonly Dictionary<string, BaseTile> baseTiles = new();
     readonly ShotPool shotPool = new(30, 50);
 
+    public static IResourceManager Instance { get; private set; }
     /// <summary>
     /// いつでも使用するアセットなどをロードする。
     /// </summary>
     public async void OnAppStart(Action callback)
     {
+        Instance = this;
         await LoadAsset("InitLoad");
 
         callback?.Invoke();

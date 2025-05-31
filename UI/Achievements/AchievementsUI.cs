@@ -54,7 +54,7 @@ public class AchievementsUI : UIPageBase
         foreach (var na in nameAndAchievementDatas)
         {
             (string name, AchievementData data) = na;
-            AchievementEntryUI entryUI = m_resourceManager.GetOther(ResourceManager.UIID.AchievementEntryUI.ToString()).GetComponent<AchievementEntryUI>();
+            AchievementEntryUI entryUI = ResourceManager.Instance.GetOther(ResourceManager.UIID.AchievementEntryUI.ToString()).GetComponent<AchievementEntryUI>();
             entryUI.Set(name, data);
             entryUI.transform.SetParent(achievementsFrame);
         }

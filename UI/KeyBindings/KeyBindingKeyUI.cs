@@ -23,6 +23,7 @@ public class KeyBindingKeyUI : UI
             SetDisplayKeyName(key);
             // button = GetComponent<Button>();
             button.onClick.AddListener(StartRebind);
+            transform.localScale = Vector3.one;
 
             IsInitialized = true;
         }

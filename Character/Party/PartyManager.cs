@@ -8,7 +8,6 @@ using Zenject;
 public class PartyManager : MonoBehaviour
 {
     static public PartyManager Instance { get; private set; }
-    [Inject] IResourceManager m_resourceManager;
     [SerializeField] PlayerParty m_playerParty;
     public PlayerParty PlayerParty => m_playerParty;
 
@@ -27,7 +26,7 @@ public class PartyManager : MonoBehaviour
 
     public Party GetParty()
     {
-        GameObject partyObj = m_resourceManager.GetOther(ResourceManager.OtherID.Party.ToString());
+        GameObject partyObj = ResourceManager.Instance.GetOther(ResourceManager.OtherID.Party.ToString());
         partyObj.transform.SetParent(transform);
         Party party = partyObj.GetComponent<Party>();
         party.Init();
@@ -46,6 +45,6 @@ public class PartyManager : MonoBehaviour
             Debug.LogError("Party not found in party list");
             return;
         }
-        m_resourceManager.ReleaseOther(ResourceManager.OtherID.Party.ToString(), party.gameObject);
+        ResourceManager.Instance.ReleaseOther(ResourceManager.OtherID.Party.ToString(), party.gameObject);
     }
 }

@@ -87,18 +87,17 @@ namespace MyGame
             Init();
         }
 
-    [Inject] IResourceManager m_resourceManager;
         void Init()
         {
             if (Instance == null)
             {
                 Instance = this;
             }
-            var TerrainObj = m_resourceManager.GetOther(ResourceManager.OtherID.TerrainGrid.ToString());
+            var TerrainObj = ResourceManager.Instance.GetOther(ResourceManager.OtherID.TerrainGrid.ToString());
             Grid = TerrainObj.GetComponent<Grid>();
             TerrainTilemap = TerrainObj.GetComponentInChildren<Tilemap>();
 
-            Areas[AreaIDs.DefaultArea] = m_resourceManager.GetOther(ResourceManager.AreaID.DefaultArea.ToString()).GetComponent<AreaManager>();
+            Areas[AreaIDs.DefaultArea] = ResourceManager.Instance.GetOther(ResourceManager.AreaID.DefaultArea.ToString()).GetComponent<AreaManager>();
             foreach (var keyValue in Areas)
             {
                 keyValue.Value.Init(this);

@@ -106,7 +106,7 @@ public class KeyBindingEntryUI : UI
 
     void AddKeyBindingKeyUI()
     {
-        var tmp = m_resourceManager.GetOther(ResourceManager.UIID.KeyBindingKeyUI.ToString());
+        var tmp = ResourceManager.Instance.GetOther(ResourceManager.UIID.KeyBindingKeyUI.ToString());
         tmp.transform.SetParent(KeyBindingKeyUIFrameTf);
         if (tmp.TryGetComponent(out KeyBindingKeyUI keyBindingKeyUI))
         {

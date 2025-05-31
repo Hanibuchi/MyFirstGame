@@ -389,7 +389,7 @@ public class MobManager : ObjectManager, IItemOwner
         for (int i = 0; i < mobData.ItemCapacity; i++)
         {
             var itemData = mobData.Items[i];
-            var itemObj = m_resourceManager.GetItem(itemData.ItemID);
+            var itemObj = ResourceManager.Instance.GetItem(itemData.ItemID);
             if (itemObj != null && itemObj.TryGetComponent(out ObjectManager itemMng))
             {
                 itemMng.ApplyObjectData(itemData);

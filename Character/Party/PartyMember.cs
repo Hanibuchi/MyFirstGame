@@ -54,12 +54,11 @@ public class PartyMember : MonoBehaviour
     }
 
 
-    [Inject] IResourceManager m_resourceManager;
     public GameObject GetMemberUI()
     {
         if (m_memberEquipmentUI == null)
         {
-            m_memberEquipmentUI = m_resourceManager.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString());
+            m_memberEquipmentUI = ResourceManager.Instance.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString());
 
             // アイテム所持するコンポネントを分離したらこれも分離する。
             var memberEquipmentUI = m_memberEquipmentUI.GetComponent<MemberEquipmentUI>();
@@ -74,7 +73,7 @@ public class PartyMember : MonoBehaviour
         if (m_memberEquipmentUI == null)
             return;
 
-        m_resourceManager.ReleaseOther(ResourceManager.UIID.MemberEquipmentUI.ToString(), m_memberEquipmentUI.gameObject);
+        ResourceManager.Instance.ReleaseOther(ResourceManager.UIID.MemberEquipmentUI.ToString(), m_memberEquipmentUI.gameObject);
         m_memberEquipmentUI = null;
     }
 

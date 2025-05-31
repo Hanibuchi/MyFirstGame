@@ -19,7 +19,6 @@ public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
     public ChunkManager BossChunkManager { get => bossChunkManager; set => bossChunkManager = value; }
 
 
-    [Inject] protected IResourceManager m_resourceManager;
 
 
     /// <summary>

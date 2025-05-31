@@ -14,7 +14,6 @@ public class PlayerParty : Party
     PartyMember Player => Leader;
     InventoryUI m_inventoryUI;
     IEquipmentUI m_equipmentUI;
-    [Inject] IResourceManager m_resourceManager;
 
     public void OnGameStart()
     {
@@ -28,7 +27,7 @@ public class PlayerParty : Party
         }
         else
         {
-            PartyMember player = m_resourceManager.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<PartyMember>();
+            PartyMember player = ResourceManager.Instance.GetMob(ResourceManager.MobID.NPC.ToString()).GetComponent<PartyMember>();
             AddMember(player);
         }
     }

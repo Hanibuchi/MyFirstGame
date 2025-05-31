@@ -12,15 +12,14 @@ public class PoolableResourceComponent : ResourceComponent, IPoolableResourceCom
 		ReleaseCallback?.Invoke();
 	}
 
-    [Inject] IResourceManager m_resourceManager;
 	public void Release()
 	{
 		switch (Type)
 		{
-			case ResourceType.Item: m_resourceManager.ReleaseItem(this); break;
-			case ResourceType.Projectile: m_resourceManager.ReleaseProjectile(this); break;
-			case ResourceType.Mob: m_resourceManager.ReleaseMob(this); break;
-			case ResourceType.Other: m_resourceManager.ReleaseOther(this); break;
+			case ResourceType.Item: ResourceManager.Instance.ReleaseItem(this); break;
+			case ResourceType.Projectile: ResourceManager.Instance.ReleaseProjectile(this); break;
+			case ResourceType.Mob: ResourceManager.Instance.ReleaseMob(this); break;
+			case ResourceType.Other: ResourceManager.Instance.ReleaseOther(this); break;
 		}
 	}
 }//

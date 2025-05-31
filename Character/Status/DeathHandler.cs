@@ -24,7 +24,6 @@ public class DeathHandler : MonoBehaviour
 	RigidbodyConstraints2D m_originalConstraints;
 	LevelHandler m_levelHandler;
 	// ItemUseHandler m_itemUseHandler;
-    [Inject] IResourceManager m_resourceManager;
 
 	private void Awake()
 	{
@@ -115,7 +114,7 @@ public class DeathHandler : MonoBehaviour
 		{
 			if (Random.Randoms[RandomName.DropItem.ToString()].Value() <= dropItem.DropRate)
 			{
-				GameObject obj = m_resourceManager.GetItem(dropItem.ItemName);
+				GameObject obj = ResourceManager.Instance.GetItem(dropItem.ItemName);
 				if (obj != null && obj.TryGetComponent(out Rigidbody2D rb))
 				{
 					if (m_rigidbody2D != null)

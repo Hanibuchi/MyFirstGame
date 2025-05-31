@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.IO;
 using MyGame;
 using UnityEngine;
+using Zenject;
 
-public class SettingsManager : MonoBehaviour
+public class SettingsManager : MonoBehaviour, IInitializableSettingsManager
 {
     string SettingDataPath => Path.Combine(ApplicationManager.ConfigDirectoryPath, "SettingsData");
     public static SettingsManager Instance { get; private set; }
-    [SerializeField] KeyBindingsController m_keyBindingsController;
+    [Inject]IKeyBindingsController m_keyBindingsController;
 
     [SerializeField] SettingsData settingsData;
 
@@ -44,15 +45,17 @@ public class SettingsManager : MonoBehaviour
     public ScreenShakeType ScreenShake => settingsData.screenShake;
     public event Action<ScreenShakeType> OnScreenShakeChanged;
 
-    private void Awake()
-    {
-        Instance = this;
-    }
-
     public void OnAppStart()
     {
-        m_keyBindingsController.OnAppStart();
+        Instance = this;
         settingsData = new();
+        // Debug.Log($"KeyBindingsController: {m_keyBindingsController}");
+        // Debug.Log($"KeyBindingsController is null: {m_keyBindingsController == null}");
+    }
+
+    public IKeyBindingsController GetKeyBindingsController()
+    {
+        return m_keyBindingsController;
     }
 
     /// <summary>

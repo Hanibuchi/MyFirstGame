@@ -238,7 +238,6 @@ public class ChunkManager : MonoBehaviour
         return new(pos, ChunkSize);
     }
 
-    [Inject] IResourceManager m_resourceManager;
     /// <summary>
     /// ChunkDataからチャンクを生成
     /// </summary>
@@ -255,7 +254,7 @@ public class ChunkManager : MonoBehaviour
         BaseTile[] tiles = new BaseTile[tileIDs.Length];
         for (int i = 0; i < tileIDs.Length; i++)
         {
-            tiles[i] = m_resourceManager.GetTile(tileIDs[i]);
+            tiles[i] = ResourceManager.Instance.GetTile(tileIDs[i]);
         }
         TerrainManager.Instance.TerrainTilemap.SetTilesBlock(GetBoundsInt(), tiles);
 

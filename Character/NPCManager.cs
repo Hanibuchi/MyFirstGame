@@ -30,7 +30,7 @@ public class NPCManager : MobManager
 		{
 			if (m_equipmentMenu == null)
 			{
-				m_equipmentMenu = m_resourceManager.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString()).GetComponent<MemberEquipmentUI>();
+				m_equipmentMenu = ResourceManager.Instance.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString()).GetComponent<MemberEquipmentUI>();
 				m_equipmentMenu.SetItemParent(this);
 				m_equipmentMenu.RegisterStatus(gameObject);
 			}

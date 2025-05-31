@@ -18,7 +18,6 @@ public class BaseTile : RuleTile, IResourceComponent
         ID = id;
     }
 
-    [Inject] IResourceManager m_resourceManager;
     /// <summary>
     /// 登録されているGameObject(GroundManager)生成時に自分のpositionを記憶させ，壊れるときにそのpositionのtileを置き換える。
     /// </summary>
@@ -31,7 +30,7 @@ public class BaseTile : RuleTile, IResourceComponent
         // Debug.Log($"Application.isPlaying: {Application.isPlaying}, GetPool() != null{GetPool()}, StartUP was called");
         if (Application.isPlaying)
         {
-            GameObject tile = m_resourceManager.GetOther(TileObjID);
+            GameObject tile = ResourceManager.Instance.GetOther(TileObjID);
             if (tile != null && tile.TryGetComponent(out TileObjManager GM))
                 GM.Init(position);
         }
