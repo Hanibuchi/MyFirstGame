@@ -455,7 +455,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	}
 	public virtual bool CanAddItem(int index, Item item)
 	{
-		if (item != null && index <= Items.Count && item != null)
+		if (item != null && index <= Items.Count)
 		{
 			return IsWithinItemLimits(item);
 		}
