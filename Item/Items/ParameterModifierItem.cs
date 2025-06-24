@@ -22,7 +22,8 @@ public class ParameterModifierItem : Item, IParameterModifierItem
 
     public override void Fire(Shot shot)
     {
-        Parent.RemoveItem(this);
-        shot.mobMan?.ThrowItem(this, shot.target);
+        this.ItemHolder.ClearPrevRelation();
+        var attack = shot.user?.GetComponent<Attack>();
+        attack?.ThrowItem(this, shot.target);
     }
 }

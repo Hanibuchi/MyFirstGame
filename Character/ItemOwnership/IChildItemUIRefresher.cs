@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IItemParentUI
+public interface IChildItemUIRefresher
 {
-
-    void AddItem(int index, Item item);
+    void RefreshUI();
 }

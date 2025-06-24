@@ -13,7 +13,8 @@ public class PartyItemHolder : IItemHolder
     public MemberItemTracker MemberItemTracker => null;
     public int ItemCapacity { get; private set; } = 1;
     public bool IsFixedSize => true;
-    public List<IChildItemHolder> Items { get; private set; } = new();
+    [SerializeReference] List<IChildItemHolder> _items = new();
+    public List<IChildItemHolder> Items { get => _items; private set => _items = value; }
 
 
     public void ResetItems()
@@ -23,6 +24,7 @@ public class PartyItemHolder : IItemHolder
         {
             Items.Add(null);
         }
+        _partyItemUIRefresher?.RefreshUI();
     }
     public void SetPartyItemTracker(PartyItemTracker partyItemTracker)
     {
@@ -81,6 +83,7 @@ public class PartyItemHolder : IItemHolder
     {
         if (CanAddItemAt(index, childItemHolder))
         {
+            childItemHolder.ClearPrevRelation();
             if (Items[index] != null)
             {
                 int offset = 1, target;
@@ -121,7 +124,8 @@ public class PartyItemHolder : IItemHolder
                 }
             }
             Items[index] = childItemHolder;
-            childItemHolder.OnAddedToParty(PartyItemTracker);
+            childItemHolder.OnAddedToParty(PartyItemTracker, this);
+            _partyItemUIRefresher.RefreshUI();
         }
         else
             Debug.LogWarning("item cannot be added");
@@ -133,6 +137,7 @@ public class PartyItemHolder : IItemHolder
             int index = Items.IndexOf(childItemHolder);
             Items[index] = null;
             childItemHolder.OnRemovedFromParty();
+            _partyItemUIRefresher.RefreshUI();
         }
         else
             Debug.LogWarning("Item is not in this party.");
@@ -141,6 +146,7 @@ public class PartyItemHolder : IItemHolder
     {
         ItemCapacity++;
         Items.Add(null);
+        _partyItemUIRefresher.RefreshUI();
     }
 
     public void AddMember(IMemberItemHolder memberItemHolder)
@@ -148,7 +154,7 @@ public class PartyItemHolder : IItemHolder
         if (memberItemHolder != null)
         {
             _members.Add(memberItemHolder);
-            memberItemHolder.OnAddedToParty(PartyItemTracker);
+            memberItemHolder.OnAddedToParty(PartyItemTracker, this);
         }
     }
     public void RemoveMember(IMemberItemHolder memberItemHolder)
@@ -166,5 +172,10 @@ public class PartyItemHolder : IItemHolder
             member.OnRemovedFromParty();
         }
         _members.Clear();
+    }
+    IPartyItemUIRefresher _partyItemUIRefresher;
+    public void SetPartyItemUIRefresher(IPartyItemUIRefresher partyItemUIRefresher)
+    {
+        _partyItemUIRefresher = partyItemUIRefresher;
     }
 }

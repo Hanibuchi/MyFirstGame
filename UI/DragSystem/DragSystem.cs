@@ -86,7 +86,7 @@ public class DragSystem : MonoBehaviour
             m_draggingItem.EnableComponentsOnCollected(false);
 
             if (m_draggingItem.GetItemSlotUI() == null)
-                m_draggingItem.RefreshItemSlotUIs();
+                m_draggingItem.RefreshUI();
             m_draggingItemSlot = m_draggingItem.GetItemSlotUI();
 
             m_draggingItemSlot.BeginDrag();
@@ -104,7 +104,7 @@ public class DragSystem : MonoBehaviour
 
         if (m_draggingItemSlot != null)
         {
-            m_draggingItem.Parent?.RemoveItem(m_draggingItem);
+            m_draggingItem.ItemHolder.ClearPrevRelation();
             // ドラッグし始めたオブジェクトがItemSlotの場合，OnEndDragを呼び出すためにはItemSlotがアクティブ状態でないといけない。親オブジェクトのEquipmentMenuManagerはここでは必ず非アクティブであるため，親をnullにしてからアクティブ状態にする。
             m_draggingItemSlot.transform.SetParent(null);
             m_draggingItemSlot.gameObject.SetActive(true);

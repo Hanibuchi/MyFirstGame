@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IItemParentUI
+public interface IItemProvider
 {
-
-    void AddItem(int index, Item item);
+    IItem GetItem();
 }

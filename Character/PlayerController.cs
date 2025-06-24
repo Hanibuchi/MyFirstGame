@@ -218,7 +218,6 @@ public class PlayerController : MonoBehaviour
 
     public void OnScrollWheel(InputAction.CallbackContext context)
     {
-        m_npcManager.AddSelectedSlotNumber((int)math.sign(context.ReadValue<Vector2>().y));
     }
 
     // void OnShowValue(InputAction.CallbackContext context)
@@ -309,11 +308,11 @@ public class PlayerController : MonoBehaviour
             return;
 
         m_mousePosition = GameManager.Utility.GetMousePos();
-        m_items = (List<Item>)m_npcManager.Items;
+        // m_items = (List<Item>)m_npcManager.GetComp;
         if (m_items != null && m_items.Count > 0)
         {
-            m_npcManager.SetSelectedSlotNumber(0);
-            m_npcManager.Fire(m_mousePosition);
+            // m_npcManager.SetSelectedSlotNumber(0);
+            // m_npcManager.Fire(m_mousePosition);
             // transform.GetChild(0).GetComponent<Animator>().SetTrigger("Attack");
         }
         else
@@ -325,7 +324,7 @@ public class PlayerController : MonoBehaviour
     public void Throw()
     {
         m_mousePosition = GameManager.Utility.GetMousePos();
-        m_npcManager.ThrowItem(m_mousePosition);
+        // m_npcManager.ThrowItem(m_mousePosition);
     }
 
     /// <summary>
@@ -333,7 +332,8 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void PickUpItem()
     {
-        m_npcManager.PickupItem();
+        if (TryGetComponent(out ItemUser itemUser))
+            itemUser.PickupItem();
     }
 
     /// <summary>

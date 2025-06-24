@@ -14,10 +14,10 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
     RectTransform m_rt;
     [SerializeField] Transform m_partnerSlotSpacing; // 右側にいるパートナーのスロットスペーシング
 
-    public void Init(Item newItem, Sprite sprite)
+    public void Init(IItem newItem, Sprite sprite)
     {
-        ItemParent = newItem;
-        gameObject.name = newItem.name + "Slot";
+        Item = newItem;
+
         SetRayCastTarget(true);
         if (m_itemImage != null)
         {
@@ -35,11 +35,10 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
 
 
 
-
-    public IItemParent ItemParent { get; private set; }
-    public void SetItemParent(IItemParent itemParent)
+    public IItem Item { get; private set; }
+    public void SetItem(Item item)
     {
-        ItemParent = itemParent;
+        Item = item;
     }
     public virtual void InitSlots(int slotCount)
     {
@@ -81,10 +80,10 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
 
     public void AddItem(int index, Item item)
     {
-        if (ItemParent.CanAddItem(index, item))
+        var itemHolder = Item.ItemHolder;
+        if (itemHolder.CanAddItemAt(index, item.ItemHolder))
         {
-            Debug.Log("Can add item to this slot.");
-            ItemParent.AddItem(index, item);
+            itemHolder.AddItemAt(index, item.ItemHolder);
         }
         else
         {
@@ -101,13 +100,13 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
         if (dropped != null)
         {
             Debug.Log("dropped != null");
-            Item item = null;
+            IItem item = null;
             if (dropped.TryGetComponent(out ItemSlot itemSlot))
-                item = (Item)itemSlot.ItemParent;
+                item = itemSlot.Item;
             if (item == null)
                 item = dropped.GetComponent<Item>();
 
-            AddItem(m_id, item);
+            AddItem(m_id, (Item)item);
         }
         eventData.Use();
     }
@@ -116,8 +115,7 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
     {
         base.OnRelease();
         transform.SetParent(null);
-        if (ItemParent is Item item)
-            item.OnReleaseItemSlotUI();
+        Item.OnReleaseItemSlotUI();
     }
 
 
@@ -159,7 +157,7 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
     public void OnBeginDrag(PointerEventData eventData)
     {
         // Debug.Log("Begin drag");
-        DragSystem.Instance.ItemSlotBeginDrag(this, (Item)ItemParent);
+        DragSystem.Instance.ItemSlotBeginDrag(this, (Item)Item);
 
         eventData.Use();
     }

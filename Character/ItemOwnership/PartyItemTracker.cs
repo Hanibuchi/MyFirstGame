@@ -21,7 +21,7 @@ public class PartyItemTracker
     }
     public void RegisterMember(ITrackablePartyMember trackablePartyMember)
     {
-        trackablePartyMember.OnRegisterd(_partyModifier);
+        trackablePartyMember.OnRegistered(_partyModifier);
     }
     public void UnregisterMember(ITrackablePartyMember trackablePartyMember)
     {

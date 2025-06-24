@@ -130,6 +130,6 @@ public class TestAttackItem : Item, IAttackItem
 	/// <param name="shot"></param>
 	public void ApplyRecoil(Shot shot)
 	{
-		shot.mobMan?.ApplyRecoil(shot);
+		shot.user?.GetComponent<KnockbackHandler>()?.Knockback(shot.recoil, (Vector2)transform.position - shot.target);
 	}
 }

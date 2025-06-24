@@ -21,7 +21,8 @@ public class ProjectileModifierItem : Item, IProjectileModifierItem
 
     public override void Fire(Shot shot)
     {
-        Parent.RemoveItem(this);
-        shot.mobMan?.ThrowItem(this, shot.target);
+        ItemHolder.ClearPrevRelation();
+        var attack = shot.user?.GetComponent<Attack>();
+        attack?.ThrowItem(this, shot.target);
     }
 }

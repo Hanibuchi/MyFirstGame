@@ -12,4 +12,5 @@ public class InitialStatusData : ScriptableObject
     public SpeedData speedData;
     public JobData jobData;
     public DeathData deathData;
+    public ItemUserData itemUserData;
 }

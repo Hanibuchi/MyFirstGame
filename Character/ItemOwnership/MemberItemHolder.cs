@@ -12,7 +12,12 @@ public class MemberItemHolder : ITrackablePartyMember, IMemberItemHolder
     public MemberItemTracker MemberItemTracker => _memberItemTracker;
     public int ItemCapacity { get; private set; } = 4;
     public bool IsFixedSize => true;
-    public List<IChildItemHolder> Items { get; private set; } = new();
+    [SerializeReference] List<IChildItemHolder> _items = new();
+    public List<IChildItemHolder> Items { get => _items; private set => _items = value; }
+    public void SetItemCapacity(int itemCapacity)
+    {
+        ItemCapacity = itemCapacity;
+    }
 
     public void ResetItems()
     {
@@ -21,6 +26,7 @@ public class MemberItemHolder : ITrackablePartyMember, IMemberItemHolder
         {
             Items.Add(null);
         }
+        _memberItemUIRefresher.RefreshUI();
     }
     public void SetPartyItemTracker(PartyItemTracker partyItemTracker)
     {
@@ -79,6 +85,7 @@ public class MemberItemHolder : ITrackablePartyMember, IMemberItemHolder
     {
         if (CanAddItemAt(index, childItemHolder))
         {
+            childItemHolder.ClearPrevRelation();
             if (Items[index] != null)
             {
                 int offset = 1, target;
@@ -119,7 +126,8 @@ public class MemberItemHolder : ITrackablePartyMember, IMemberItemHolder
                 }
             }
             Items[index] = childItemHolder;
-            childItemHolder.OnAddedToMember(PartyItemTracker, MemberItemTracker);
+            childItemHolder.OnAddedToMember(PartyItemTracker, _partyItemHolder, MemberItemTracker, this);
+            _memberItemUIRefresher.RefreshUI();
         }
         else
             Debug.LogWarning("item cannot be added");
@@ -131,6 +139,7 @@ public class MemberItemHolder : ITrackablePartyMember, IMemberItemHolder
             int index = Items.IndexOf(childItemHolder);
             Items[index] = null;
             childItemHolder.OnRemovedFromMember();
+            _memberItemUIRefresher.RefreshUI();
         }
         else
             Debug.LogWarning("Item is not in this party.");
@@ -139,21 +148,25 @@ public class MemberItemHolder : ITrackablePartyMember, IMemberItemHolder
     {
         ItemCapacity++;
         Items.Add(null);
+        _memberItemUIRefresher.RefreshUI();
     }
-
-    public void OnAddedToParty(PartyItemTracker partyItemTracker)
+    [SerializeReference] PartyItemHolder _partyItemHolder;
+    public PartyItemHolder PartyItemHolder => _partyItemHolder;
+    public void OnAddedToParty(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder)
     {
         SetPartyItemTracker(partyItemTracker);
         PartyItemTracker?.RegisterMember(this);
+        _partyItemHolder = partyItemHolder;
         foreach (var item in Items)
         {
-            item?.OnAddedToParty(partyItemTracker);
+            item?.OnAddedToParty(partyItemTracker, partyItemHolder);
         }
     }
     public void OnRemovedFromParty()
     {
         PartyItemTracker?.UnregisterMember(this);
         SetPartyItemTracker(null);
+        _partyItemHolder = null;
         foreach (var item in Items)
         {
             item?.OnRemovedFromParty();
@@ -161,13 +174,32 @@ public class MemberItemHolder : ITrackablePartyMember, IMemberItemHolder
     }
 
 
-    public void OnRegisterd(IPartyModifier partyModifier)
+    IPartyRegistrationHandler _partyRegistrationHandler;
+    public void SetPartyRegistrationHandler(IPartyRegistrationHandler partyRegistrationHandler)
     {
-        Debug.Log("registerd");
-        // ここにパーティに登録されたときする処理を記述する。
+        _partyRegistrationHandler = partyRegistrationHandler;
+    }
+    public void OnRegistered(IPartyModifier partyModifier)
+    {
+        _partyRegistrationHandler.OnRegistered(partyModifier);
     }
     public void OnUnregistered(IPartyModifier partyModifier)
     {
-        Debug.Log("unregisterd");
+        _partyRegistrationHandler.OnUnregistered(partyModifier);
+    }
+    IMemberItemUIRefresher _memberItemUIRefresher;
+    public void SetMemberItemUIRefresher(IMemberItemUIRefresher memberItemUIRefresher)
+    {
+        _memberItemUIRefresher = memberItemUIRefresher;
+    }
+
+    IItemUser _itemUser;
+    public void SetItemUser(IItemUser itemUser)
+    {
+        _itemUser = itemUser;
+    }
+    public IItemUser GetItemUser()
+    {
+        return _itemUser;
     }
 }

@@ -17,7 +17,7 @@ public class BagSlot : ItemSlot
     void GenAndSetSlot(int index)
     {
         string invSlotName;
-        if (ItemParent is BagItem bag)
+        if (Item is BagItem bag)
             invSlotName = bag.InvSlotID;
         else
             invSlotName = ResourceManager.ItemSlotID.InventorySlot.ToString();

@@ -9,10 +9,13 @@ using Zenject;
 [RequireComponent(typeof(ObjectManager))]
 [RequireComponent(typeof(Rigidbody2D))]
 // Itemの動作を統括するコンポーネント。ItemはItemに統合された。
-public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IItem, IItemParent
+public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IItem, IPartyRegistrationHandler, IMemberRegistrationHandler, IChildItemUIRefresher, IItemTypeProvider
 {
 	[SerializeField] protected ItemData m_itemData;
-	private ItemSlot m_itemSlotUI;
+	ItemSlot m_itemSlotUI;
+
+	[SerializeReference] IChildItemHolder _childItemHolder = new ChildItemHolder();
+	public IChildItemHolder ItemHolder => _childItemHolder;
 
 
 
@@ -122,7 +125,11 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		TryGetComponent(out m_rb);
 		m_gravity = m_rb.gravityScale;
 		m_deathHandler = GetComponent<DeathHandler>();
-		InitItems();
+		if (TryGetComponent(out PoolableResourceComponent poolableResourceComponent))
+		{
+			poolableResourceComponent.ReleaseCallback += Init;
+		}
+		Init();
 	}
 
 	protected virtual void Init()
@@ -133,7 +140,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			return;
 		}
 
-		m_itemCapacity = m_itemData.itemCapacity;
 		m_reloadTime = m_itemData.reloadTime;
 		m_targetLayer = m_itemData.targetLayer;
 		mp = m_itemData.mp;
@@ -146,10 +152,13 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		additionalAmount = m_itemData.amount;
 		m_slotID = m_itemData.slotID.ToString();
 
-		m_itemCapacity = m_itemData.m_itemCapacity;
-		m_attackItemCapacity = m_itemData.m_attackItemCapacity;
-		m_parameterModifierItemCapacity = m_itemData.m_parameterModifierItemCapacity;
-		m_projectileModifierItemCapacity = m_itemData.m_projectileModifierItemCapacity;
+		_childItemHolder.SetItem(this);
+		_childItemHolder.SetPartyRegistrationHandler(this);
+		_childItemHolder.SetMemberRegistrationHandler(this);
+		_childItemHolder.SetChildItemUIRefresher(this);
+		_childItemHolder.SetItemTypeProvider(this);
+		_childItemHolder.SetItemCapacityData(m_itemData.itemCapacityData);
+		_childItemHolder.ResetItems();
 	}
 
 	/// <summary>
@@ -158,8 +167,9 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <param name="shot"></param>
 	public void RegisterNextItemsToShot(Shot shot)
 	{
-		foreach (Item nextItem in Items)
+		foreach (ChildItemHolder itemHolder in ItemHolder.Items)
 		{
+			IItem nextItem = itemHolder.GetItem();
 			if (nextItem is IParameterModifierItem parameterModifierItem)
 			{
 				shot.EditParameters += parameterModifierItem.EditParameters;
@@ -242,10 +252,8 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// MPとリロード時間の初期設定をする。アイテムを走査してMPが足りるアイテムのIsMPSufficientをtrue，そうでないものをfalseにする。trueのもののリロード時間の総和を計算してCoolDownTimeに入れる。深さ優先探索。mpは行きがけ，reloadは帰りがけ。
 	/// </summary>
 	/// <param name="shot"></param>
-	protected void ProcessReloadAndMP(Shot shot)
+	public void ProcessReloadAndMP(Shot shot)
 	{
-		if (shot.mobMan == null)
-			return;
 
 		if (shot.user != null && shot.user.TryGetComponent(out Mana mana) && MP <= mana.MP)
 		{
@@ -258,8 +266,9 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			return;
 		}
 
-		foreach (var item in Items)
+		foreach (var itemHolder in ItemHolder.Items)
 		{
+			var item = itemHolder.GetItem();
 			item?.ProcessReloadAndMP(shot);
 		}
 
@@ -267,8 +276,9 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			CoolDownTime = ReloadTime;
 		else
 			CoolDownTime = 0;
-		foreach (var item in Items)
+		foreach (var itemHolder in ItemHolder.Items)
 		{
+			var item = itemHolder.GetItem();
 			if (item != null)
 				CoolDownTime += item.CoolDownTime;
 		}
@@ -309,7 +319,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	{
 		if (shot == null)
 		{
-			// Debug.Log($"shot:{shot} is null");
+			Debug.Log($"shot:{shot} is null");
 			return;
 		}
 
@@ -353,214 +363,48 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 
 
+	public void OnRegistered(IPartyModifier partyModifier)
+	{
+		// ここにパーティに登録されたときの処理を書く。
+	}
+	public void OnUnregistered(IPartyModifier partyModifier)
+	{
+	}
+	public void OnRegistered(IMemberModifier memberModifier)
+	{
+		// ここにメンバーに登録されたときの処理を書く。
+	}
+	public void OnUnregistered(IMemberModifier memberModifier)
+	{
+	}
 
 
 	// ここからnew
-	// 以下のメンバたちは終わったら上に移動させる
-	[SerializeField] Party m_party;
-	public Party OwnerParty
-	{
-		get { return m_party; }
-		set
-		{
-			// Partyに現在とは異なる値が代入された場合，次のアイテム達にもそれを伝える。
-			if (value != m_party)
-			{
-				m_party?.UnregisterItemAsParty(this);
-				value?.RegisterItemAsParty(Owner, this);
-				m_party = value;
 
-				foreach (Item item in Items)
-					if (item != null)
-						item.OwnerParty = value;
-			}
-		}
-	}
-	[SerializeField] IItemOwner m_owner;
-	/// <summary>
-	/// このアイテムの持ち主。自動でPartyも設定される。
-	/// </summary>
-	public IItemOwner Owner
-	{
-		get { return m_owner; }
-		set
-		{
-			// Ownerに現在とは異なる値が代入された場合，次のアイテム達にもそれを伝える。
-			if (value != m_owner)
-			{
-				m_owner?.UnregisterItem(this);
-				value?.RegisterItem(this);
-				m_owner = value;
-
-				foreach (Item item in Items)
-					if (item != null)
-						item.Owner = value;
-			}
-			OwnerParty = value?.OwnerParty;
-		}
-	}
-	[SerializeField] IItemParent m_parent;
-	public IItemParent Parent
-	{
-		get => m_parent;
-		private set
-		{
-			if (m_parent != null && m_parent.OwnerParty is PlayerParty)
-			{
-				m_parent.RefreshItemSlotUIs();
-			}
-			if (value != null)
-			{
-				EnableComponentsOnCollected(false);
-				if (value.OwnerParty is PlayerParty)
-					value.RefreshItemSlotUIs();
-			}
-			else
-				EnableComponentsOnCollected(true);
-			m_parent = value;
-		}
-	}
-	[SerializeField] List<Item> m_items = new();
-	/// <summary>
-	/// 次に使用するアイテム
-	/// </summary>
-	public List<Item> Items { get => m_items; private set => m_items = value; }
-
-	[SerializeField] protected int m_itemCapacity = 10;
-	[SerializeField] int m_attackItemCapacity = 2;
-	[SerializeField] int m_parameterModifierItemCapacity = 10;
-	[SerializeField] int m_projectileModifierItemCapacity = 3;
-
-	public virtual void InitItems()
-	{
-		Items.Clear();
-	}
 	// アイテムを追加できるか判定する。継承してアイテムの種類ごとに判定を変える。
-	public virtual bool CanAddItem(Item item)
-	{
-		if (CanAddItem(Items.Count, item))
-			return true;
-		else
-		{
-			foreach (var nextItem in Items)
-			{
-				if (nextItem is BagItem bag)
-				{
-					if (bag.CanAddItem(item))
-						return true;
-				}
-			}
-		}
-		return false;
-	}
-	public virtual bool CanAddItem(int index, Item item)
-	{
-		if (item != null && index <= Items.Count)
-		{
-			return IsWithinItemLimits(item);
-		}
-		else
-			return false;
-	}
-	protected virtual bool IsWithinItemLimits(Item item)
-	{
-		if (GetItemsCount() >= m_itemCapacity)
-			return false;
-		if (item is IAttackItem && Items.Count(a => a is IAttackItem) >= m_attackItemCapacity)
-			return false;
-		if (item is IParameterModifierItem && Items.Count(a => a is IParameterModifierItem) >= m_parameterModifierItemCapacity)
-			return false;
-		if (item is IProjectileModifierItem && Items.Count(a => a is IProjectileModifierItem) >= m_projectileModifierItemCapacity)
-			return false;
-		return true;
-	}
-	protected virtual int GetItemsCount()
-	{
-		return Items.Count;
-	}
-	public virtual void AddItem(Item item)
-	{
-		if (CanAddItem(Items.Count, item))
-		{
-			Debug.Log("this item can be added");
-			AddItem(Items.Count, item);
-			return;
-		}
-		else if (CanAddItem(item))
-		{
-			foreach (var nextItem in Items)
-			{
-				if (nextItem is BagItem bag && bag.CanAddItem(item))
-				{
-					bag.AddItem(item);
-					return;
-				}
-			}
-		}
-		Debug.Log("this item can not be added");
-	}
-	public virtual void AddItem(int index, Item item)
-	{
-		if (CanAddItem(index, item))
-		{
-			Debug.Log($"item: {gameObject.name}");
-			item.RemovePrevRelation();
-			Items.Insert(index, item);
-			item.OnAdded(this);
-		}
-		else
-			Debug.Log("item cannot be added");
-	}
-	public void OnAdded(IItemParent itemParent)
-	{
-		Owner = itemParent.Owner;
-		Parent = itemParent;
-	}
-
-	/// <summary>
-	/// これまで持っていた持ち主アイテムや持ち主（Owner）との関係を断ち切る。
-	/// </summary>
-	public void RemovePrevRelation()
-	{
-		Parent?.RemoveItem(this);
-	}
-	public virtual void RemoveItem(Item item)
-	{
-		if (Items.Contains(item))
-		{
-			Items.Remove(item);
-			item.OnRemoved();
-		}
-		else
-			Debug.LogWarning("item is not in Items");
-	}
-	public void OnRemoved()
-	{
-		Owner = null;
-		Parent = null;
-	}
 
 	/// <summary>
 	/// 直下のItemsのUIをリフレッシュする。もし直下のItemのItemSlotがnullの場合のみそのItemのUIをrefreshする。
 	/// </summary>
-	public void RefreshItemSlotUIs()
+	public void RefreshUI()
 	{
 		InitItemSlotUI();
 		m_itemSlotUI.DetachChildrenUI();
-		Debug.Log($"Owner: {Owner}, OwnerParty: {OwnerParty}");
+		// Debug.Log($"Owner: {Owner}, OwnerParty: {OwnerParty}");
 
-		for (int i = 0; i < Items.Count; i++)
+		for (int i = 0; i < ItemHolder.Items.Count; i++)
 		{
 			ItemSlot itemSlot = null;
-			Debug.Log($"Items[{i}]: {Items[i]}");
-			if (Items[i] != null)
+			// Debug.Log($"Items[{i}]: {Items[i]}");
+			var itemHolder = ItemHolder.Items[i];
+			if (itemHolder != null)
 			{
-				itemSlot = Items[i].GetItemSlotUI();
-				Debug.Log($"itemSlot: {itemSlot}");
+				var item = itemHolder.GetItem();
+				itemSlot = item.GetItemSlotUI();
 				if (itemSlot == null)
 				{
-					Items[i].RefreshItemSlotUIs();
-					itemSlot = Items[i].GetItemSlotUI();
+					item.RefreshUI();
+					itemSlot = item.GetItemSlotUI();
 				}
 			}
 			m_itemSlotUI.SetItemSlot(itemSlot, i);
@@ -584,8 +428,8 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		{
 			m_itemSlotUI = ResourceManager.Instance.GetOther(m_slotID).GetComponent<ItemSlot>();
 			m_itemSlotUI.Init(this, gameObject.GetComponentInChildren<SpriteRenderer>().sprite);
-			m_itemSlotUI.SetItemParent(this);
-			m_itemSlotUI.InitSlots(m_itemCapacity);
+			m_itemSlotUI.SetItem(this);
+			m_itemSlotUI.InitSlots(ItemHolder.ItemCapacity);
 		}
 	}
 
@@ -618,7 +462,15 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 
 
 
-
+	public void Drop()
+	{
+		ItemHolder.ClearPrevRelation();
+		EnableComponentsOnCollected(true);
+		if (m_itemSlotUI != null && m_itemSlotUI.TryGetComponent(out PoolableResourceComponent poolable))
+		{
+			poolable.Release();
+		}
+	}
 
 
 
@@ -689,7 +541,8 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 		Debug.Log("EndDrag");
 		// 必要に応じてドラッグ終了時の処理をここに追加
 		m_rb.gravityScale = m_gravity;
-		Parent?.RefreshItemSlotUIs();
+		if (ItemHolder.ParentItemHolder != null)
+			ItemHolder.ParentItemHolder.GetItem().RefreshUI();
 	}
 
 	/// <summary>
@@ -698,10 +551,22 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <returns></returns>
 	public void OnAddItemFailed()
 	{
-		if (Parent == null)
-		{
-			Parent.RemoveItem(this);
-			GameManager.Instance.PlayerNPCManager?.ThrowItem(this);
-		}
+		ItemHolder.ClearPrevRelation();
+		var attack = GameManager.Instance.Player?.GetComponent<Attack>();
+		attack?.ThrowItem(this);
+	}
+
+	public ItemType GetItemType()
+	{
+		ItemType type = ItemType.None;
+
+		if (this is IAttackItem)
+			type |= ItemType.Attack;
+		if (this is IParameterModifierItem)
+			type |= ItemType.ParameterModifier;
+		if (this is IProjectileModifierItem)
+			type |= ItemType.ProjectileModifier;
+
+		return type;
 	}
 }

@@ -12,7 +12,7 @@ public class PlayerParty : Party
     public static string PlayerPartyPath => Path.Combine(GameManager.PlayerDataPath, "PlayerParty");
     public override bool IsPlayerParty => true;
     PartyMember Player => Leader;
-    InventoryUI m_inventoryUI;
+    IPartyInventoryUI m_inventoryUI;
     IEquipmentUI m_equipmentUI;
 
     public void OnGameStart()
@@ -36,8 +36,8 @@ public class PlayerParty : Party
     {
         m_equipmentUI = UIManager.Instance.GetEquipmentUI();
         m_inventoryUI = UIManager.Instance.GetInventoryUI();
-        m_inventoryUI.SetItemParent(this);
-        m_inventoryUI.InitSlots(ItemCapacity);
+        m_inventoryUI.SetParty(this);
+        base.Init();
     }
 
     public void Save()
@@ -119,45 +119,9 @@ public class PlayerParty : Party
         }
     }
 
-
-
-
-
-
-    public override void RefreshItemSlotUIs()
+    public override void RefreshUI()
     {
-        base.RefreshItemSlotUIs();
-        m_inventoryUI.DetachChildrenUI();
-
-        for (int i = 0; i < Items.Count; i++)
-        {
-            ItemSlot itemSlot = null;
-            Debug.Log($"Items[{i}]: {Items[i]}");
-            if (Items[i] != null)
-            {
-                itemSlot = Items[i].GetItemSlotUI();
-                Debug.Log($"itemSlot: {itemSlot}");
-                if (itemSlot == null)
-                {
-                    Items[i].RefreshItemSlotUIs();
-                    itemSlot = Items[i].GetItemSlotUI();
-                }
-            }
-            m_inventoryUI.SetItemSlot(itemSlot, i);
-        }
-    }
-    public override void RegisterItemAsParty(IItemOwner owner, Item item)
-    {
-        base.RegisterItemAsParty(owner, item);
-    }
-    public override void UnregisterItemAsParty(Item item)
-    {
-        base.UnregisterItemAsParty(item);
-    }
-
-    public override void AddItemSlot()
-    {
-        base.AddItemSlot();
-        m_inventoryUI.AddSlot();
+        base.RefreshUI();
+        m_inventoryUI.UpdateInventoryUI(ItemHolder.Items);
     }
 }

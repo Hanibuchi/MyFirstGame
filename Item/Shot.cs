@@ -71,7 +71,7 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 
 	public Shot(Shot shot)
 	{
-		SetCore(shot.mobMan, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
+		SetCore(shot.user, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
 		SetExtras(shot.targetLayer, shot.damage, shot.diffusion, shot.speed, shot.duration, shot.size, shot.amount, shot.recoil);
 	}
 
@@ -82,12 +82,12 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 	/// <returns></returns>
 	public Shot CopyCore(Shot shot)
 	{
-		return SetCore(shot.mobMan, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
+		return SetCore(shot.user, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
 	}
 
-	public Shot SetCore(MobManager user, GameObject referenceObject, Vector2 target, LayerMask baseTargetLayer, Damage userDamageRate)
+	public Shot SetCore(GameObject user, GameObject referenceObject, Vector2 target, LayerMask baseTargetLayer, Damage userDamageRate)
 	{
-		this.mobMan = user;
+		this.user = user;
 		this.referenceObject = referenceObject;
 		this.baseTargetLayer = baseTargetLayer;
 		this.target = target;
@@ -111,6 +111,6 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 
 	public override string ToString()
 	{
-		return $"Shot: user: {mobMan}, referenceObj: {referenceObject}, target: {target}, baseTargetLayer: {baseTargetLayer}, userDamageRate: {userDamageRate}, targetLayer: {targetLayer}, damage: {damage}, diffusion: {diffusion}, speed: {speed}, duration: {duration}, size: {size}, amount: {amount}, recoil: {recoil}";
+		return $"Shot: user: {user}, referenceObj: {referenceObject}, target: {target}, baseTargetLayer: {baseTargetLayer}, userDamageRate: {userDamageRate}, targetLayer: {targetLayer}, damage: {damage}, diffusion: {diffusion}, speed: {speed}, duration: {duration}, size: {size}, amount: {amount}, recoil: {recoil}";
 	}
 }

@@ -2,12 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IChildItemHolder : IItemHolder, IItemTypeProvider
+public interface IChildItemHolder : IItemHolder, IItemTypeProvider, IItemProvider
 {
-    void OnAddedToParty(PartyItemTracker partyItemTracker);
+    PartyItemHolder PartyItemHolder { get; }
+    MemberItemHolder MemberItemHolder { get; }
+    ChildItemHolder ParentItemHolder { get; }
+    void OnAddedToParty(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder);
     void OnRemovedFromParty();
-    void OnAddedToMember(PartyItemTracker partyItemTracker, MemberItemTracker memberItemTracker);
+    void OnAddedToMember(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder, MemberItemTracker memberItemTracker, MemberItemHolder memberItemHolder);
     void OnRemovedFromMember();
-    void OnAddedToItem(PartyItemTracker partyItemTracker, MemberItemTracker memberItemTracker);
+    void OnAddedToItem(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder, MemberItemTracker memberItemTracker, MemberItemHolder memberItemHolder, ChildItemHolder parentItemHolder);
     void OnRemovedFromItem();
+    void SetItemTypeProvider(IItemTypeProvider itemTypeProvider);
+    void SetItem(IItem item);
+    void SetItemCapacityData(ItemCapacityData itemCapacityData);
+    void SetPartyRegistrationHandler(IPartyRegistrationHandler partyRegistrationHandler);
+    void SetMemberRegistrationHandler(IMemberRegistrationHandler memberRegistrationHandler);
+    void SetChildItemUIRefresher(IChildItemUIRefresher childItemUIRefresher);
+    void ClearPrevRelation();
 }

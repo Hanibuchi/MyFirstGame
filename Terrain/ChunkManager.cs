@@ -205,10 +205,11 @@ public class ChunkManager : MonoBehaviour
         {
             if (handler is NPCManager npc)
             {
-                if (npc.OwnerParty != null)
+                // if (npc.OwnerParty != null)
+                if (true)
                 {
                     // if (npc.IsLeader)
-                        // chunkData.partys.Add(npc.OwnerParty.MakePartyData());
+                    // chunkData.partys.Add(npc.OwnerParty.MakePartyData());
                 }
                 else
                 {

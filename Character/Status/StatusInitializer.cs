@@ -14,6 +14,7 @@ public class StatusInitializer : MonoBehaviour
     SpeedHandler m_speedHandler;
     JobHandler m_jobHandler;
     DeathHandler m_deathHandler;
+    ItemUser m_itemUser;
     private void Awake()
     {
         if (!isInitialized)
@@ -46,6 +47,8 @@ public class StatusInitializer : MonoBehaviour
         m_speedHandler = GetComponent<SpeedHandler>();
         m_jobHandler = GetComponent<JobHandler>();
         m_deathHandler = GetComponent<DeathHandler>();
+        m_itemUser = GetComponent<ItemUser>();
+        
 
         m_health?.Initialize(m_initialStatusData.healthData);
         m_mana?.Initialize(m_initialStatusData.manaData);
@@ -54,6 +57,7 @@ public class StatusInitializer : MonoBehaviour
         m_speedHandler?.Initialize(m_initialStatusData.speedData);
         m_jobHandler?.Initialize(m_initialStatusData.jobData);
         m_deathHandler?.Initialize(m_initialStatusData.deathData);
+        m_itemUser?.Initialize(m_initialStatusData.itemUserData);
 
         if (m_deathHandler != null)
         {
@@ -107,5 +111,7 @@ public class StatusInitializer : MonoBehaviour
             m_jobHandler.enabled = enabled;
         if (m_deathHandler != null)
             m_deathHandler.enabled = enabled;
+        if (m_itemUser != null)
+            m_itemUser.enabled = enabled;
     }
 }

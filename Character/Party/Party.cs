@@ -10,7 +10,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class Party : MonoBehaviour, IItemOwner, ISerializableComponent
+public class Party : MonoBehaviour, ISerializableComponent, IPartyItemUIRefresher
 {
     protected SerializeManager m_serializeHandler;
     [JsonProperty][SerializeField] List<PartyMember> m_members = new();
@@ -25,12 +25,12 @@ public class Party : MonoBehaviour, IItemOwner, ISerializableComponent
     private void Awake()
     {
         m_serializeHandler = GetComponent<SerializeManager>();
-        OwnerParty = this;
-        Owner = this;
-        InitItems();
     }
     public virtual void Init()
     {
+        _partyItemHolder.SetPartyItemTracker(_partyItemTracker);
+        _partyItemHolder.SetPartyItemUIRefresher(this);
+        ItemHolder.ResetItems();
     }
 
     /// <summary>
@@ -69,6 +69,8 @@ public class Party : MonoBehaviour, IItemOwner, ISerializableComponent
             {
                 member.OnBecomeLeader();
             }
+            if (member.TryGetComponent(out ItemUser itemUser))
+                ItemHolder.AddMember(itemUser.ItemHolder);
         }
         else
             Debug.LogWarning("idex is out of range");
@@ -94,6 +96,9 @@ public class Party : MonoBehaviour, IItemOwner, ISerializableComponent
 
         MemberList.Remove(member);
         member.OnLeaveParty();
+
+        if (member.TryGetComponent(out ItemUser itemUser))
+            ItemHolder.RemoveMember(itemUser.ItemHolder);
     }
 
     /// <summary>
@@ -165,128 +170,18 @@ public class Party : MonoBehaviour, IItemOwner, ISerializableComponent
     }
 
 
+    [SerializeField] PartyItemTracker _partyItemTracker = new();
+    public PartyItemTracker PartyItemTracker => _partyItemTracker;
+    [SerializeField] PartyItemHolder _partyItemHolder = new();
+    public PartyItemHolder ItemHolder => _partyItemHolder;
 
-
-
-
-
-    // ここからアイテム管理関連の改良版
-    public Party OwnerParty { get; set; }
-    public IItemOwner Owner { get; set; }
-    [SerializeField] List<Item> m_items = new();
-    /// <summary>
-    /// アイテム
-    /// </summary>
-    public List<Item> Items { get => m_items; private set => m_items = value; }
-    public int ItemCapacity { get; set; } = 1;
-    public void InitItems()
+    public virtual void RefreshUI()
     {
-        ((IItemOwner)this).ResetItems();
-    }
-    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
-    public bool CanAddItem(Item item)
-    {
-        if (Items.Count(x => x == null) >= 1)
-            return true;
-        else
-        {
-            foreach (var nextItem in Items)
-            {
-                if (nextItem is BagItem bag)
-                {
-                    Debug.Log($"bag.CanAddItem(item): {bag.CanAddItem(item)}");
-                    if (bag.CanAddItem(item))
-                        return true;
-                }
-            }
-        }
-        return false;
-    }
-    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
-    public bool CanAddItem(int index, Item item)
-    {
-        if (0 <= index && index < Items.Count && item != null && Items[index] == null)
-            return true;
-        else
-            return false;
-    }
-    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
-    public void AddItem(Item item)
-    {
-        Debug.Log($"CanAddItem: {CanAddItem(item)}");
-        if (CanAddItem(item))
-        {
-            for (int i = 0; i < Items.Count; i++)
-            {
-                if (Items[i] == null && CanAddItem(i, item))
-                {
-                    AddItem(i, item);
-                    return;
-                }
-            }
-            foreach (var nextItem in Items)
-            {
-                if (nextItem is BagItem bag && bag.CanAddItem(item))
-                {
-                    bag.AddItem(item);
-                    return;
-                }
-            }
-        }
-    }
-    // Party, MobM, BagItemに同じような処理あり（完全に同じとは限らない）。
-    public void AddItem(int index, Item item)
-    {
-        if (CanAddItem(index, item))
-        {
-            Debug.Log($"Party, AddItem: {item} to {index}");
-            item.RemovePrevRelation();
-            Items[index] = item;
-            item.OnAdded(this);
-        }
-        else
-            Debug.LogWarning("item cannot be added");
-    }
-    public void RemoveItem(Item item)
-    {
-        if (Items.Contains(item))
-        {
-            int index = Items.IndexOf(item);
-            Items[index] = null;
-            item.OnRemoved();
-        }
-        else
-            Debug.LogWarning("Item is not in this party.");
-    }
-    public virtual void RefreshItemSlotUIs()
-    {
-    }
-
-    public void RegisterItem(Item item)
-    {
-        Debug.Log("Party, RegisterItem was called");
-    }
-    public void UnregisterItem(Item item)
-    {
-        Debug.Log("Party, UnregisterItem was called");
-    }
-    public virtual void RegisterItemAsParty(IItemOwner owner, Item item)
-    {
-        Debug.Log("Party, RegisterItemAsParty was called");
-    }
-    public virtual void UnregisterItemAsParty(Item item)
-    {
-        Debug.Log("Party, UnregisterItemAsParty was called");
-    }
-    public virtual void AddItemSlot()
-    {
-        ItemCapacity++;
-        Items.Add(null);
     }
 
     // ここまでアイテム管理関連の改良版
 
-
+//
 
 
 }

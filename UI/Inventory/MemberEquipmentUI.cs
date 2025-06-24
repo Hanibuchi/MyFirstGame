@@ -3,32 +3,23 @@ using System.Collections;
 using System.Collections.Generic;
 using MyGame;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 
-public class MemberEquipmentUI : UI, IItemParentUI
+public class MemberEquipmentUI : UI, IItemParentUI, IMemberEquipmentUI
 {
-    public IItemParent ItemParent { get; private set; }
-    public void SetItemParent(IItemParent itemParent)
+    public ItemUser ItemUser { get; private set; }
+    public void SetItemUser(ItemUser itemUser)
     {
-        ItemParent = itemParent;
+        ItemUser = itemUser;
     }
 
-    /// <summary>
-    /// EquipmentSlotsをItemCapacityの数だけ生成する。
-    /// </summary>
-    public void InitSlots(int slotCount)
-    {
-        for (int i = 0; i < slotCount; i++)
-        {
-            GenAndSetSlot(i);
-        }
-    }
     public void AddItem(int index, Item item)
     {
-        if (ItemParent.CanAddItem(index, item))
-            ItemParent.AddItem(index, item);
+        if (ItemUser.ItemHolder.CanAddItemAt(index, item.ItemHolder))
+            ItemUser.ItemHolder.AddItemAt(index, item.ItemHolder);
         else
         {
             Debug.Log("Cannot add item to this slot.");
@@ -36,7 +27,9 @@ public class MemberEquipmentUI : UI, IItemParentUI
             item?.OnAddItemFailed();
         }
     }
-    public void DetachChildrenUI()
+
+
+    public void UpdateEquipmentUI(List<IChildItemHolder> itemHolders)
     {
         foreach (Transform slotTrs in m_itemSlotFrame)
         {
@@ -44,42 +37,48 @@ public class MemberEquipmentUI : UI, IItemParentUI
             {
                 slot.DetachChildrenUI();
             }
+            if (slotTrs.TryGetComponent(out PoolableResourceComponent poolable))
+            {
+                poolable.Release();
+            }
         }
-    }
 
-    public void SetItemSlot(ItemSlot itemSlot, int index)
-    {
-        var slot = m_itemSlotFrame.GetChild(index).GetComponent<InventorySlot>();
-        if (itemSlot != null)
+        Debug.Log($"count: {itemHolders.Count}");
+        for (int i = 0; i < itemHolders.Count; i++)
         {
-            slot.SetItemSlot(itemSlot);
+            InventorySlot slot = GenAndSetSlot(i);
+            Debug.Log($"slot: {slot}");
+
+            var itemHolder = itemHolders[i];
+            if (itemHolder != null)
+            {
+                var item = itemHolder.GetItem();
+                ItemSlot itemSlot = item.GetItemSlotUI();
+                if (itemSlot == null)
+                {
+                    item.RefreshUI();
+                    itemSlot = item.GetItemSlotUI();
+                }
+                slot.SetItemSlot(itemSlot);
+            }
         }
-        else
-        {
-            Debug.Log("itemSlot is null");
-            slot.DetachChildrenUI();
-        }
-    }
-    /// <summary>
-    /// 装備スロットを追加する。
-    /// </summary>
-    public void AddSlot()
-    {
-        GenAndSetSlot(m_npcManager.ItemCapacity);
+        foreach (Transform slotTrs in m_itemSlotFrame)
+            Debug.Log($"slot: {slotTrs}");
     }
 
     /// <summary>
     /// inventorySlotを生成して，諸設定をする。一番後ろに追加されることを想定している。
     /// </summary>
     /// <param name="index"></param>
-    void GenAndSetSlot(int index)
+    InventorySlot GenAndSetSlot(int index)
     {
         var slot = ResourceManager.Instance.GetOther(ResourceManager.ItemSlotID.InventorySlot.ToString()).GetComponent<InventorySlot>();
         slot.SetID(index);
         slot.SetItemParentUI(this);
         slot.transform.SetParent(m_itemSlotFrame);
+        slot.transform.SetAsLastSibling();
+        return slot;
     }
-
 
 
 
@@ -155,8 +154,6 @@ public class MemberEquipmentUI : UI, IItemParentUI
         }
 
         SetCallbacks(true);
-
-        InitSlots(m_npcManager.ItemCapacity);
 
         name = obj.name + "EquipMentMenu";
     }

@@ -23,22 +23,6 @@ public class NPCManager : MobManager
 	public event Action<Sprite> OnNPCImageChanged;
 
 
-	[SerializeField] MemberEquipmentUI m_equipmentMenu;
-	public MemberEquipmentUI EquipmentMenuUI
-	{
-		get
-		{
-			if (m_equipmentMenu == null)
-			{
-				m_equipmentMenu = ResourceManager.Instance.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString()).GetComponent<MemberEquipmentUI>();
-				m_equipmentMenu.SetItemParent(this);
-				m_equipmentMenu.RegisterStatus(gameObject);
-			}
-			return m_equipmentMenu;
-		}
-		private set => m_equipmentMenu = value;
-	}
-
 	protected override void ResetToGeneratedStatus()
 	{
 		base.ResetToGeneratedStatus();
@@ -66,31 +50,26 @@ public class NPCManager : MobManager
 
 
 
-	public override void RefreshItemSlotUIs()
+	public override void RefreshUI()
 	{
 		Debug.Log("RefreshItemSlotUIs");
-		EquipmentMenuUI.DetachChildrenUI();
+		// EquipmentMenuUI.DetachChildrenUI();
 
-		for (int i = 0; i < Items.Count; i++)
-		{
-			ItemSlot itemSlot = null;
-			if (Items[i] != null)
-			{
-				Debug.Log($"Item: {Items[i]}");
-				itemSlot = Items[i].GetItemSlotUI();
-				if (itemSlot == null)
-				{
-					Items[i].RefreshItemSlotUIs();
-					itemSlot = Items[i].GetItemSlotUI();
-				}
-			}
-			EquipmentMenuUI.SetItemSlot(itemSlot, i);
-		}
-	}
-	public override void AddItemSlot()
-	{
-		base.AddItemSlot();
-		EquipmentMenuUI.AddSlot();
+		// for (int i = 0; i < Items.Count; i++)
+		// {
+		// 	ItemSlot itemSlot = null;
+		// 	if (Items[i] != null)
+		// 	{
+		// 		Debug.Log($"Item: {Items[i]}");
+		// 		itemSlot = Items[i].GetItemSlotUI();
+		// 		if (itemSlot == null)
+		// 		{
+		// 			Items[i].RefreshUI();
+		// 			itemSlot = Items[i].GetItemSlotUI();
+		// 		}
+		// 	}
+		// 	EquipmentMenuUI.SetItemSlot(itemSlot, i);
+		// }
 	}
 
 
@@ -108,11 +87,6 @@ public class NPCManager : MobManager
 	public float GetHiringCost()
 	{
 		return 0;
-	}
-
-	// EquipmentMenu(UI)を削除。PartyMemberを削除するとき呼び出す。
-	public void DestroyEquipmentMenu()
-	{
 	}
 
 	/// <summary>

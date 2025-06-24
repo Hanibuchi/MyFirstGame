@@ -47,4 +47,5 @@ public class PartyManager : MonoBehaviour
         }
         ResourceManager.Instance.ReleaseOther(ResourceManager.OtherID.Party.ToString(), party.gameObject);
     }
+    
 }

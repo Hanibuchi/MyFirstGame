@@ -62,8 +62,8 @@ public class PartyMember : MonoBehaviour
 
             // アイテム所持するコンポネントを分離したらこれも分離する。
             var memberEquipmentUI = m_memberEquipmentUI.GetComponent<MemberEquipmentUI>();
-            IItemParent itemParent = GetComponent<IItemParent>();
-            memberEquipmentUI.SetItemParent(itemParent);
+            var itemUser = GetComponent<ItemUser>();
+            memberEquipmentUI.SetItemUser(itemUser);
             memberEquipmentUI.RegisterStatus(gameObject);
         }
         return m_memberEquipmentUI;

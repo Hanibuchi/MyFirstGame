@@ -40,7 +40,7 @@ public class Slot : UI, IDropHandler
             Debug.Log("dropped != null");
             Item item = null;
             if (dropped.TryGetComponent(out ItemSlot itemSlot))
-                item = (Item)itemSlot.ItemParent;
+                item = (Item)itemSlot.Item;
             if (item == null)
                 item = dropped.GetComponent<Item>();
 

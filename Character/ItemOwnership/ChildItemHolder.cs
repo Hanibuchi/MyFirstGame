@@ -12,7 +12,8 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
 
     public int ItemCapacity { get; private set; } = 8;
     public virtual bool IsFixedSize { get; set; } = false;
-    public List<IChildItemHolder> Items { get; private set; } = new();
+    [SerializeReference] List<IChildItemHolder> _items = new();
+    public List<IChildItemHolder> Items { get => _items; private set => _items = value; }
 
     [SerializeField] int m_attackItemCapacity = 4;
     [SerializeField] int m_parameterModifierItemCapacity = 4;
@@ -28,6 +29,7 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
                 Items.Add(null);
             }
         }
+        _childItemUIRefresher.RefreshUI();
     }
     public void SetPartyItemTracker(PartyItemTracker partyItemTracker)
     {
@@ -152,6 +154,7 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
     {
         if (CanAddItemAt(index, childItemHolder))
         {
+            childItemHolder.ClearPrevRelation();
             if (IsFixedSize)
             {
                 if (Items[index] != null)
@@ -197,7 +200,8 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
             }
             else
                 Items.Insert(index, childItemHolder);
-            childItemHolder.OnAddedToItem(PartyItemTracker, MemberItemTracker);
+            childItemHolder.OnAddedToItem(PartyItemTracker, _partyItemHolder, MemberItemTracker, _memberItemHolder, this);
+            _childItemUIRefresher.RefreshUI();
         }
     }
     public void RemoveItem(IChildItemHolder childItemHolder)
@@ -214,6 +218,7 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
                 Items.Remove(childItemHolder);
             }
             childItemHolder.OnRemovedFromItem();
+            _childItemUIRefresher.RefreshUI();
         }
         else
             Debug.LogWarning("item is not in Items");
@@ -223,34 +228,45 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
         ItemCapacity++;
         if (IsFixedSize)
             Items.Add(null);
+        _childItemUIRefresher.RefreshUI();
     }
-    public void OnAddedToParty(PartyItemTracker partyItemTracker)
+    public void OnAddedToParty(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder)
     {
         SetPartyItemTracker(partyItemTracker);
         PartyItemTracker.RegisterItem(this);
+        _partyItemHolder = partyItemHolder;
         foreach (var item in Items)
         {
-            item?.OnAddedToParty(partyItemTracker);
+            item?.OnAddedToParty(partyItemTracker, partyItemHolder);
         }
     }
     public void OnRemovedFromParty()
     {
         PartyItemTracker.UnregisterItem(this);
         SetPartyItemTracker(null);
+        _partyItemHolder = null;
         foreach (var item in Items)
         {
             item?.OnRemovedFromParty();
         }
     }
-    public void OnAddedToMember(PartyItemTracker partyItemTracker, MemberItemTracker memberItemTracker)
+    public PartyItemHolder PartyItemHolder => _partyItemHolder;
+    PartyItemHolder _partyItemHolder;
+    public MemberItemHolder MemberItemHolder => _memberItemHolder;
+    MemberItemHolder _memberItemHolder;
+    public ChildItemHolder ParentItemHolder => _parentChildItemHolder;
+    ChildItemHolder _parentChildItemHolder;
+    public void OnAddedToMember(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder, MemberItemTracker memberItemTracker, MemberItemHolder memberItemHolder)
     {
         SetPartyItemTracker(partyItemTracker);
         SetMemberItemTracker(memberItemTracker);
         PartyItemTracker?.RegisterItem(this);
         MemberItemTracker?.RegisterItem(this);
+        _partyItemHolder = partyItemHolder;
+        _memberItemHolder = memberItemHolder;
         foreach (var item in Items)
         {
-            item?.OnAddedToMember(partyItemTracker, memberItemTracker);
+            item?.OnAddedToMember(partyItemTracker, partyItemHolder, memberItemTracker, memberItemHolder);
         }
     }
     public void OnRemovedFromMember()
@@ -259,28 +275,36 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
         MemberItemTracker?.UnregisterItem(this);
         SetPartyItemTracker(null);
         SetMemberItemTracker(null);
+        _partyItemHolder = null;
+        _memberItemHolder = null;
         foreach (var item in Items)
         {
             item?.OnRemovedFromMember();
         }
     }
-    public void OnAddedToItem(PartyItemTracker partyItemTracker, MemberItemTracker memberItemTracker)
+    public void OnAddedToItem(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder, MemberItemTracker memberItemTracker, MemberItemHolder memberItemHolder, ChildItemHolder parentItemHolder)
     {
         SetPartyItemTracker(partyItemTracker);
         SetMemberItemTracker(memberItemTracker);
-        PartyItemTracker.RegisterItem(this);
-        MemberItemTracker.RegisterItem(this);
+        PartyItemTracker?.RegisterItem(this);
+        MemberItemTracker?.RegisterItem(this);
+        _partyItemHolder = partyItemHolder;
+        _memberItemHolder = memberItemHolder;
+        _parentChildItemHolder = parentItemHolder;
         foreach (var item in Items)
         {
-            item?.OnAddedToItem(partyItemTracker, memberItemTracker);
+            item?.OnAddedToItem(partyItemTracker, _partyItemHolder, memberItemTracker, _memberItemHolder, this);
         }
     }
     public void OnRemovedFromItem()
     {
-        PartyItemTracker.UnregisterItem(this);
-        MemberItemTracker.UnregisterItem(this);
+        PartyItemTracker?.UnregisterItem(this);
+        MemberItemTracker?.UnregisterItem(this);
         SetPartyItemTracker(null);
         SetMemberItemTracker(null);
+        _partyItemHolder = null;
+        _memberItemHolder = null;
+        _parentChildItemHolder = null;
         foreach (var item in Items)
         {
             item?.OnRemovedFromItem();
@@ -297,14 +321,82 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
         return _itemTypeProvider.GetItemType();
     }
 
+    IPartyRegistrationHandler _partyRegistrationHandler;
+    public void SetPartyRegistrationHandler(IPartyRegistrationHandler partyRegistrationHandler)
+    {
+        _partyRegistrationHandler = partyRegistrationHandler;
+    }
+    IMemberRegistrationHandler _memberRegistrationHandler;
+    public void SetMemberRegistrationHandler(IMemberRegistrationHandler memberRegistrationHandler)
+    {
+        _memberRegistrationHandler = memberRegistrationHandler;
+    }
+    public void OnRegisterd(IPartyModifier partyModifier)
+    {
+        _partyRegistrationHandler.OnRegistered(partyModifier);
+    }
+    public void OnUnregistered(IPartyModifier partyModifier)
+    {
+        _partyRegistrationHandler.OnUnregistered(partyModifier);
+    }
     public void OnRegisterd(IMemberModifier memberModifier)
     {
-        // ここにパーティやメンバーに登録されたときする処理を記述する。
+        _memberRegistrationHandler.OnRegistered(memberModifier);
     }
     public void OnUnregistered(IMemberModifier memberModifier)
     {
-
+        _memberRegistrationHandler.OnUnregistered(memberModifier);
     }
-    public void OnRegisterd(IPartyModifier partyModifier) { }
-    public void OnUnregistered(IPartyModifier partyModifier) { }
+
+    IItem _item;
+    public void SetItem(IItem item)
+    {
+        _item = item;
+    }
+    public IItem GetItem()
+    {
+        if (_item != null)
+            return _item;
+        else
+        {
+            Debug.LogWarning("_item is null. use SetItem(IItem)");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// ItemCapacityDataを受け取って値を代入するだけ。Itemsのリセットとかはしない。
+    /// </summary>
+    /// <param name="itemCapacityData"></param>
+    public void SetItemCapacityData(ItemCapacityData itemCapacityData)
+    {
+        ItemCapacity = itemCapacityData.itemCapacity;
+        m_attackItemCapacity = itemCapacityData.attackItemCapacity;
+        m_parameterModifierItemCapacity = itemCapacityData.parameterModifierItemCapacity;
+        m_projectileModifierItemCapacity = itemCapacityData.projectileModifierItemCapacity;
+    }
+    IChildItemUIRefresher _childItemUIRefresher;
+    public void SetChildItemUIRefresher(IChildItemUIRefresher childItemUIRefresher)
+    {
+        _childItemUIRefresher = childItemUIRefresher;
+    }
+
+    public void ClearPrevRelation()
+    {
+        if (ParentItemHolder != null)
+        {
+            Debug.Log("ClearPrevRelation: ParentItemHolder.RemoveItem(this)");
+            ParentItemHolder.RemoveItem(this);
+        }
+        else if (MemberItemHolder != null)
+        {
+            Debug.Log("ClearPrevRelation: MemberItemHolder.RemoveItem(this)");
+            MemberItemHolder.RemoveItem(this);
+        }
+        else if (PartyItemHolder != null)
+        {
+            Debug.Log("ClearPrevRelation: PartyItemHolder.RemoveItem(this)");
+            PartyItemHolder.RemoveItem(this);
+        }
+    }
 }
