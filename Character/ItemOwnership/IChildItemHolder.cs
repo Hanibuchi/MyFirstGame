@@ -7,6 +7,7 @@ public interface IChildItemHolder : IItemHolder, IItemTypeProvider, IItemProvide
     PartyItemHolder PartyItemHolder { get; }
     MemberItemHolder MemberItemHolder { get; }
     ChildItemHolder ParentItemHolder { get; }
+    bool IsBag { get; }
     void OnAddedToParty(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder);
     void OnRemovedFromParty();
     void OnAddedToMember(PartyItemTracker partyItemTracker, PartyItemHolder partyItemHolder, MemberItemTracker memberItemTracker, MemberItemHolder memberItemHolder);

@@ -39,7 +39,6 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     {
         DefaultSlot,
         InventorySlot,
-        BagSlot,
     }
     /// <summary>
     /// UIのリソースの名前を管理するためのenum。UIPageはUIPageTypeで管理されてる。
@@ -362,7 +361,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
 
     public ChunkData GetChunkData(string id)
     {
-        if (!chunkDatas.ContainsKey(id) || chunkDatas[id] == null)
+        if (!chunkDatas.ContainsKey(id))
         {
             Debug.LogWarning($"this key({id}) is not contained");
             return null;
@@ -377,7 +376,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
 
     public BaseTile GetTile(string id)
     {
-        if (!baseTiles.ContainsKey(id) || baseTiles[id] == null)
+        if (!baseTiles.ContainsKey(id))
         {
             Debug.LogWarning($"this key({id}) is not contained");
             return null;
@@ -392,7 +391,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
 
     GameObject GetFromObjectPool(ResourceType type, Dictionary<string, GameObjectPool> dictionary, string id)
     {
-        if (!dictionary.ContainsKey(id) || dictionary[id] == null)
+        if (!dictionary.ContainsKey(id))
         {
             Debug.LogWarning($"this key({id}) is not contained");
             return null;
@@ -407,7 +406,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     }
     void Release(Dictionary<string, GameObjectPool> dictionary, string id, GameObject item)
     {
-        if (!dictionary.ContainsKey(id) || dictionary[id] == null)
+        if (!dictionary.ContainsKey(id))
         {
             Debug.Log("this id is not contained");
             return;
@@ -420,7 +419,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     }
     void Clear(Dictionary<string, GameObjectPool> dictionary, string id)
     {
-        if (!dictionary.ContainsKey(id) || dictionary[id] == null)
+        if (!dictionary.ContainsKey(id))
         {
             Debug.Log("this id is not contained");
             return;

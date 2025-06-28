@@ -42,10 +42,10 @@ public class PartyItemHolder : IItemHolder
         {
             foreach (var item in Items)
             {
-                if (item is IBagChildItemHolder bag)
+                if (item.IsBag)
                 {
-                    Debug.Log($"bag.CanAddItem(item): {bag.CanAddItem(childItemHolder)}");
-                    if (bag.CanAddItem(childItemHolder))
+                    Debug.Log($"bag.CanAddItem(item): {item.CanAddItem(childItemHolder)}");
+                    if (item.CanAddItem(childItemHolder))
                         return true;
                 }
             }
@@ -71,9 +71,9 @@ public class PartyItemHolder : IItemHolder
             }
             foreach (var item in Items)
             {
-                if (item is IBagChildItemHolder bag && bag.CanAddItem(childItemHolder))
+                if (item.IsBag && item.CanAddItem(childItemHolder))
                 {
-                    bag.AddItem(childItemHolder);
+                    item.AddItem(childItemHolder);
                     return;
                 }
             }

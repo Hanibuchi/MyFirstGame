@@ -10,6 +10,8 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
     public PartyItemTracker PartyItemTracker { get; private set; }
     public MemberItemTracker MemberItemTracker { get; private set; }
 
+    public virtual bool IsBag { get; private set; }
+
     public int ItemCapacity { get; private set; } = 8;
     public virtual bool IsFixedSize { get; set; } = false;
     [SerializeReference] List<IChildItemHolder> _items = new();
@@ -50,10 +52,10 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
             {
                 foreach (var item in Items)
                 {
-                    if (item is IBagChildItemHolder bag)
+                    if (item.IsBag)
                     {
-                        Debug.Log($"bag.CanAddItem(item): {bag.CanAddItem(childItemHolder)}");
-                        if (bag.CanAddItem(childItemHolder))
+                        Debug.Log($"bag.CanAddItem(item): {item.CanAddItem(childItemHolder)}");
+                        if (item.CanAddItem(childItemHolder))
                             return true;
                     }
                 }
@@ -68,9 +70,9 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
             {
                 foreach (var item in Items)
                 {
-                    if (item is IBagChildItemHolder bag)
+                    if (item.IsBag)
                     {
-                        if (bag.CanAddItem(childItemHolder))
+                        if (item.CanAddItem(childItemHolder))
                             return true;
                     }
                 }
@@ -97,11 +99,11 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
         ItemType itemType = childItemHolder.GetItemType();
         if (Items.Count(a => a != null) >= ItemCapacity)
             return false;
-        if ((itemType & ItemType.Attack) != 0 && Items.Count(a => (a.GetItemType() & ItemType.Attack) != 0) >= m_attackItemCapacity)
+        if ((itemType & ItemType.Attack) != 0 && Items.Count(a => a != null && (a.GetItemType() & ItemType.Attack) != 0) >= m_attackItemCapacity)
             return false;
-        if ((itemType & ItemType.ParameterModifier) != 0 && Items.Count(a => (a.GetItemType() & ItemType.ParameterModifier) != 0) >= m_parameterModifierItemCapacity)
+        if ((itemType & ItemType.ParameterModifier) != 0 && Items.Count(a => a != null && (a.GetItemType() & ItemType.ParameterModifier) != 0) >= m_parameterModifierItemCapacity)
             return false;
-        if ((itemType & ItemType.ProjectileModifier) != 0 && Items.Count(a => (a.GetItemType() & ItemType.ProjectileModifier) != 0) >= m_projectileModifierItemCapacity)
+        if ((itemType & ItemType.ProjectileModifier) != 0 && Items.Count(a => a != null && (a.GetItemType() & ItemType.ProjectileModifier) != 0) >= m_projectileModifierItemCapacity)
             return false;
         return true;
     }
@@ -122,9 +124,9 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
                 }
                 foreach (var item in Items)
                 {
-                    if (item is IBagChildItemHolder bag && bag.CanAddItem(childItemHolder))
+                    if (item.IsBag && item.CanAddItem(childItemHolder))
                     {
-                        bag.AddItem(childItemHolder);
+                        item.AddItem(childItemHolder);
                         return;
                     }
                 }
@@ -141,9 +143,9 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
             {
                 foreach (var item in Items)
                 {
-                    if (item is IBagChildItemHolder bag && bag.CanAddItem(childItemHolder))
+                    if (item.IsBag && item.CanAddItem(childItemHolder))
                     {
-                        bag.AddItem(childItemHolder);
+                        item.AddItem(childItemHolder);
                         return;
                     }
                 }
@@ -374,6 +376,8 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
         m_attackItemCapacity = itemCapacityData.attackItemCapacity;
         m_parameterModifierItemCapacity = itemCapacityData.parameterModifierItemCapacity;
         m_projectileModifierItemCapacity = itemCapacityData.projectileModifierItemCapacity;
+        IsBag = itemCapacityData.isBag;
+        IsFixedSize = itemCapacityData.isFixedSize;
     }
     IChildItemUIRefresher _childItemUIRefresher;
     public void SetChildItemUIRefresher(IChildItemUIRefresher childItemUIRefresher)

@@ -15,7 +15,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	ItemSlot m_itemSlotUI;
 
 	[SerializeReference] IChildItemHolder _childItemHolder = new ChildItemHolder();
-	public IChildItemHolder ItemHolder => _childItemHolder;
+	public virtual IChildItemHolder ItemHolder => _childItemHolder;
 
 
 
@@ -389,26 +389,7 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	public void RefreshUI()
 	{
 		InitItemSlotUI();
-		m_itemSlotUI.DetachChildrenUI();
-		// Debug.Log($"Owner: {Owner}, OwnerParty: {OwnerParty}");
-
-		for (int i = 0; i < ItemHolder.Items.Count; i++)
-		{
-			ItemSlot itemSlot = null;
-			// Debug.Log($"Items[{i}]: {Items[i]}");
-			var itemHolder = ItemHolder.Items[i];
-			if (itemHolder != null)
-			{
-				var item = itemHolder.GetItem();
-				itemSlot = item.GetItemSlotUI();
-				if (itemSlot == null)
-				{
-					item.RefreshUI();
-					itemSlot = item.GetItemSlotUI();
-				}
-			}
-			m_itemSlotUI.SetItemSlot(itemSlot, i);
-		}
+		m_itemSlotUI.UpdateItemSlotUI(ItemHolder.Items, ItemHolder.IsBag);
 	}
 	/// <summary>
 	/// m_itemSlotUIを返す。nullのときもそのまま返す。
@@ -429,7 +410,6 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 			m_itemSlotUI = ResourceManager.Instance.GetOther(m_slotID).GetComponent<ItemSlot>();
 			m_itemSlotUI.Init(this, gameObject.GetComponentInChildren<SpriteRenderer>().sprite);
 			m_itemSlotUI.SetItem(this);
-			m_itemSlotUI.InitSlots(ItemHolder.ItemCapacity);
 		}
 	}
 

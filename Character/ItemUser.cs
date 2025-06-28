@@ -86,7 +86,7 @@ public class ItemUser : MonoBehaviour, IItemUser, IMemberItemUIRefresher, IParty
         {
             if (m_equipmentMenu == null)
             {
-                m_equipmentMenu = GetComponent<PartyMember>()?.GetMemberUI().GetComponent<IMemberEquipmentUI>();
+                m_equipmentMenu = GetComponent<PartyMember>()?.GetMemberUI();
                 if (m_equipmentMenu == null)
                     return null;
                 m_equipmentMenu.SetItemUser(this);

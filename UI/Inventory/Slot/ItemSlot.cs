@@ -40,12 +40,73 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
     {
         Item = item;
     }
-    public virtual void InitSlots(int slotCount)
-    {
 
+
+    public void UpdateItemSlotUI(List<IChildItemHolder> itemHolders, bool isBag)
+    {
+        foreach (Transform slotTrs in m_itemSlotFrame)
+        {
+            if (slotTrs.TryGetComponent(out InventorySlot slot))
+            {
+                slot.DetachChildrenUI();
+            }
+            if (slotTrs.TryGetComponent(out PoolableResourceComponent poolable))
+            {
+                poolable.Release();
+            }
+        }
+
+        if (isBag)
+        {
+            Debug.Log($"count: {itemHolders.Count}");
+            for (int i = 0; i < itemHolders.Count; i++)
+            {
+                InventorySlot slot = GenAndSetSlot(i);
+                Debug.Log($"slot: {slot}");
+
+                var itemHolder = itemHolders[i];
+                if (itemHolder != null)
+                {
+                    var item = itemHolder.GetItem();
+                    ItemSlot itemSlot = item.GetItemSlotUI();
+                    if (itemSlot == null)
+                    {
+                        item.RefreshUI();
+                        itemSlot = item.GetItemSlotUI();
+                    }
+                    slot.SetItemSlot(itemSlot);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < itemHolders.Count; i++)
+            {
+                var itemHolder = itemHolders[i];
+                if (itemHolder != null)
+                {
+                    var item = itemHolder.GetItem();
+                    ItemSlot itemSlot = item.GetItemSlotUI();
+                    if (itemSlot == null)
+                    {
+                        item.RefreshUI();
+                        itemSlot = item.GetItemSlotUI();
+                    }
+                    SetItemSlot(itemSlot, i);
+                }
+            }
+        }
     }
 
-
+    InventorySlot GenAndSetSlot(int index)
+    {
+        var slot = ResourceManager.Instance.GetOther(ResourceManager.ItemSlotID.InventorySlot.ToString()).GetComponent<InventorySlot>();
+        slot.SetID(index);
+        slot.SetItemParentUI(this);
+        slot.transform.SetParent(m_itemSlotFrame);
+        slot.transform.SetAsLastSibling();
+        return slot;
+    }
 
     /// <summary>
     /// 子供のUIを指定されたindexにセットする。indexは0から始まる。
@@ -58,13 +119,8 @@ public class ItemSlot : Slot, IItemParentUI, IPointerDownHandler, IBeginDragHand
         {
             itemSlot.SetID(index);
             itemSlot.SetItemParentUI(this);
-            // Debug.Log($"itemSLot.ItemSlotParent: {}")
             itemSlot.transform.SetParent(m_itemSlotFrame);
             itemSlot.transform.SetSiblingIndex(index);
-
-            // var slotSpacing = itemSlot.GetSlotSpacing();
-            // slotSpacing.SetParent(transform);
-            // slotSpacing.SetSiblingIndex(index + 1);
         }
         else
             Debug.LogWarning("index is weired");

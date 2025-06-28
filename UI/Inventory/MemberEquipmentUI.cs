@@ -99,6 +99,7 @@ public class MemberEquipmentUI : UI, IItemParentUI, IMemberEquipmentUI
     Mana m_mana;
     LevelHandler m_level;
     JobHandler m_job;
+    PartyMember m_partyMember;
 
 
     NPCManager m_npcManager; // 後々MobManagerにしたいが，アイテムの処理などがだるく時間がかかる
@@ -124,11 +125,11 @@ public class MemberEquipmentUI : UI, IItemParentUI, IMemberEquipmentUI
 
         UpdateNPCName(obj.name);
 
-        // if (obj.TryGetComponent(out m_imageManager))
-        // {
-        //     UpdateNPCImage(m_imageManager.GetImage());
-        //     m_imageManager.OnNPCImageChanged += UpdateNPCImage;
-        // }
+        if (obj.TryGetComponent(out m_partyMember))
+        {
+            UpdateNPCImage(m_partyMember.GetImage());
+            m_partyMember.OnNPCImageChanged += UpdateNPCImage;
+        }
 
 
         if (obj.TryGetComponent(out m_health))

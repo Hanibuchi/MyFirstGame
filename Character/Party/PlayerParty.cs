@@ -115,7 +115,7 @@ public class PlayerParty : Party
         foreach (var member in MemberList)
         {
             var equipmentUI = member.GetMemberUI();
-            m_equipmentUI.SetMemberUI(equipmentUI);
+            m_equipmentUI.SetMemberUI(equipmentUI.gameObject);
         }
     }
 

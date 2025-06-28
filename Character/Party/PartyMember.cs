@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +7,7 @@ using Zenject;
 public class PartyMember : MonoBehaviour
 {
     public bool IsLeader { get; private set; }
-    GameObject m_memberEquipmentUI;
+    MemberEquipmentUI m_memberEquipmentUI;
     public Party Party { get; private set; }
 
     LevelHandler m_levelHandler;
@@ -54,17 +55,15 @@ public class PartyMember : MonoBehaviour
     }
 
 
-    public GameObject GetMemberUI()
+    public MemberEquipmentUI GetMemberUI()
     {
         if (m_memberEquipmentUI == null)
         {
-            m_memberEquipmentUI = ResourceManager.Instance.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString());
+            this.m_memberEquipmentUI = ResourceManager.Instance.GetOther(ResourceManager.UIID.MemberEquipmentUI.ToString()).GetComponent<MemberEquipmentUI>();
 
-            // アイテム所持するコンポネントを分離したらこれも分離する。
-            var memberEquipmentUI = m_memberEquipmentUI.GetComponent<MemberEquipmentUI>();
             var itemUser = GetComponent<ItemUser>();
-            memberEquipmentUI.SetItemUser(itemUser);
-            memberEquipmentUI.RegisterStatus(gameObject);
+            m_memberEquipmentUI.SetItemUser(itemUser);
+            m_memberEquipmentUI.RegisterStatus(gameObject);
         }
         return m_memberEquipmentUI;
     }
@@ -94,4 +93,14 @@ public class PartyMember : MonoBehaviour
     {
         return m_levelHandler.BaseLevel * 10 + 100;
     }
+
+    public Sprite GetImage()
+    {
+        if (TryGetComponent(out SpriteRenderer spriteRenderer))
+        {
+            return spriteRenderer.sprite;
+        }
+        return null;
+    }
+    public event Action<Sprite> OnNPCImageChanged;
 }
