@@ -63,7 +63,7 @@ public class SettingsManager : MonoBehaviour, IInitializableSettingsManager
     /// </summary>
     public void Save()
     {
-        EditFile.SaveCompressedJson(SettingDataPath, settingsData);
+        EditFile.SaveObjectAsCompressedJson(SettingDataPath, settingsData);
     }
 
     public void SetLanguage(string language)

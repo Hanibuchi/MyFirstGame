@@ -4,24 +4,30 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 public class EditFile : MonoBehaviour
 {
+    public static void SaveJson(string filePath, string json)
+    {
+        if (!filePath.EndsWith(".json"))
+        {
+            filePath += ".json";
+        }
+        PrepareDirectory(filePath);
+        File.WriteAllText(filePath, json);
+    }
     /// <summary>
     /// 任意のクラスをjsonに変換しfilePathに.jsonファイルを生成。
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="filePath"></param>
     /// <param name="obj"></param>
-    public static void SaveJson<T>(string filePath, T obj)
+    public static void SaveObjectAsJson<T>(string filePath, T obj)
     {
-        if (!filePath.EndsWith(".json"))
-        {
-            filePath += ".json";
-        }
         string json = ToJson(obj);
-        File.WriteAllText(filePath, json);
+        SaveJson(filePath, json);
         // Debug.Log($"Data saved to: {filePath}");
     }
 
@@ -29,9 +35,8 @@ public class EditFile : MonoBehaviour
     /// <summary>
     /// 任意のクラスをjsonに変換しbrotli圧縮，filePathに.json.brファイルを生成。
     /// </summary>
-    public static void SaveCompressedJson<T>(string filePath, T obj)
+    public static void SaveObjectAsCompressedJson<T>(string filePath, T obj)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
         filePath = GetCompressedJsonName(filePath);
         string json = ToJson(obj);
         CompressAndSaveJson(filePath, json);
@@ -39,7 +44,7 @@ public class EditFile : MonoBehaviour
     /// <summary>
     /// filePathの.json.brファイルを任意のクラスに変換。
     /// </summary>
-    public static T LoadCompressedJson<T>(string filePath) where T : class
+    public static T LoadCompressedJsonAsObject<T>(string filePath) where T : class
     {
         string json = ReadAndDecompressJson(filePath);
         if (json == "")
@@ -49,6 +54,7 @@ public class EditFile : MonoBehaviour
 
     public static void CompressAndSaveJson(string filePath, string json)
     {
+        PrepareDirectory(filePath);
         using FileStream fileStream = new(filePath, FileMode.Create);
         using BrotliStream brotliStream = new(fileStream, CompressionMode.Compress);
         using StreamWriter writer = new(brotliStream, Encoding.UTF8);
@@ -90,5 +96,19 @@ public class EditFile : MonoBehaviour
     static T FromJson<T>(string json)
     {
         return JsonConvert.DeserializeObject<T>(json);
+    }
+
+    static void PrepareDirectory(string filePath)
+    {
+        string dir = Path.GetDirectoryName(filePath);
+        if (!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+    }
+
+    public static JObject JsonToJObject(string json)
+    {
+        return JObject.Parse(json);
     }
 }

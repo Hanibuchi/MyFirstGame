@@ -9,41 +9,22 @@ using Newtonsoft.Json;
 using UnityEditor.iOS;
 using UnityEditor;
 using Zenject;
+using UnityEditor.SearchService;
+using Newtonsoft.Json.Linq;
 
+[RequireComponent(typeof(SerializeManager))]
 [RequireComponent(typeof(PoolableResourceComponent))]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
-public class ChunkManager : MonoBehaviour
+[JsonObject(MemberSerialization.OptIn)]
+public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
 {
-    string ChunkDataPath => GetChunkDataPath(bossAreaManager.AreaDirectoryPath, ChunkPos);
-    [SerializeField] AreaManager bossAreaManager;
-    public AreaManager BossAreaManager { get => bossAreaManager; private set => bossAreaManager = value; }
-
-    [SerializeField] Vector2Int chunkPos; // マップ作成時にも使うためInspectorで編集できるようにする
-    /// <summary>
-    /// このまねじゃのチャンク位置
-    /// </summary>
-    public Vector2Int ChunkPos { get => chunkPos; private set => chunkPos = value; }
-
-    /// <summary>
-    /// このまねじゃの部下みたいなものたち
-    /// </summary>
-    [SerializeField] List<IChunkHandler> Handlers = new();
+    [SerializeField] AreaManager _areaManager;
+    public AreaManager AreaManager { get => _areaManager; private set => _areaManager = value; }
+    [SerializeField] List<ChunkHandler> Handlers = new();
 
 
-    /// ここら辺全部消す。
-    public static readonly string WorldDataDirectoryPath = "WorldData/";
-    public static string InitialChunkDataDirectoryPath => $"{WorldDataDirectoryPath}InitialChunks/";
-    /// <summary>
-    /// このチャンクが生成しうるChunkDataの種類
-    /// </summary>
-    protected List<string> InitialChunkDataPaths => new()
-    {
-        $"{InitialChunkDataDirectoryPath}defaultChunk.json",
-    };
-    /// ここまで
-
-    Vector3Int ChunkSize => BossAreaManager.BossTerrainManager.ChunkSize;
+    Vector3Int ChunkSize => TerrainManager.Instance.ChunkSize;
 
     PoolableResourceComponent m_poolableResourceComponent;
 
@@ -53,94 +34,20 @@ public class ChunkManager : MonoBehaviour
             Debug.LogWarning("m_poolableResourceComponent is null");
         m_poolableResourceComponent.ReleaseCallback += OnRelease;
     }
-    public void Init(AreaManager areaManager)
-    {
-        BossAreaManager = areaManager;
-    }
 
     public static string GetChunkDataPath(string areaDirectoryPath, Vector2Int chunkPos)
     {
         return Path.Combine(areaDirectoryPath, $"Chunk_{chunkPos.x}x{chunkPos.y}");
     }
 
-    /// <summary>
-    /// チャンクを生成。
-    /// </summary>
-    /// <param name="chunkPos"></param>
-    /// <returns>チャンクの生成に成功したかどうか。</returns>
-    public bool Generate(Vector2Int chunkPos)
-    {
-        // Debug.Log("ChunkManager.Generate was called");
-        SetChunkPos(chunkPos);
-        ChunkData chunkData;
-        // Debug.Log($"Chunk at {ChunkPos} was Activated");
-        if (File.Exists(ChunkDataPath))
-        {
-            chunkData = EditFile.LoadCompressedJson<ChunkData>(ChunkDataPath);
-            // Debug.Log("chunk was generated");
-        }
-        else
-            chunkData = GetInitChunkData();
-        ApplyChunkData(chunkData);
-
-        Handlers.ForEach(a => a.OnChunkGenerate());
-        return true;
-    }
-
-    /// <summary>
-    /// このchunkで最初に生成するチャンクを返す。そのうちResourceManagerにChunk取得機能を実装する予定。そのとき改良する。
-    /// </summary>
-    /// <returns></returns>
-    protected ChunkData GetInitChunkData()
-    {
-        string initialChunkPath = InitialChunkDataPaths[Math.Abs(HashCode.Combine(GameManager.Instance.Seed, ChunkPos)) % InitialChunkDataPaths.Count];
-
-        if (File.Exists(initialChunkPath))
-            return ConvertFromJson<ChunkData>(File.ReadAllText(initialChunkPath));
-        else return null;
-    }
-
-    public ChunkData Deactivate()
-    {
-        m_poolableResourceComponent.Release();
-
-        new List<IChunkHandler>(Handlers).ForEach(a => a.OnChunkDeactivate());
-
-        return MakeChunkData();
-    }
-
-    /// <summary>
-    /// チャンクデータをもとにチャンクを作成
-    /// </summary>
-    /// <param name="chunkPos"></param>
-    /// <returns></returns>
-    public bool Activate(Vector2Int chunkPos, ChunkData chunkData)
-    {
-        SetChunkPos(chunkPos);
-
-        ApplyChunkData(chunkData);
-
-        Handlers.ForEach(a => a.OnChunkActivate());
-        return true;
-    }
 
     /// <summary>
     /// ChunkPosをセットし，対応する場所へこのオブジェクトを移動させる。
     /// </summary>
     /// <param name="chunkPos"></param>
-    void SetChunkPos(Vector2Int chunkPos)
+    void SetChunkPos()
     {
-        ChunkPos = chunkPos;
         transform.position = new(ChunkSize.x * ChunkPos.x, ChunkSize.y * ChunkPos.y, 0);
-    }
-
-    /// <summary>
-    /// AreaManagerがリセットされたときに呼び出される
-    /// </summary>
-    public void Reset()
-    {
-        Handlers.ForEach(a => a.OnChunkReset());
-        Handlers.Clear();
     }
 
     /// <summary>
@@ -156,78 +63,15 @@ public class ChunkManager : MonoBehaviour
     /// <summary>
     /// tileを消すときは必ずこれを使用しなければならない
     /// </summary>
-    /// <param name="gm"></param>
-    public void DeleteTile(TileObjManager gm)
+    /// <param name="tm"></param>
+    public void DeleteTile(TileObjManager tm)
     {
-        gm.GetComponent<PoolableResourceComponent>().Release();
-        TerrainManager.Instance.TerrainTilemap.SetTile(gm.Position, null);
-        Handlers.Remove(gm);
+        tm.GetComponent<PoolableResourceComponent>().Release();
+        TerrainManager.Instance.TerrainTilemap.SetTile(tm.Position, null);
+        Handlers.Remove(tm.GetComponent<ChunkHandler>());
     }
 
-    ///////////////// ここから削除予定
-    /// <summary>
-    /// Jsonへの変換をまとめるためのメソッド
-    /// </summary>
-    /// <returns></returns>
-    string ConvertToJson(ChunkData chunkData)
-    {
-        return JsonUtility.ToJson(chunkData);
-    }
 
-    T ConvertFromJson<T>(string content)
-    {
-        return JsonUtility.FromJson<T>(content);
-    }
-    ////////////////// ここまで
-
-    /// <summary>
-    /// チャンクデータを作成。
-    /// </summary>
-    /// <returns></returns>
-    public ChunkData MakeChunkData()
-    {
-        Vector3Int pos = new((int)(ChunkSize.x * (ChunkPos.x - 0.5f)), (int)(ChunkSize.y * (ChunkPos.y - 0.5f)), 0);
-
-        var tiles = TerrainManager.Instance.TerrainTilemap?.GetTilesBlock(new(pos, ChunkSize));
-        string[] tileIDs = new string[tiles.Length];
-        for (int i = 0; i < tiles.Length; i++)
-        {
-            var tile = tiles[i];
-            if (tile is BaseTile baseTile)
-            {
-                tileIDs[i] = baseTile.ID;
-            }
-        }
-
-        ChunkData chunkData = new();
-
-        foreach (var handler in Handlers)
-        {
-            if (handler is NPCManager npc)
-            {
-                // if (npc.OwnerParty != null)
-                if (true)
-                {
-                    // if (npc.IsLeader)
-                    // chunkData.partys.Add(npc.OwnerParty.MakePartyData());
-                }
-                else
-                {
-                    chunkData.npcs.Add(npc.MakeNPCData());
-                }
-            }
-            else if (handler is MobManager mob)
-            {
-                chunkData.mobs.Add(mob.MakeMobData());
-            }
-            else if (handler is ObjectManager item)
-            {
-                chunkData.items.Add(item.MakeObjectData());
-            }
-        }
-        chunkData.tileIDs = tileIDs;
-        return chunkData;
-    }
 
     /// <summary>
     /// ChunkPosに対応するBoundsIntを返す。
@@ -239,65 +83,6 @@ public class ChunkManager : MonoBehaviour
         return new(pos, ChunkSize);
     }
 
-    /// <summary>
-    /// ChunkDataからチャンクを生成
-    /// </summary>
-    /// <param name="chunkData"></param>
-    public void ApplyChunkData(ChunkData chunkData)
-    {
-        if (chunkData == null)
-        {
-            Debug.LogWarning("ChunkData is null");
-            return;
-        }
-        // Debug.Log("ChunkData was generated");
-        var tileIDs = chunkData.tileIDs;
-        BaseTile[] tiles = new BaseTile[tileIDs.Length];
-        for (int i = 0; i < tileIDs.Length; i++)
-        {
-            tiles[i] = ResourceManager.Instance.GetTile(tileIDs[i]);
-        }
-        TerrainManager.Instance.TerrainTilemap.SetTilesBlock(GetBoundsInt(), tiles);
-
-        foreach (var party in chunkData.partys)
-        {
-            // Party.SpawnParty(party);
-        }
-        foreach (var npc in chunkData.npcs)
-        {
-            // NPCManager.SpawnNPC(npc);
-        }
-        foreach (var mob in chunkData.mobs)
-        {
-            // MobManager.SpawnMob(mob);
-        }
-        foreach (var item in chunkData.items)
-        {
-            // ObjectManager.SpawnItem(item);
-        }
-    }
-
-    /// <summary>
-    /// すべてのチャンクデータを削除
-    /// </summary>
-    // public static void ClearAllChunkData()
-    // {
-    //     string[] jsonFiles = Directory.GetFiles(SavedChunkDataDirectoryPath, "*.json");
-
-    //     // すべてのJSONファイルを削除
-    //     foreach (string file in jsonFiles)
-    //     {
-    //         try
-    //         {
-    //             File.Delete(file); // ファイルを削除
-    //             Debug.Log($"Deleted: {file}");
-    //         }
-    //         catch (IOException ex)
-    //         {
-    //             Debug.LogError($"Error deleting file {file}: {ex.Message}");
-    //         }
-    //     }
-    // }
 
     /// <summary>
     /// このチャンクマネジャに触れたIChunkHandlerを持つコンポネントを勝手に登録させる。
@@ -305,23 +90,38 @@ public class ChunkManager : MonoBehaviour
     /// <param name="other"></param>
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.TryGetComponent(out IChunkHandler handler))
+        // Debug.Log("trigger entered");
+        if (other.gameObject.TryGetComponent(out ChunkHandler handler))
         {
-            handler.BossChunkManager?.Unregister(handler);
-            Register(handler);
+            if (handler.ChunkManager != this)
+            {
+                handler.ChunkManager?.Unregister(handler);
+                Register(handler);
+            }
         }
     }
-    void Register(IChunkHandler handler)
+    void OnTriggerExit2D(Collider2D other)
     {
-        handler.BossChunkManager = this;
-        Handlers.Add(handler);
-        // if (handler is MonoBehaviour mono)
-        //     mono.transform.SetParent(transform);
+        if (other.gameObject.TryGetComponent(out ChunkHandler handler))
+        {
+            Unregister(handler);
+        }
+        // Debug.Log("trigger exit");
     }
-    void Unregister(IChunkHandler handler)
+    void Register(ChunkHandler handler)
     {
-        handler.BossChunkManager = null;
-        Handlers.Remove(handler);
+        // Debug.Log("Registered");
+        Handlers.Add(handler);
+        handler.OnRegistered(this);
+    }
+    void Unregister(ChunkHandler handler)
+    {
+        // Debug.Log("Unregistered");
+        if (Handlers.Contains(handler))
+        {
+            handler.OnUnregistered();
+            Handlers.Remove(handler);
+        }
     }
 
     [SerializeField] string chunkAssetsDirectoryPath = "Assets/ChunkAssets";
@@ -331,24 +131,174 @@ public class ChunkManager : MonoBehaviour
     /// </summary>
     public void CreateChunkAsset()
     {
-        Handlers = GetComponentsInChildren<IChunkHandler>().ToList();
-        if (!chunkAssetName.EndsWith(".asset"))
-            chunkAssetName += ".asset";
+        var handlers = GetComponentsInChildren<ChunkHandler>();
+        Handlers.AddRange(handlers);
         string path = Path.Combine(chunkAssetsDirectoryPath, chunkAssetName);
 
-        var asset = ScriptableObject.CreateInstance<ChunkAsset>();
-        AssetDatabase.CreateAsset(asset, path);
+        EditFile.SaveJson(path, MakeChunkData().ToString());
 
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+        // ScriptableObjectとして保存してた時の処理
+        // var asset = ScriptableObject.CreateInstance<ChunkAsset>();
+        // asset.chunkData = MakeChunkData();
 
-        EditorUtility.FocusProjectWindow();
-        Selection.activeObject = asset;
+        // AssetDatabase.CreateAsset(asset, path);
+
+        // AssetDatabase.SaveAssets();
+        // AssetDatabase.Refresh();
+
+        // EditorUtility.FocusProjectWindow();
+        // Selection.activeObject = asset;
     }
 
     public void OnRelease()
     {
         Handlers.Clear();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    [SerializeField] Vector2Int _chunkPos;
+    public Vector2Int ChunkPos { get => _chunkPos; private set => _chunkPos = value; }
+
+    /// <summary>
+    /// チャンクが生成されたときに呼ばれます。
+    /// </summary>
+    public void OnGenerated(IAreaManager areaManager, Vector2Int chunkPos)
+    {
+        _areaManager = (AreaManager)areaManager;
+        this.ChunkPos = chunkPos;
+        this.gameObject.name = $"Chunk_{chunkPos.x}_{chunkPos.y}";
+        SetChunkPos();
+    }
+
+    /// <summary>
+    /// チャンクが非アクティブ化されたときに呼ばれます。
+    /// </summary>
+    public JObject OnDeactivated()
+    {
+        // 現在のチャンクの状態からChunkDataを作成して返す
+        var currentChunkData = MakeChunkData();
+        // チャンク内のGameObjectなどを非アクティブ化、またはプールに戻す
+        ClearChunkContents();
+        return currentChunkData;
+    }
+
+    // ここからデータ保存用。名前勝手に変えるとJsonふぁいるを直接編集してるところが使えなくなるからやめる。
+    [JsonProperty] string[] tileIDs;
+    [JsonProperty] List<(ResourceType type, string id, JObject objData)> objects = new();
+    /// <summary>
+    /// 現在のチャンクの状態からChunkDataを作成します。
+    /// </summary>
+    public JObject MakeChunkData()
+    {
+        return GetComponent<SerializeManager>().SaveState();
+    }
+
+    public void OnBeforeSerializeData()
+    {
+        var tiles = TerrainManager.Instance.GetTiles(ChunkPos);
+        tileIDs = new string[tiles.Length];
+        Debug.Log($"tiles.Length: {tiles.Length}");
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            var tile = tiles[i];
+            if (tile is BaseTile baseTile)
+            {
+                tileIDs[i] = baseTile.ID;
+            }
+        }
+
+        objects.Clear();
+        foreach (var handler in Handlers)
+        {
+            if (handler != null && handler.TryGetComponent(out SerializeManager serializable) && handler.TryGetComponent(out PoolableResourceComponent poolable))
+            {
+                if (!handler.TryGetComponent(out TileObjManager tileObjManager))
+                {
+                    objects.Add((poolable.Type, poolable.ID, serializable.SaveState()));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// ChunkDataからチャンクを生成
+    /// </summary>
+    /// <param name="chunkData"></param>
+    public void ApplyChunkData(JObject chunkData)
+    {
+        GetComponent<SerializeManager>().LoadState(chunkData);
+    }
+
+    public void OnAfterDeserializeData()
+    {
+        BaseTile[] tiles = new BaseTile[tileIDs.Length];
+        for (int i = 0; i < tileIDs.Length; i++)
+        {
+            var tileID = tileIDs[i];
+            if (tileID == null)
+                tiles[i] = null;
+            else
+                tiles[i] = ResourceManager.Instance.GetTile(tileID);
+        }
+        TerrainManager.Instance.TerrainTilemap.SetTilesBlock(GetBoundsInt(), tiles);
+
+        foreach (var obj in objects)
+        {
+            var spawndObj = ResourceManager.Instance.Get(obj.type, obj.id);
+            if (spawndObj != null)
+            {
+                spawndObj.transform.SetParent(transform);
+                spawndObj.GetComponent<SerializeManager>().LoadState(obj.objData);
+            }
+            else
+            {
+                Debug.LogWarning($"Handler with ID {obj.id} not found.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// チャンク内のコンテンツ（タイルやオブジェクト）をクリアします。
+    /// </summary>
+    private void ClearChunkContents()
+    {
+        foreach (var handler in Handlers.ToList())
+        {
+            if (handler == null)
+                continue;
+            if (handler.TryGetComponent(out TileObjManager tileObjManager))
+            {
+                DeleteTile(tileObjManager);
+            }
+            else
+            {
+                handler.GetComponent<PoolableResourceComponent>().Release();
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// チャンクデータのファイルパスを取得します。
+    /// </summary>
+    public static string GetChunkFilePath(Vector2Int chunkPos)
+    {
+        return Path.Combine(TerrainManager.Instance.TerrainDataDirectoryPath, "Chunk", $"chunk_{chunkPos.x}_{chunkPos.y}.json");
     }
 }
 

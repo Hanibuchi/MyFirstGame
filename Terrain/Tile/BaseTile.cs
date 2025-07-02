@@ -9,13 +9,12 @@ using Zenject;
 public class BaseTile : RuleTile, IResourceComponent
 {
     public ResourceType Type { get; private set; }
-    public string ID { get; private set; }
+    public string ID { get => name; }
     string TileObjID = ResourceManager.TileObjID.DefaultTileObj.ToString();
 
     public void OnGet(ResourceType type, string id)
     {
         Type = type;
-        ID = id;
     }
 
     /// <summary>
@@ -31,8 +30,8 @@ public class BaseTile : RuleTile, IResourceComponent
         if (Application.isPlaying)
         {
             GameObject tile = ResourceManager.Instance.GetOther(TileObjID);
-            if (tile != null && tile.TryGetComponent(out TileObjManager GM))
-                GM.Init(position);
+            if (tile != null && tile.TryGetComponent(out TileObjManager tm))
+                tm.Init(position);
         }
 
         return base.StartUp(position, tilemap, obj);

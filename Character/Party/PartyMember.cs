@@ -11,7 +11,7 @@ public class PartyMember : MonoBehaviour
     public Party Party { get; private set; }
 
     LevelHandler m_levelHandler;
-
+    [SerializeField] SpriteRenderer _spriteRenderer;
     private void Awake()
     {
         m_levelHandler = GetComponent<LevelHandler>();
@@ -19,6 +19,8 @@ public class PartyMember : MonoBehaviour
         {
             deathHandler.OnDead += OnDead;
         }
+        if (_spriteRenderer == null)
+            Debug.LogWarning("spriteRenderer is null");
     }
 
     public void OnJoinParty(Party party)
@@ -96,11 +98,21 @@ public class PartyMember : MonoBehaviour
 
     public Sprite GetImage()
     {
-        if (TryGetComponent(out SpriteRenderer spriteRenderer))
+        if (_spriteRenderer != null)
         {
-            return spriteRenderer.sprite;
+            return _spriteRenderer.sprite;
         }
         return null;
     }
     public event Action<Sprite> OnNPCImageChanged;
+
+    Sprite previousSprite;
+    void Update()
+    {
+        if (_spriteRenderer != null && _spriteRenderer.sprite != previousSprite)
+        {
+            OnNPCImageChanged?.Invoke(_spriteRenderer.sprite);
+            previousSprite = _spriteRenderer.sprite;
+        }
+    }
 }

@@ -46,7 +46,7 @@ public class AchievementsManager : MonoBehaviour, IInitializableAchievementsMana
         {
             Achievements = Achievements,
         };
-        EditFile.SaveCompressedJson(AchievementsPath, achievementsData);
+        EditFile.SaveObjectAsCompressedJson(AchievementsPath, achievementsData);
     }
 
     public void Unlock(string name)
@@ -114,7 +114,7 @@ public class AchievementsManager : MonoBehaviour, IInitializableAchievementsMana
     {
         if (File.Exists(achievementsPath))
         {
-            AchievementsData achievementsData = EditFile.LoadCompressedJson<AchievementsData>(achievementsPath);
+            AchievementsData achievementsData = EditFile.LoadCompressedJsonAsObject<AchievementsData>(achievementsPath);
             var achievementDict = achievementsData.Achievements;
             foreach (var keyValue in achievementDict)
             {

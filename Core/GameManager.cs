@@ -24,8 +24,6 @@ public class GameManager : MonoBehaviour, IInitializableGameManager
     [SerializeField] private TerrainManager terrainManager;
     public TerrainManager TerrainManager => terrainManager;
 
-    [SerializeField] private NPCManager playerNPCManager;
-    public NPCManager PlayerNPCManager => playerNPCManager;
     [SerializeField] GameObject m_player;
     public GameObject Player => m_player;
 
@@ -57,7 +55,6 @@ public class GameManager : MonoBehaviour, IInitializableGameManager
         foreach (RandomName rand in Enum.GetValues(typeof(RandomName)))
             Random.Randoms[rand.ToString()] = new MyRandom(state);
     }
-
 
     private void Awake()
     {
@@ -126,7 +123,6 @@ public class GameManager : MonoBehaviour, IInitializableGameManager
     public void RespawnPlayer()
     {
         Player.transform.position = respawnPoint;
-        PlayerNPCManager.OnRespawn();
         UIManager.Instance.Show(UIPageType.PlayerStatusUI);
         UIManager.Instance.Show(UIPageType.InventoryUI);
     }

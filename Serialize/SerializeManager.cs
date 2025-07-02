@@ -1,40 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 public class SerializeManager : MonoBehaviour
 {
-    public string SaveState()
+    public JObject SaveState()
     {
         var components = GetComponents<ISerializableComponent>();
 
-        var dict = new Dictionary<string, string>();
+        var dict = new Dictionary<string, JObject>();
 
         foreach (var comp in components)
         {
             comp.OnBeforeSerializeData();
 
             var type = comp.GetType();
-            var json = comp.Serialize();
-            dict[type.FullName] = json;
+            var jsonObj = comp.ToJObject();
+
+            dict[type.FullName] = jsonObj;
         }
 
-        return JsonConvert.SerializeObject(dict, Formatting.Indented);
+        return JObject.FromObject(dict);
     }
 
-    public void LoadState(string json)
+    public void LoadState(JObject json)
     {
+        if (json == null)
+        {
+            Debug.LogWarning("json is invalid");
+            return;
+        }
         var components = GetComponents<ISerializableComponent>();
-        var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+        var dict = json;
 
         foreach (var comp in components)
         {
             var type = comp.GetType();
             if (dict.TryGetValue(type.FullName, out var compJson))
             {
-                comp.Deserialize(compJson);
-
+                comp.FromJObject((JObject)compJson);
                 comp.OnAfterDeserializeData();
             }
         }
@@ -45,22 +51,22 @@ interface ISerializableComponent
     /// <summary>
     /// シリアライズ前に実行される。特殊な処理が必要なときはこのときする。
     /// </summary>
-    public void OnBeforeSerializeData() { }
-    string Serialize()
+    void OnBeforeSerializeData() { }
+    JObject ToJObject()
     {
         var setting = new JsonSerializerSettings
         {
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Formatting = Formatting.None,
         };
-        return JsonConvert.SerializeObject(this, setting);
+        return JObject.FromObject(this, JsonSerializer.Create(setting));
     }
-    void Deserialize(string json)
+    void FromJObject(JObject jobject)
     {
-        JsonConvert.PopulateObject(json, this);
+        JsonConvert.PopulateObject(jobject.ToString(), this);
     }
     /// <summary>
     /// デシリアライズ後に実行される。適用に特殊な処理が必要ならこのときする。
     /// </summary>
-    public void OnAfterDeserializeData() { }
+    void OnAfterDeserializeData() { }
 }

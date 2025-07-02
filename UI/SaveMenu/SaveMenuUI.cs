@@ -39,7 +39,7 @@ public class SaveMenuUI : UIPageBase
             // Debug.Log($"saveHeaderPath: {saveHeaderPath}");
             if (File.Exists(saveHeaderPath))
             {
-                SaveHeaderData saveHeaderData = EditFile.LoadCompressedJson<SaveHeaderData>(saveHeaderPath);
+                SaveHeaderData saveHeaderData = EditFile.LoadCompressedJsonAsObject<SaveHeaderData>(saveHeaderPath);
                 // Debug.Log($"saveHeaderData: {saveHeaderData}");
                 if (saveHeaderData == null)
                 {

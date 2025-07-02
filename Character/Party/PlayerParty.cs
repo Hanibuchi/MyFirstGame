@@ -23,7 +23,7 @@ public class PlayerParty : Party
             string json = EditFile.ReadAndDecompressJson(PlayerPartyPath);
             if (m_serializeHandler == null)
                 m_serializeHandler = GetComponent<SerializeManager>();
-            m_serializeHandler.LoadState(json);
+            m_serializeHandler.LoadState(EditFile.JsonToJObject(json));
         }
         else
         {
@@ -43,7 +43,7 @@ public class PlayerParty : Party
     public void Save()
     {
         if (TryGetComponent(out SerializeManager serializeManager))
-            EditFile.CompressAndSaveJson(PlayerPartyPath, serializeManager.SaveState());
+            EditFile.CompressAndSaveJson(PlayerPartyPath, serializeManager.SaveState().ToString());
         else
             Debug.LogError($"SerializeManager not found on {gameObject.name}");
     }

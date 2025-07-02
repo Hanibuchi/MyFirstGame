@@ -12,7 +12,7 @@ using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 using Zenject;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class ObjectManager : MonoBehaviour, IChunkHandler//, IStatusAffectable
+public class ObjectManager : MonoBehaviour//, IStatusAffectable
 {
 
     [SerializeField] ChunkManager bossChunkManager;

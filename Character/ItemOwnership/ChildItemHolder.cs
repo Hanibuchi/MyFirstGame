@@ -370,7 +370,7 @@ public class ChildItemHolder : IChildItemHolder, ITrackablePartyItem, ITrackable
     /// ItemCapacityDataを受け取って値を代入するだけ。Itemsのリセットとかはしない。
     /// </summary>
     /// <param name="itemCapacityData"></param>
-    public void SetItemCapacityData(ItemCapacityData itemCapacityData)
+    public void SetItemCapacityData(ItemHolderData itemCapacityData)
     {
         ItemCapacity = itemCapacityData.itemCapacity;
         m_attackItemCapacity = itemCapacityData.attackItemCapacity;

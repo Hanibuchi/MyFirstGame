@@ -16,7 +16,7 @@ public interface IChildItemHolder : IItemHolder, IItemTypeProvider, IItemProvide
     void OnRemovedFromItem();
     void SetItemTypeProvider(IItemTypeProvider itemTypeProvider);
     void SetItem(IItem item);
-    void SetItemCapacityData(ItemCapacityData itemCapacityData);
+    void SetItemCapacityData(ItemHolderData itemCapacityData);
     void SetPartyRegistrationHandler(IPartyRegistrationHandler partyRegistrationHandler);
     void SetMemberRegistrationHandler(IMemberRegistrationHandler memberRegistrationHandler);
     void SetChildItemUIRefresher(IChildItemUIRefresher childItemUIRefresher);

@@ -66,6 +66,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     {
         TerrainGrid,
         Party,
+        ChunkManager,
     }
 
     public enum ChunkID
@@ -83,7 +84,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     readonly Dictionary<string, GameObjectPool> mobPools = new();
     readonly Dictionary<string, GameObjectPool> otherPools = new();
 
-    readonly Dictionary<string, ChunkData> chunkDatas = new();
+    readonly Dictionary<string, string> chunkDatas = new();
     readonly Dictionary<string, BaseTile> baseTiles = new();
     readonly ShotPool shotPool = new(30, 50);
 
@@ -226,33 +227,38 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     async Task LoadChunkData(string groupName)
     {
         List<string> labels = new() { groupName, ResourceType.ChunkData.ToString() };
-        var locationHandle = Addressables.LoadResourceLocationsAsync(labels, Addressables.MergeMode.Intersection, typeof(ChunkAsset));
+
+        // JSONファイルを読み込む前提で TextAsset をターゲット型に
+        var locationHandle = Addressables.LoadResourceLocationsAsync(labels, Addressables.MergeMode.Intersection, typeof(TextAsset));
         await locationHandle.Task;
 
         if (locationHandle.Status != AsyncOperationStatus.Succeeded || locationHandle.Result.Count == 0)
         {
-            Debug.LogWarning($"No assets found for labels: {String.Join(", ", labels)}");
+            Debug.LogWarning($"No JSON files found for labels: {String.Join(", ", labels)}");
             return;
         }
 
         var loadTasks = new List<Task>();
         foreach (var location in locationHandle.Result)
         {
-            var loadHandle = Addressables.LoadAssetAsync<ChunkAsset>(location);
+            var loadHandle = Addressables.LoadAssetAsync<TextAsset>(location);
+
             loadHandle.Completed += (handle) =>
             {
                 if (handle.Status == AsyncOperationStatus.Succeeded)
                 {
-                    var asset = handle.Result;
-                    chunkDatas[asset.name] = asset.chunkData;
+                    var textAsset = handle.Result;
+                    chunkDatas[textAsset.name] = textAsset.text;
                 }
                 else
                 {
                     Debug.LogWarning($"Failed to load asset: {location}");
                 }
             };
+
             loadTasks.Add(loadHandle.Task);
         }
+
         await Task.WhenAll(loadTasks);
     }
 
@@ -292,7 +298,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
 
     public GameObject GetItem(string id)
     {
-        return GetFromObjectPool(ResourceType.Item, itemPools, id);
+        return Get(ResourceType.Item, id);
     }
     public void ReleaseItem(IPoolableResourceComponent poolable)
     {
@@ -309,7 +315,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
 
     public GameObject GetProjectile(string id)
     {
-        return GetFromObjectPool(ResourceType.Projectile, projectilePools, id);
+        return Get(ResourceType.Projectile, id);
     }
     public void ReleaseProjectile(IPoolableResourceComponent poolable)
     {
@@ -325,7 +331,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
 
     public GameObject GetMob(string id)
     {
-        return GetFromObjectPool(ResourceType.Mob, mobPools, id);
+        return Get(ResourceType.Mob, id);
     }
     public void ReleaseMob(IPoolableResourceComponent poolable)
     {
@@ -341,7 +347,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
 
     public GameObject GetOther(string id)
     {
-        return GetFromObjectPool(ResourceType.Other, otherPools, id);
+        return Get(ResourceType.Other, id);
     }
     public void ReleaseOther(string id, GameObject obj)
     {
@@ -359,23 +365,24 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
         Clear(otherPools, id);
     }
 
-    public ChunkData GetChunkData(string id)
+    public string GetChunkData(string id)
     {
         if (!chunkDatas.ContainsKey(id))
         {
             Debug.LogWarning($"this key({id}) is not contained");
-            return null;
+            return "";
         }
         var chunkData = chunkDatas[id];
-        if (chunkData is IPoolableResourceComponent handler)
-        {
-            handler?.OnGet(ResourceType.ChunkData, id);
-        }
         return chunkData;
     }
 
     public BaseTile GetTile(string id)
     {
+        if (id == null)
+        {
+            Debug.LogWarning("id can not be null");
+            return null;
+        }
         if (!baseTiles.ContainsKey(id))
         {
             Debug.LogWarning($"this key({id}) is not contained");
@@ -387,6 +394,24 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
             handler?.OnGet(ResourceType.Tile, id);
         }
         return baseTile;
+    }
+
+    public GameObject Get(ResourceType type, string id)
+    {
+        switch (type)
+        {
+            case ResourceType.Item:
+                return GetFromObjectPool(type, itemPools, id);
+            case ResourceType.Projectile:
+                return GetFromObjectPool(type, projectilePools, id);
+            case ResourceType.Mob:
+                return GetFromObjectPool(type, mobPools, id);
+            case ResourceType.Other:
+                return GetFromObjectPool(type, otherPools, id);
+            default:
+                Debug.LogWarning($"Resource type {type} is not supported.");
+                return null;
+        }
     }
 
     GameObject GetFromObjectPool(ResourceType type, Dictionary<string, GameObjectPool> dictionary, string id)

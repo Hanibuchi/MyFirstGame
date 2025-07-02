@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public class ItemCapacityData
+public class ItemHolderData
 {
     public int itemCapacity = 10;
     public int attackItemCapacity = 2;

@@ -16,5 +16,5 @@ public class ItemData : ScriptableObject
     public float amount;
     public ResourceManager.ItemSlotID slotID = ResourceManager.ItemSlotID.DefaultSlot;
 
-    public ItemCapacityData itemCapacityData;
+    public ItemHolderData itemCapacityData;
 }

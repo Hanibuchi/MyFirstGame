@@ -14,289 +14,399 @@ using System.Linq;
 using System.Collections;
 using Unity.VisualScripting.FullSerializer;
 using System.IO;
-using Zenject;
-// using System.Numerics;
+using Newtonsoft.Json.Linq;
 
-namespace MyGame
+public class TerrainManager : MonoBehaviour
 {
+    public string TerrainDataDirectoryPath => Path.Combine(GameManager.SaveSlotDirectoryPath, "TerrainData");
+    public static TerrainManager Instance;
+    /// <summary>
+    /// TerrainのGrid
+    /// </summary>
+    [SerializeField] Grid _grid;
+    [SerializeField] Tilemap _tileMap;
+    /// <summary>
+    /// Terrainが使うTilemap
+    /// </summary>
+    public Tilemap TerrainTilemap { get => _tileMap; }
 
-    public class TerrainManager : MonoBehaviour
+    /// <summary>
+    /// チャンク1つあたりの縦横のタイル数
+    /// </summary>
+    public Vector3Int ChunkSize = new(128, 128, 1);
+    public Vector2 CellSize => _grid.cellSize;
+
+
+    Vector2? GetPlayerPos()
     {
-        public string TerrainDataDirectoryPath => Path.Combine(GameManager.SaveSlotDirectoryPath, "TerrainData");
-        public static TerrainManager Instance;
-        /// <summary>
-        /// TerrainのGrid
-        /// </summary>
-        public Grid Grid;
-        /// <summary>
-        /// Terrainが使うTilemap
-        /// </summary>
-        public Tilemap TerrainTilemap;
-        enum AreaIDs
+        var player = GameManager.Instance?.Player;
+        return player != null ? player.transform.position : null;
+    }
+
+    // [SerializeField] Vector2Int test_chunkPos;
+    // public void Test()
+    // {
+    //     Debug.Log($"ChunkStates[{test_chunkPos.x}, {test_chunkPos.y}] = {ChunkStates[test_chunkPos]}");
+    // }
+
+    /// <summary>
+    /// チャンクを生成する範囲。Playerからの距離(u)であらわされる
+    /// </summary>
+    public Vector2 ChunkGenerateRange = new(64f, 64f);
+
+    public TileBase[] GetTiles(Vector2Int chunkPos)
+    {
+        Vector3Int pos = new((int)(ChunkSize.x * (chunkPos.x - 0.5f)), (int)(ChunkSize.y * (chunkPos.y - 0.5f)), 0);
+        Debug.Log($"pos: {pos}, ChunkSize: {ChunkSize}");
+        return TerrainTilemap?.GetTilesBlock(new(pos, ChunkSize));
+    }
+
+    /// <summary>
+    /// 準備が整ったかどうか。Updateのエラーがうるさいからこうした。
+    /// </summary>
+    bool isReady;
+
+    public void OnGameStart()
+    {
+        if (File.Exists(TerrainDataDirectoryPath))
         {
-            DefaultArea,
-        }
-        readonly Dictionary<AreaIDs, AreaManager> Areas = new();
-
-        enum ChunkState
-        {
-            None,
-            Active,
-            Inactive,
-        }
-        /// <summary>
-        /// チャンクの状態を記録
-        /// </summary>
-        readonly Dictionary<Vector2Int, ChunkState> ChunkStates = new();
-
-        /// <summary>
-        /// チャンク1つあたりの縦横のタイル数
-        /// </summary>
-        public Vector3Int ChunkSize = new(128, 128, 1);
-        public Vector2 CellSize => Grid.cellSize;
-
-        Vector2? PlayerPos => PlayerManager != null ? PlayerManager.transform.position : null;
-
-        NPCManager PlayerManager => GameManager.Instance?.PlayerNPCManager;
-
-        public Vector2Int? PlayerChunkPos => WorldPosToChunkPos((Vector2)PlayerPos);
-
-        // [SerializeField] Vector2Int test_chunkPos;
-        // public void Test()
-        // {
-        //     Debug.Log($"ChunkStates[{test_chunkPos.x}, {test_chunkPos.y}] = {ChunkStates[test_chunkPos]}");
-        // }
-
-        /// <summary>
-        /// チャンクを生成する範囲。Playerからの距離(u)であらわされる
-        /// </summary>
-        public Vector2 ChunkGenerateRange = new(64f, 64f);
-
-        /// <summary>
-        /// 準備が整ったかどうか。Updateのエラーがうるさいからこうした。
-        /// </summary>
-        bool isReady;
-
-        public void OnGameStart()
-        {
-            if (File.Exists(TerrainDataDirectoryPath))
-            {
-                TerrainData terrainData = EditFile.LoadCompressedJson<TerrainData>(TerrainDataDirectoryPath);
-            }
-
-            Init();
+            TerrainData terrainData = EditFile.LoadCompressedJsonAsObject<TerrainData>(TerrainDataDirectoryPath);
         }
 
-        void Init()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            var TerrainObj = ResourceManager.Instance.GetOther(ResourceManager.OtherID.TerrainGrid.ToString());
-            Grid = TerrainObj.GetComponent<Grid>();
-            TerrainTilemap = TerrainObj.GetComponentInChildren<Tilemap>();
+        Init();
+    }
 
-            Areas[AreaIDs.DefaultArea] = ResourceManager.Instance.GetOther(ResourceManager.AreaID.DefaultArea.ToString()).GetComponent<AreaManager>();
-            foreach (var keyValue in Areas)
-            {
-                keyValue.Value.Init(this);
-            }
-            isReady = true;
+    void Init()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
         }
+        _missedItemManager = GetComponent<IMissedItemManager>();
 
-        public void Save()
+        foreach (var areaManager in _areaManagers)
         {
-            foreach (var keyValue in Areas)
+            if (!_areaNameToAreaManagerMap.ContainsKey(areaManager.AreaName))
             {
-                keyValue.Value.Save();
-            }
-            // ここでTerrainDataを保存。（あれば（全体に関係するデータはPlayerData, エリアごとのデータはAreaDataに保存されるため必要ない気がする。））
-        }
-
-        private void Update()
-        {
-            // プレイヤーの近くにあるチャンクを生成する
-            if (isReady)
-                UpdateChunksAroundPlayer(PlayerPos);
-        }
-
-        readonly HashSet<Vector2Int> previousActiveChunks = new();
-        readonly HashSet<Vector2Int> currentActiveChunks = new();
-        readonly HashSet<Vector2Int> chunksToActivate = new();
-        readonly HashSet<Vector2Int> chunksToDeactivate = new();
-
-        // / <summary>
-        // / プレイヤーの近くのチャンクを生成・削除。生成の中心を簡単に変えられるよう，引数として定義
-        // / </summary>
-        // / <param name="playerChunkPos"></param>
-        void UpdateChunksAroundPlayer(Vector2? nullablePlayerPos)
-        {
-            Vector2 playerPos;
-            if (nullablePlayerPos == null)
-                return;
-            else
-                playerPos = (Vector2)nullablePlayerPos;
-
-            currentActiveChunks.Clear();
-
-            Vector2 realChunkSize = new(ChunkSize.x * CellSize.x, ChunkSize.y * CellSize.y);
-
-            Vector2 playerChunkPosFlt = new(playerPos.x / realChunkSize.x, playerPos.y / realChunkSize.y);
-            Vector2 chunkPosRange = new(ChunkGenerateRange.x / realChunkSize.x, ChunkGenerateRange.y / realChunkSize.y);
-
-            for (int x = Mathf.CeilToInt(playerChunkPosFlt.x - chunkPosRange.x); x <= Mathf.FloorToInt(playerChunkPosFlt.x + chunkPosRange.x); x++)
-            {
-                for (int y = Mathf.CeilToInt(playerChunkPosFlt.y - chunkPosRange.y); y <= Mathf.FloorToInt(playerChunkPosFlt.y + chunkPosRange.y); y++)
-                {
-                    currentActiveChunks.Add(new(x, y));
-                }
-            }
-            chunksToActivate.Clear();
-            chunksToActivate.UnionWith(currentActiveChunks);
-            chunksToActivate.ExceptWith(previousActiveChunks);
-            foreach (var chunk in chunksToActivate)
-                PrepareChunk(chunk);
-
-            chunksToDeactivate.Clear();
-            chunksToDeactivate.UnionWith(previousActiveChunks);
-            chunksToDeactivate.ExceptWith(currentActiveChunks);
-            foreach (var chunk in chunksToDeactivate)
-            {
-                UnloadChunk(chunk);
-            }
-
-            previousActiveChunks.Clear();
-            previousActiveChunks.UnionWith(currentActiveChunks);
-        }
-
-        public void PrepareChunk(Vector2Int chunkPos)
-        {
-            // Debug.Log($"Chunk at {chunkPos} was Prepared");
-            switch (ChunkStates.GetValueOrDefault(chunkPos, ChunkState.None))
-            {
-                case ChunkState.None:
-                    // Debug.Log("chunk is none");
-                    StartCoroutine(Generate(chunkPos));
-                    break;
-
-                case ChunkState.Active:
-                    // Debug.Log("chunk is active");
-                    break;
-
-                case ChunkState.Inactive:
-                    // Debug.Log("chunk is inactive");
-                    StartCoroutine(Activate(chunkPos));
-                    break;
+                _areaNameToAreaManagerMap.Add(areaManager.AreaName, areaManager);
             }
         }
+        isReady = true;
+    }
 
-        public void UnloadChunk(Vector2Int chunkPos)
+    private void Update()
+    {
+        // プレイヤーの近くにあるチャンクを生成する
+        if (isReady)
+            UpdateChunksAroundPlayer(GetPlayerPos());
+    }
+
+    readonly HashSet<Vector2Int> previousActiveChunks = new();
+    readonly HashSet<Vector2Int> currentActiveChunks = new();
+    readonly HashSet<Vector2Int> chunksToActivate = new();
+    readonly HashSet<Vector2Int> chunksToDeactivate = new();
+
+    // / <summary>
+    // / プレイヤーの近くのチャンクを生成・削除。生成の中心を簡単に変えられるよう，引数として定義
+    // / </summary>
+    // / <param name="playerChunkPos"></param>
+    void UpdateChunksAroundPlayer(Vector2? nullablePlayerPos)
+    {
+        Vector2 playerPos;
+        if (nullablePlayerPos == null)
+            return;
+        else
+            playerPos = (Vector2)nullablePlayerPos;
+
+        currentActiveChunks.Clear();
+
+        Vector2 realChunkSize = new(ChunkSize.x * CellSize.x, ChunkSize.y * CellSize.y);
+
+        Vector2 playerChunkPosFlt = new(playerPos.x / realChunkSize.x, playerPos.y / realChunkSize.y);
+        Vector2 chunkPosRange = new(ChunkGenerateRange.x / realChunkSize.x, ChunkGenerateRange.y / realChunkSize.y);
+
+        for (int x = Mathf.CeilToInt(playerChunkPosFlt.x - chunkPosRange.x); x <= Mathf.FloorToInt(playerChunkPosFlt.x + chunkPosRange.x); x++)
         {
-            // Debug.Log($"Chunk at {chunkPos} was unloaded");
-            switch (ChunkStates.GetValueOrDefault(chunkPos, ChunkState.None))
+            for (int y = Mathf.CeilToInt(playerChunkPosFlt.y - chunkPosRange.y); y <= Mathf.FloorToInt(playerChunkPosFlt.y + chunkPosRange.y); y++)
             {
-                case ChunkState.None:
-                    // Debug.Log("chunk is none");
-                    break;
-
-                case ChunkState.Active:
-                    // Debug.Log("chunk is active");
-                    StartCoroutine(Deactivate(chunkPos));
-                    break;
-
-                case ChunkState.Inactive:
-                    // Debug.Log("chunk is inactive");
-                    break;
+                currentActiveChunks.Add(new(x, y));
             }
         }
+        chunksToActivate.Clear();
+        chunksToActivate.UnionWith(currentActiveChunks);
+        chunksToActivate.ExceptWith(previousActiveChunks);
+        foreach (var chunk in chunksToActivate)
+            PrepareChunk(chunk);
 
-        private IEnumerator Generate(Vector2Int chunkPos)
+        chunksToDeactivate.Clear();
+        chunksToDeactivate.UnionWith(previousActiveChunks);
+        chunksToDeactivate.ExceptWith(currentActiveChunks);
+        foreach (var chunk in chunksToDeactivate)
         {
-            AreaManager area = GetArea(chunkPos);
-            if (area == null)
-                yield break;
+            UnloadChunk(chunk);
+        }
 
-            bool result = area.Generate(chunkPos);
+        previousActiveChunks.Clear();
+        previousActiveChunks.UnionWith(currentActiveChunks);
+    }
 
-            while (!result)
+    public void PrepareChunk(Vector2Int chunkPos)
+    {
+        Generate(chunkPos);
+    }
+
+    public void UnloadChunk(Vector2Int chunkPos)
+    {
+        Deactivate(chunkPos);
+    }
+
+    public Vector2Int? WorldPosToChunkPos(Vector2 worldPos)
+    {
+        if (worldPos == null)
+            return null;
+
+        // Debug.Log($"{MethodBase.GetCurrentMethod().Name}, playerPosition: {playerPosition}");
+        int chunkX = Mathf.FloorToInt(worldPos.x / (ChunkSize.x * CellSize.x));
+        int chunkY = Mathf.FloorToInt(worldPos.y / (ChunkSize.y * CellSize.y));
+        return new Vector2Int(chunkX, chunkY);
+    }
+
+
+
+
+
+
+
+
+
+    [SerializeField] List<AreaManager> _areaManagers;
+
+    // 内部データ
+    readonly Dictionary<Vector2Int, JObject> _chunkDatas = new();
+    Dictionary<Vector2Int, IChunkManager> _activeChunkManagers = new Dictionary<Vector2Int, IChunkManager>();
+
+    private Dictionary<string, IAreaManager> _areaNameToAreaManagerMap = new Dictionary<string, IAreaManager>();
+    private Dictionary<Vector2Int, string> _chunkToAreaMap = new Dictionary<Vector2Int, string>();
+    private Dictionary<string, List<Vector2Int>> _areaToChunksMap = new Dictionary<string, List<Vector2Int>>();
+
+    // 依存関係
+    IMissedItemManager _missedItemManager; // 後でDIで注入
+
+    /// <summary>
+    /// エリアマネージャーを登録します。
+    /// </summary>
+    public void RegisterAreaManager(string areaName, IAreaManager areaManager)
+    {
+        if (!_areaNameToAreaManagerMap.ContainsKey(areaName))
+        {
+            _areaNameToAreaManagerMap.Add(areaName, areaManager);
+            areaManager.Init(this); // AreaManagerにTerrainManagerを渡す
+        }
+        else
+        {
+            Debug.LogWarning($"エリア名 '{areaName}' はすでに登録されています。");
+        }
+    }
+
+    /// <summary>
+    /// 指定された位置にチャンクを生成またはアクティブ化します。
+    /// </summary>
+    public void Generate(Vector2Int chunkPos)
+    {
+        Debug.Log($"generated: {chunkPos}");
+        if (_activeChunkManagers.ContainsKey(chunkPos))
+        {
+            Debug.LogWarning("this chunk is already active: " + chunkPos);
+            // 既にアクティブなチャンクはスキップ
+            return;
+        }
+
+        IChunkManager chunkManager = ResourceManager.Instance.GetOther(ResourceManager.OtherID.ChunkManager.ToString()).GetComponent<IChunkManager>();
+
+        JObject chunkData = null;
+        IAreaManager areaManager = GetArea(chunkPos); // チャンクが属するエリアを取得
+
+        if (_chunkDatas.ContainsKey(chunkPos))
+        {
+            chunkData = _chunkDatas[chunkPos];
+            Debug.Log($"get from memory, chunkData: {chunkData}");
+        }
+        else if (areaManager != null)
+        {
+            chunkData = areaManager.GetChunkData(chunkPos);
+            Debug.Log($"get from areaManager, chunkData: {chunkData}");
+        }
+        else
+        {
+            Debug.LogWarning("area manager is null");
+            return;
+        }
+
+        if (chunkData == null)
+        {
+            Debug.LogWarning("chunkData is invalid");
+            return;
+        }
+
+        chunkManager.OnGenerated(areaManager, chunkPos);
+        Debug.Log($"chunkData: {chunkData}");
+        chunkManager.ApplyChunkData(chunkData);
+
+        _activeChunkManagers.Add(chunkPos, chunkManager);
+
+        areaManager?.OnChunkGenerated(chunkManager, chunkPos);
+    }
+
+    /// <summary>
+    /// 指定された位置のチャンクを非アクティブ化します。
+    /// </summary>
+    public void Deactivate(Vector2Int chunkPos)
+    {
+        Debug.Log($"deactivate: {chunkPos}");
+        if (!_activeChunkManagers.TryGetValue(chunkPos, out IChunkManager chunkManager))
+        {
+            return;
+        }
+
+        _activeChunkManagers.Remove(chunkPos);
+        IAreaManager areaManager = GetArea(chunkPos);
+
+        areaManager?.OnChunkDeactivated(chunkManager, chunkPos);
+
+        var deactivatedChunkData = chunkManager.OnDeactivated();
+
+        if (_missedItemManager == null)
+            Debug.LogWarning(_missedItemManager is null);
+        deactivatedChunkData = _missedItemManager?.CollectMissedItems(deactivatedChunkData);
+        _chunkDatas[chunkPos] = deactivatedChunkData; // チャンクデータをメモリに保存
+
+        if (chunkManager is MonoBehaviour monoBehaviour)
+        {
+            monoBehaviour.GetComponent<PoolableResourceComponent>()?.Release();
+        }
+    }
+
+    /// <summary>
+    /// 指定されたチャンク位置が属するエリアマネージャーを取得します。
+    /// TerrainManagerがエリア間の衝突を仲裁します。
+    /// </summary>
+    public IAreaManager GetArea(Vector2Int chunkPos)
+    {
+        var areaName = GetAreaName(chunkPos);
+        if (_areaNameToAreaManagerMap.TryGetValue(areaName, out IAreaManager areaManager))
+        {
+            return areaManager;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 指定されたチャンク位置が属するエリア名を取得します。
+    /// </summary>
+    private string GetAreaName(Vector2Int chunkPos)
+    {
+        if (_chunkToAreaMap.TryGetValue(chunkPos, out string areaName))
+        {
+            return areaName;
+        }
+        // デフォルトのエリア名を返すか、エラー処理を行う
+        return "DefaultArea";
+    }
+
+    /// <summary>
+    /// 指定されたエリア名のチャンクデータをすべて削除します。
+    /// </summary>
+    public void ClearChunkDatas(string areaName)
+    {
+        if (_areaToChunksMap.TryGetValue(areaName, out List<Vector2Int> chunkPosList))
+        {
+            foreach (Vector2Int chunkPos in chunkPosList)
             {
-                yield return null;
-                result = area.Generate(chunkPos);
+                // アクティブなチャンクであれば非アクティブ化
+                // if (_activeChunkManagers.ContainsKey(chunkPos))
+                // {
+                //     Deactivate(chunkPos);
+                // }
+                // メモリ上のチャンクデータを削除
+                _chunkDatas.Remove(chunkPos);
             }
-            ChunkStates[chunkPos] = ChunkState.Active;
+        }
+        else
+        {
+            Debug.LogWarning($"エリア '{areaName}' は見つかりませんでした。");
+        }
+    }
+
+    /// <summary>
+    /// チャンクとエリアの関連付けを登録します。
+    /// </summary>
+    private void RegisterChunkToArea(string areaName, Vector2Int chunkPos)
+    {
+        if (!_areaToChunksMap.ContainsKey(areaName))
+        {
+            _areaToChunksMap.Add(areaName, new List<Vector2Int>());
+        }
+        if (!_areaToChunksMap[areaName].Contains(chunkPos))
+        {
+            _areaToChunksMap[areaName].Add(chunkPos);
+            _chunkToAreaMap[chunkPos] = areaName;
+        }
+    }
+
+    /// <summary>
+    /// チャンクとエリアの関連付けを解除します。
+    /// </summary>
+    private void RemoveChunkFromArea(string areaName, Vector2Int chunkPos)
+    {
+        if (_areaToChunksMap.TryGetValue(areaName, out List<Vector2Int> chunkPosList))
+        {
+            chunkPosList.Remove(chunkPos);
+        }
+        _chunkToAreaMap.Remove(chunkPos);
+    }
+
+    /// <summary>
+    /// TerrainManagerが保持するすべてのチャンクデータとエリアデータをファイルに保存します。
+    /// </summary>
+    public void Save()
+    {
+        // エリアデータの保存
+        foreach (var entry in _areaNameToAreaManagerMap)
+        {
+            string areaName = entry.Key;
+            IAreaManager areaManager = entry.Value; areaManager.Save();
+            Debug.Log($"エリア '{areaName}' のデータを保存しました。");
         }
 
-        /// <summary>
-        /// chunkPosのチャンクを非アクティブにする。UpdateChunksAroundPlayerの実装の関係から1度しか実行することができず失敗すればそのままになってしまう。そのため，成功するまで何度も繰り返すようにした。
-        /// </summary>
-        /// <param name="chunkPos"></param>
-        /// <returns></returns>
-        private IEnumerator Deactivate(Vector2Int chunkPos)
+        // アクティブなチャンクのデータを更新して保存
+        foreach (var entry in _activeChunkManagers)
         {
-            AreaManager area = GetArea(chunkPos);
-            if (area == null)
-                yield break;
+            Vector2Int chunkPos = entry.Key;
+            _chunkDatas[chunkPos] = entry.Value.MakeChunkData(); // メモリ上のデータを更新
 
-            bool result = area.Deactivate(chunkPos);
-
-            while (!result)
+            // すべてのチャンクデータを保存
+            foreach (var data in _chunkDatas)
             {
-                yield return null;
-                result = area.Deactivate(chunkPos);
+                var chunkData = data.Value;
+                EditFile.CompressAndSaveJson(ChunkManager.GetChunkFilePath(data.Key), chunkData.ToString());
+                Debug.Log($"チャンク {data.Key} のデータを保存しました。");
             }
-            ChunkStates[chunkPos] = ChunkState.Inactive;
+            Debug.Log("すべてのマップデータを保存しました。");
         }
+    }
 
-        private IEnumerator Activate(Vector2Int chunkPos)
+    /// <summary>
+    /// シード値と地形をリセットします。
+    /// 地上に帰った場合などに呼ばれます。
+    /// </summary>
+    public void ResetSeedAndTerrain()
+    {
+        _chunkDatas.Clear();
+        // アクティブなチャンクをすべて非アクティブ化
+        List<Vector2Int> activeChunkPositions = new List<Vector2Int>(_activeChunkManagers.Keys);
+        foreach (Vector2Int chunkPos in activeChunkPositions)
         {
-            AreaManager area = GetArea(chunkPos);
-            if (area == null)
-                yield break;
-
-            bool result = area.Activate(chunkPos);
-
-            while (!result)
-            {
-                yield return null;
-                result = area.Activate(chunkPos);
-            }
-            ChunkStates[chunkPos] = ChunkState.Active;
-        }
-
-        private AreaManager GetArea(Vector2Int chunkPos)
-        {
-            return Areas.GetValueOrDefault(AreaIDs.DefaultArea, null);
-        }
-
-        public void Reset()
-        {
-            ChunkStates.Clear();
-            foreach (var keyValue in Areas)
-            {
-                keyValue.Value.Reset();
-            }
-        }
-
-        /// <summary>
-        /// プレイヤーのワールド座標からチャンク座標を取得する
-        /// </summary>
-        /// <param name="worldPos"></param>
-        /// <returns></returns>
-        public Vector2Int? WorldPosToChunkPos(Vector2 worldPos)
-        {
-            if (worldPos == null)
-                return null;
-
-            // Debug.Log($"{MethodBase.GetCurrentMethod().Name}, playerPosition: {playerPosition}");
-            int chunkX = Mathf.FloorToInt(worldPos.x / (ChunkSize.x * CellSize.x));
-            int chunkY = Mathf.FloorToInt(worldPos.y / (ChunkSize.y * CellSize.y));
-            return new Vector2Int(chunkX, chunkY);
-        }
-
-        public MyTerrainData MakeTerrainData()
-        {
-            return new MyTerrainData();
+            Deactivate(chunkPos);
         }
     }
 }

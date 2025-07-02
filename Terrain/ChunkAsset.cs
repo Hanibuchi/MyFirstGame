@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class ChunkAsset : ScriptableObject
 {
-    public ChunkData chunkData;
+    public string chunkData;
 }

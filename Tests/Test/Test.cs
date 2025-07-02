@@ -24,7 +24,7 @@ public class TestClass : MonoBehaviour
     }
     public void Test_TerrainAllReset()
     {
-        GameManager.Instance.TerrainManager.Reset();
+        // GameManager.Instance.TerrainManager.Reset();
     }
     public void Test_Message()
     {

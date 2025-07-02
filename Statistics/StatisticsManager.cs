@@ -53,11 +53,11 @@ public class StatisticsManager : MonoBehaviour
     }
     public void Save()
     {
-        EditFile.SaveCompressedJson(StatisticsPath, m_statisticsData);
+        EditFile.SaveObjectAsCompressedJson(StatisticsPath, m_statisticsData);
     }
     public void Load()
     {
-        StatisticsData data = EditFile.LoadCompressedJson<StatisticsData>(StatisticsPath);
+        StatisticsData data = EditFile.LoadCompressedJsonAsObject<StatisticsData>(StatisticsPath);
         if (data != null)
             m_statisticsData = data;
     }

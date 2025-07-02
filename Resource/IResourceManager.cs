@@ -5,6 +5,7 @@ using UnityEngine;
 
 public interface IResourceManager
 {
+	GameObject Get(ResourceType type, string id);
 	GameObject GetItem(string id);
 	void ReleaseItem(IPoolableResourceComponent poolable);
 	void ClearItemPool(string id);
@@ -18,6 +19,6 @@ public interface IResourceManager
 	void ReleaseOther(string id, GameObject obj);
 	void ReleaseOther(IPoolableResourceComponent poolable);
 	void ClearOtherPool(string id);
-	ChunkData GetChunkData(string id);
+	string GetChunkData(string id);
 	BaseTile GetTile(string id);
 }

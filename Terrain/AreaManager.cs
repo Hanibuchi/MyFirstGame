@@ -1,135 +1,91 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Threading;
 using MyGame;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEditor.Build.Pipeline;
 using UnityEngine;
 using Zenject;
 
-[RequireComponent(typeof(PoolableResourceComponent))]
-public class AreaManager : MonoBehaviour
+[RequireComponent(typeof(SerializeManager))]
+[JsonObject(MemberSerialization.OptIn)]
+public class AreaManager : MonoBehaviour, IAreaManager, ISerializableComponent
 {
-    public string AreaDirectoryPath => Path.Combine(bossTerrainManager.TerrainDataDirectoryPath, m_poolableResourceComponent.ID);
-    string AreaDataPath => Path.Combine(AreaDirectoryPath, m_poolableResourceComponent.ID);
-    [SerializeField] TerrainManager bossTerrainManager;
+    public string AreaDirectoryPath => Path.Combine(_terrainManager.TerrainDataDirectoryPath, AreaName);
+    string AreaDataPath => Path.Combine(AreaDirectoryPath, AreaName);
 
-    public TerrainManager BossTerrainManager { get => bossTerrainManager; private set => bossTerrainManager = value; }
 
+    [JsonProperty]
     public bool IsVisited { get; private set; }
 
-    /// <summary>
-    /// チャンク位置からChunkManagerを返す辞書
-    /// </summary>
-    readonly Dictionary<Vector2Int, ChunkManager> ChunkManagers = new();
+    [SerializeField] float HiringCostMean;
+    [SerializeField] float HiringCostStdDev;
 
-    readonly Dictionary<Vector2Int, ChunkData> ChunkDatas = new();
-
-    float HiringCostMean;
-    float HiringCostStdDev;
-    
-    PoolableResourceComponent m_poolableResourceComponent;
-
-    private void Awake()
-    {
-        if (!TryGetComponent(out m_poolableResourceComponent))
-            Debug.LogWarning("m_poolableResourceComponent is null");
-    }
-
-    public void Init(TerrainManager terrainManager)
-    {
-        BossTerrainManager = terrainManager;
-    }
-
-    public void Save()
-    {
-        // ここでAreaDataを保存。
-
-        foreach (var keyValue in ChunkManagers)
-        {
-            ChunkDatas[keyValue.Key] = keyValue.Value.MakeChunkData();
-        }
-        foreach (var keyValue in ChunkDatas)
-        {
-            EditFile.SaveCompressedJson(ChunkManager.GetChunkDataPath(AreaDirectoryPath, keyValue.Key), keyValue.Value);
-        }
-    }
 
     public float GetHireAmount()
     {
         return Random.Randoms[RandomName.HireAmount.ToString()].NormalDistribution() * HiringCostStdDev + HiringCostMean;
     }
 
-    public bool Generate(Vector2Int pos)
+
+    [JsonProperty]
+    [SerializeField] string _areaName = "DefaultArea"; // このAreaManagerが管理するエリア名
+    public string AreaName => _areaName;
+
+    private TerrainManager _terrainManager;
+    private Dictionary<Vector2Int, IChunkManager> _activeChunkManagersInArea = new Dictionary<Vector2Int, IChunkManager>();
+
+    public void Init(TerrainManager terrainManager)
     {
-        ChunkManager cm = GetChunk(pos);
-        if (cm == null)
-            return false;
-
-        ChunkManagers[pos] = cm;
-        return cm.Generate(pos);
-    }
-
-    public bool Deactivate(Vector2Int pos)
-    {
-        ChunkManager cm = ChunkManagers.GetValueOrDefault(pos, null);
-        if (cm == null)
-            return false;
-
-        ChunkDatas[pos] = cm.Deactivate();
-        ChunkManagers[pos] = null;
-
-        return true;
-    }
-
-    public bool Activate(Vector2Int pos)
-    {
-        // Debug.Log("area was activated");
-        ChunkManager cm = GetChunk(pos);
-        if (cm == null)
-            return false;
-
-        ChunkManagers[pos] = cm;
-
-        return cm.Activate(pos, ChunkDatas[pos]);
+        _terrainManager = terrainManager;
+        _terrainManager.RegisterAreaManager(_areaName, this);
     }
 
     /// <summary>
-    /// チャンク位置に対応するChunkManagerを生成して返す。生成した後initするのを忘れそうなためわざわざメソッドにした。取得できなかったらnullを返す。
+    /// エリアに属するチャンクデータを取得します。ファイルからの読み込みを試みます。
     /// </summary>
-    /// <param name="pos"></param>
-    /// <returns></returns>
-    ChunkManager GetChunk(Vector2Int pos)
+    public virtual JObject GetChunkData(Vector2Int chunkPos)
     {
-        ChunkManager chunkManager = ResourceManager.Instance.GetOther(GetChunkID(pos).ToString()).GetComponent<ChunkManager>();
+        string chunkDataPath = ChunkManager.GetChunkFilePath(chunkPos);
+        var chunkData = EditFile.ReadAndDecompressJson(chunkDataPath);
 
-        chunkManager?.Init(this);
-        return chunkManager;
-    }
-
-    /// <summary>
-    /// posに対応するチャンクのIDを返す。ここで生成するチャンクを決める。
-    /// </summary>
-    /// <param name="pos"></param>
-    /// <returns></returns>
-    protected ResourceManager.ChunkID GetChunkID(Vector2Int pos)
-    {
-        return ResourceManager.ChunkID.DefaultChunk;
-    }
-
-    /// <summary>
-    /// リセットする。地上へ帰ったときに呼び出される。
-    /// </summary>
-    public void Reset()
-    {
-        foreach (var kv in ChunkManagers)
+        if (chunkData == "")
         {
-            kv.Value.Reset();
-            ResourceManager.Instance.ReleaseOther(GetChunkID(kv.Key).ToString(), kv.Value.gameObject);
+            chunkData = ResourceManager.Instance.GetChunkData(ResourceManager.ChunkID.DefaultChunk.ToString());
         }
-        ChunkManagers.Clear();
+        Debug.Log($"chunkData: {chunkData} in AreaManager");
 
-        ChunkDatas.Clear();
+        return JObject.Parse(chunkData);
+    }
+
+    /// <summary>
+    /// チャンクが生成されたときに呼ばれます。
+    /// </summary>
+    public void OnChunkGenerated(IChunkManager chunkManager, Vector2Int chunkPos)
+    {
+        if (!_activeChunkManagersInArea.ContainsKey(chunkPos))
+        {
+            _activeChunkManagersInArea.Add(chunkPos, chunkManager);
+        }
+    }
+
+    /// <summary>
+    /// チャンクが非アクティブ化されたときに呼ばれます。
+    /// </summary>
+    public void OnChunkDeactivated(IChunkManager chunkManager, Vector2Int chunkPos)
+    {
+        _activeChunkManagersInArea.Remove(chunkPos);
+    }
+
+    /// <summary>
+    /// エリア全体のデータ（チャンク以外の情報など）を作成します。
+    /// </summary>
+    public virtual void Save()
+    {
+        EditFile.CompressAndSaveJson(AreaDataPath, GetComponent<SerializeManager>().SaveState().ToString());
     }
 }

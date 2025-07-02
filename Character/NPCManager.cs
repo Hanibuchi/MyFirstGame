@@ -155,9 +155,6 @@ public class NPCManager : MobManager
 		ApplyMobData(npcData);
 	}
 
-	public void OnRespawn()
-	{
-	}
 
 	// public static NPCManager SpawnNPC(NPCData npc)
 	// {
