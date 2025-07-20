@@ -11,20 +11,24 @@ using MyGame;
 [Serializable]
 public class Shot //: UnityEngine.Object ←これ==nullが正しく使えないため継承しないほうがいい
 {
-	// Core
-	public MobManager mobMan; // 廃止予定
+	// Core。これらは共通の情報。複数回発射されても変わらない。主にユーザー固有の情報。
 	public GameObject user;
-	public GameObject referenceObject;
+	public LayerMask userTargetLayer;
 	/// <summary>
 	/// 目標のグローバル座標。グローバルであることでuserの位置に依存しない。
 	/// </summary>
-	public LayerMask baseTargetLayer;
 	public Vector2 target;
-	public Damage userDamageRate;
+	// ユーザー固有のダメージ。アイテム固有のダメージに足し算される。
+	public Damage userDamage;
+	// ユーザーのレベルに依存する値。ダメージに掛け算される。
+	public float userDamageModifier;
 
 
-	// Extras
+	// Extras。これらはshotごとに変わる。主にアイテム固有の情報。
+	public GameObject referenceObject;
+	// ユーザーのターゲットレイヤーとアイテムのそれも加えたターゲットレイヤー
 	public LayerMask targetLayer;
+	// ユーザーのダメージとアイテムのダメージを加算したダメージ。
 	public Damage damage;
 	/// <summary>
 	/// 拡散
@@ -58,7 +62,8 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 	public Action<Shot> OnDestroyed;
 	public Action<Shot> OnHit;
 	public Action<Shot> OnTimeout;
-	public List<Action<Shot>> NextAttackMethods = new();
+
+	public List<Action<Shot>> NextAttackMethods = new(); // 使用時、個別にshotを生成して渡したいためListにしている。
 	/// <summary>
 	/// 次のアイテムを発射する際実行する。☆実行する前に，shot.referenceObjectに発射したい位置と向きのオブジェクトを入れる。
 	/// </summary>
@@ -69,12 +74,6 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 	{
 	}
 
-	public Shot(Shot shot)
-	{
-		SetCore(shot.user, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
-		SetExtras(shot.targetLayer, shot.damage, shot.diffusion, shot.speed, shot.duration, shot.size, shot.amount, shot.recoil);
-	}
-
 	/// <summary>
 	/// 引数のshotのCoreな情報をコピーする
 	/// </summary>
@@ -82,35 +81,16 @@ public class Shot //: UnityEngine.Object ←これ==nullが正しく使えない
 	/// <returns></returns>
 	public Shot CopyCore(Shot shot)
 	{
-		return SetCore(shot.user, shot.referenceObject, shot.target, shot.baseTargetLayer, shot.userDamageRate);
-	}
-
-	public Shot SetCore(GameObject user, GameObject referenceObject, Vector2 target, LayerMask baseTargetLayer, Damage userDamageRate)
-	{
-		this.user = user;
-		this.referenceObject = referenceObject;
-		this.baseTargetLayer = baseTargetLayer;
-		this.target = target;
-		this.userDamageRate = userDamageRate;
-		return this;
-	}
-
-	// Additionalな値をセット
-	public Shot SetExtras(LayerMask targetLayer, Damage damage, float diffusion, float speed, float duration, float size, float amount, float recoil)
-	{
-		this.targetLayer = targetLayer;
-		this.damage = damage;
-		this.diffusion = diffusion;
-		this.speed = speed;
-		this.duration = duration;
-		this.size = size;
-		this.amount = amount;
-		this.recoil = recoil;
+		this.user = shot.user;
+		this.userTargetLayer = shot.userTargetLayer;
+		this.target = shot.target;
+		this.userDamage = shot.userDamage;
+		this.userDamageModifier = shot.userDamageModifier;
 		return this;
 	}
 
 	public override string ToString()
 	{
-		return $"Shot: user: {user}, referenceObj: {referenceObject}, target: {target}, baseTargetLayer: {baseTargetLayer}, userDamageRate: {userDamageRate}, targetLayer: {targetLayer}, damage: {damage}, diffusion: {diffusion}, speed: {speed}, duration: {duration}, size: {size}, amount: {amount}, recoil: {recoil}";
+		return $"Shot: user: {user}, referenceObj: {referenceObject}, target: {target}, baseTargetLayer: {userTargetLayer}, userDamageRate: {userDamage}, targetLayer: {targetLayer}, damage: {damage}, diffusion: {diffusion}, speed: {speed}, duration: {duration}, size: {size}, amount: {amount}, recoil: {recoil}";
 	}
 }

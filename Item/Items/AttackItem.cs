@@ -44,14 +44,21 @@ public class TestAttackItem : Item, IAttackItem
 
 	public Shot CreateNextShot(Shot shot)
 	{
-		var newShot = new Shot();
-		return newShot.CopyCore(shot);
+		var newShot = new Shot
+		{
+			user = shot.user,
+			userTargetLayer = shot.userTargetLayer,
+			target = shot.target,
+			userDamage = shot.userDamage,
+			userDamageModifier = shot.userDamageModifier,
+			referenceObject = shot.referenceObject
+		};
+		return newShot;
 	}
 
 	/// <summary>
 	/// Amountを適用。Projectileの量を増やす。この中で必ずGenerateAndInitProjectileを実行しなければならない。
 	/// </summary>
-	/// <param name="referenceObject"></param>
 	/// <param name="shot"></param>
 	public void ApplyAmount(Shot shot, Action<Shot> nextMethod)
 	{
@@ -67,7 +74,6 @@ public class TestAttackItem : Item, IAttackItem
 	/// <summary>
 	/// 放射物を生成し，初期化。
 	/// </summary>
-	/// <param name="referenceObj"></param>
 	/// <param name="shot"></param>
 	public void GenerateAndInitProjectile(Shot shot)
 	{
@@ -102,6 +108,7 @@ public class TestAttackItem : Item, IAttackItem
 
 		Projectile projectile = nextProjectileObj.GetComponent<Projectile>();
 
+		Debug.Log($"Shot: {shot} @GenerateProjectile");
 		projectile.Launch(shot);
 
 		return projectile.gameObject;

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public class DeathData
+public class DropData
 {
     public List<DropItem> dropItem;
     public float dropMoneyScale = 10;

@@ -19,7 +19,6 @@ public class Test_Item : MonoBehaviour
     public Shot CreateShot()
     {
         Shot shot = new();
-        shot.SetCore(mob.gameObject, item.gameObject, GameManager.Utility.GetMousePos(), targetLayer, damage);
         return shot;
     }
 }

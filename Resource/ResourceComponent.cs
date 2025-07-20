@@ -6,9 +6,9 @@ using UnityEngine;
 [JsonObject(MemberSerialization.OptIn)]
 public class ResourceComponent : MonoBehaviour, IResourceComponent, ISerializableComponent
 {
-	[JsonProperty] ResourceType m_type;
+	[SerializeField][JsonProperty] ResourceType m_type;
 	public ResourceType Type => m_type;
-	[JsonProperty] string m_id;
+	[SerializeField][JsonProperty] string m_id;
 	public string ID => m_id;
 	public event Action GetCallback;
 

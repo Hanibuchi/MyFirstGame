@@ -9,8 +9,4 @@ public interface IChunkManager
     JObject OnDeactivated();
     JObject MakeChunkData();
     void ApplyChunkData(JObject chunkData);
-
-    // チャンク内の操作
-    void SetTile(Vector3Int pos, BaseTile baseTile);
-    void DeleteTile(TileObjManager gm); // TileObjManagerは別途定義
 }

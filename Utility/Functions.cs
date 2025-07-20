@@ -136,4 +136,28 @@ public class Functions : MonoBehaviour
             return 0;
         return value2 * Mathf.Pow(value2 / value3, -Mathf.Pow(2, -value1 * n));
     }
+    
+
+    public static (int startIndex, int count) GetKthDivision(int A, int N, int k)
+    {
+        if (k < 0 || k >= N)
+        {
+            Debug.LogWarning("k is invalid");
+            return (-1, -1);
+        }
+        if (A < N)
+        {
+            Debug.LogWarning("N is invalid");
+            return (-1, -1);
+        }
+
+        int baseSize = A / N;
+        int rem = A % N;
+
+        int count = baseSize + (k >= N - rem ? 1 : 0);
+
+        int start = k * baseSize + Math.Max(0, k - (N - rem));
+
+        return (start, count);
+    }
 }

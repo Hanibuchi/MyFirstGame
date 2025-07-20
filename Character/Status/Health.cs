@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [JsonObject(MemberSerialization.OptIn)]
-public class Health : MonoBehaviour, ISerializableComponent
+public class Health : MonoBehaviour, IDamageable, ISerializableComponent
 {
     [SerializeField] HealthData m_healthData;
     [JsonProperty][SerializeField] float m_baseMaxHP;
@@ -210,5 +210,10 @@ public class Health : MonoBehaviour, ISerializableComponent
     {
         BaseMaxHP = m_healthData.baseMaxHPGrowthCurve.Function(level);
         BaseDamageRate = m_healthData.baseDamageRate.Multiple(m_healthData.damageRateModifierGrowthCurve.Function(level));
+    }
+
+    public int GetLayer()
+    {
+        return gameObject.layer;
     }
 }

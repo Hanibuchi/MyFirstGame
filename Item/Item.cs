@@ -8,7 +8,6 @@ using Zenject;
 
 [RequireComponent(typeof(ObjectManager))]
 [RequireComponent(typeof(Rigidbody2D))]
-// Itemの動作を統括するコンポーネント。ItemはItemに統合された。
 public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IItem, IPartyRegistrationHandler, IMemberRegistrationHandler, IChildItemUIRefresher, IItemTypeProvider
 {
 	[SerializeField] protected ItemData m_itemData;
@@ -190,16 +189,14 @@ public class Item : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDrag
 	/// <param name="shot"></param>
 	public void SetBaseExtras(Shot shot)
 	{
-		shot.SetExtras(
-				shot.baseTargetLayer,
-				Damage,
-				Diffusion,
-				Speed,
-				Duration,
-				AdditionalSize,
-				AdditionalAmount,
-				Recoil
-				);
+		shot.targetLayer = shot.userTargetLayer | TargetLayer;
+		shot.damage = shot.userDamage.Add(Damage);
+		shot.diffusion = Diffusion;
+		shot.speed = Speed;
+		shot.duration = Duration;
+		shot.size = AdditionalSize;
+		shot.amount = AdditionalAmount;
+		shot.recoil = Recoil;
 	}
 
 	void Update()

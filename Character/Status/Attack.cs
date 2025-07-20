@@ -99,19 +99,33 @@ public class Attack : MonoBehaviour, ISerializableComponent
         //     return;
 
         if (target == null)
+        {
             Debug.LogWarning("target is null");
+            return;
+        }
+        if (_itemUser == null)
+        {
+            Debug.LogWarning("_itemUser is null");
+            return;
+        }
 
-        var item = _itemUser.ItemHolder.Items[_itemUser.SelectedSlotNumber].GetItem();
+        var item = _itemUser.ItemHolder.Items[_itemUser.SelectedSlotNumber]?.GetItem();
         if (item != null)
         {
             if (item is MonoBehaviour mono)
             {
                 SetItemPosition(mono.gameObject, target - (Vector2)transform.position);
 
-                Shot shot = new();
-                shot.SetCore(gameObject, mono.gameObject, target, TargetLayer, Damage);
-                // shot.SetExtra(CurrentTargetLayer, Damage.Zero, 0, 0, 0, 0, 0, 0);
-
+                Shot shot = new()
+                {
+                    user = gameObject,
+                    referenceObject = mono.gameObject,
+                    target = target,
+                    userTargetLayer = TargetLayer,
+                    userDamage = Damage,
+                    userDamageModifier = DamageModifier
+                };
+                Debug.Log($"Shot: {shot} @attack");
                 item.FirstFire(shot);
             }
         }
@@ -134,8 +148,11 @@ public class Attack : MonoBehaviour, ISerializableComponent
     public void ThrowItem(Vector2 target)
     {
         var itemHolder = _itemUser.ItemHolder.Items[_itemUser.SelectedSlotNumber];
-        itemHolder.GetItem().Drop();
-        ThrowItem((Item)itemHolder.GetItem(), target);
+        if (itemHolder != null)
+        {
+            itemHolder.GetItem().Drop();
+            ThrowItem((Item)itemHolder.GetItem(), target);
+        }
     }
     /// <summary>
     /// アイテムを投げる。アイテムはアイテム化してる前提。アイテムは所有していなくてもいい。

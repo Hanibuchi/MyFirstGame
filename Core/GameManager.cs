@@ -106,7 +106,7 @@ public class GameManager : MonoBehaviour, IInitializableGameManager
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // シーンが変更されてもオブジェクトが破棄されないようにする
+            // DontDestroyOnLoad(gameObject); // シーンが変更されてもオブジェクトが破棄されないようにする
         }
         else
         {

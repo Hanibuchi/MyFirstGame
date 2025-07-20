@@ -33,8 +33,9 @@ public class TerrainManager : MonoBehaviour
     /// <summary>
     /// チャンク1つあたりの縦横のタイル数
     /// </summary>
-    public Vector3Int ChunkSize = new(128, 128, 1);
+    public Vector3Int ChunkSize { get; private set; } = new(128, 128, 1);
     public Vector2 CellSize => _grid.cellSize;
+    public Vector2Int SubChunkDivision { get; private set; } = new(4, 4);
 
 
     Vector2? GetPlayerPos()
@@ -43,11 +44,14 @@ public class TerrainManager : MonoBehaviour
         return player != null ? player.transform.position : null;
     }
 
-    // [SerializeField] Vector2Int test_chunkPos;
-    // public void Test()
-    // {
-    //     Debug.Log($"ChunkStates[{test_chunkPos.x}, {test_chunkPos.y}] = {ChunkStates[test_chunkPos]}");
-    // }
+    public (int, int) GetSubChunkSize()
+    {
+        int sizex, sizey, tmp;
+        (tmp, sizex) = Functions.GetKthDivision(ChunkSize.x, SubChunkDivision.x, 0);
+        (tmp, sizey) = Functions.GetKthDivision(ChunkSize.y, SubChunkDivision.y, 0);
+
+        return (sizex, sizey);
+    }
 
     /// <summary>
     /// チャンクを生成する範囲。Playerからの距離(u)であらわされる
@@ -56,9 +60,32 @@ public class TerrainManager : MonoBehaviour
 
     public TileBase[] GetTiles(Vector2Int chunkPos)
     {
+        return TerrainTilemap?.GetTilesBlock(GetBoundsInt(chunkPos));
+    }
+
+    public TileBase[] GetTiles(Vector2Int chunkPos, Vector2Int subChunkPos)
+    {
+        return TerrainTilemap?.GetTilesBlock(GetBoundsInt(chunkPos, subChunkPos));
+    }
+
+    /// <summary>
+    /// ChunkPosに対応するBoundsIntを返す。
+    /// </summary>
+    /// <returns></returns>
+    public BoundsInt GetBoundsInt(Vector2Int chunkPos)
+    {
         Vector3Int pos = new((int)(ChunkSize.x * (chunkPos.x - 0.5f)), (int)(ChunkSize.y * (chunkPos.y - 0.5f)), 0);
-        Debug.Log($"pos: {pos}, ChunkSize: {ChunkSize}");
-        return TerrainTilemap?.GetTilesBlock(new(pos, ChunkSize));
+        return new(pos, ChunkSize);
+    }
+
+    public BoundsInt GetBoundsInt(Vector2Int chunkPos, Vector2Int subChunkPos)
+    {
+        int xOffset, yOffset, xSize, ySize;
+        (xOffset, xSize) = Functions.GetKthDivision(ChunkSize.x, SubChunkDivision.x, subChunkPos.x);
+        (yOffset, ySize) = Functions.GetKthDivision(ChunkSize.y, SubChunkDivision.y, subChunkPos.y);
+        Vector3Int pos = new((int)(ChunkSize.x * (chunkPos.x - 0.5f)) + xOffset, (int)(ChunkSize.y * (chunkPos.y - 0.5f)) + yOffset, 0);
+        Vector3Int subChunkSize = new(xSize, ySize, 1);
+        return new(pos, subChunkSize);
     }
 
     /// <summary>
@@ -78,10 +105,7 @@ public class TerrainManager : MonoBehaviour
 
     void Init()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
+        InitAsSingleton();
         _missedItemManager = GetComponent<IMissedItemManager>();
 
         foreach (var areaManager in _areaManagers)
@@ -92,6 +116,13 @@ public class TerrainManager : MonoBehaviour
             }
         }
         isReady = true;
+    }
+    void InitAsSingleton()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
     }
 
     private void Update()
@@ -375,10 +406,9 @@ public class TerrainManager : MonoBehaviour
         {
             string areaName = entry.Key;
             IAreaManager areaManager = entry.Value; areaManager.Save();
-            Debug.Log($"エリア '{areaName}' のデータを保存しました。");
+            Debug.Log($"'{areaName}' was saved");
         }
 
-        // アクティブなチャンクのデータを更新して保存
         foreach (var entry in _activeChunkManagers)
         {
             Vector2Int chunkPos = entry.Key;
@@ -408,5 +438,81 @@ public class TerrainManager : MonoBehaviour
         {
             Deactivate(chunkPos);
         }
+    }
+
+
+
+
+
+    [SerializeField] Vector2Int _targetChunkPos;
+    [SerializeField] Vector2Int _targetSubChunkPos;
+
+    [SerializeField] ChunkManager _chunkManagerForChunkDataGeneration;
+    [SerializeField] string chunkAssetsDirectoryPath = "Assets/ChunkAssets";
+    [SerializeField] string chunkAssetName = "ChunkAssetName.json";
+    /// <summary>
+    /// マップ作製用メソッド。子オブジェクトをChunkDataに記録しjsonファイルを作る。
+    /// </summary>
+    public void CreateChunkAsset()
+    {
+        if (_chunkManagerForChunkDataGeneration != null)
+        {
+            InitAsSingleton();
+            _chunkManagerForChunkDataGeneration.SetChunkPos(_targetChunkPos);
+            _chunkManagerForChunkDataGeneration.OnBeforeCreateChunkAsset();
+            string path = Path.Combine(chunkAssetsDirectoryPath, chunkAssetName);
+            EditFile.SaveJson(path, _chunkManagerForChunkDataGeneration.MakeChunkData().ToString());
+        }
+        else
+            Debug.LogWarning("_chunkManagerForChunkDataGeneration is null");
+    }//
+    [SerializeField] SubChunkGenerator _subChunkHandlerForChunkDataGeneration;
+    [SerializeField] string subChunkAssetsDirectoryPath = "Assets/SubChunkAssets";
+    [SerializeField] string subChunkAssetName = "SubChunkAssetName.json";
+    /// <summary>
+    /// マップ作製用メソッド。子オブジェクトをChunkDataに記録しjsonファイルを作る。
+    /// </summary>
+    public void CreateSubChunkAsset()
+    {
+        if (_subChunkHandlerForChunkDataGeneration != null)
+        {
+            InitAsSingleton();
+            _subChunkHandlerForChunkDataGeneration.SetChunkPos(_targetChunkPos);
+            _subChunkHandlerForChunkDataGeneration.SetSubChunkPos(_targetSubChunkPos);
+            _subChunkHandlerForChunkDataGeneration.OnBeforeCreateChunkAsset();
+            string path = Path.Combine(subChunkAssetsDirectoryPath, subChunkAssetName);
+            EditFile.SaveJson(path, _subChunkHandlerForChunkDataGeneration.MakeChunkData().ToString());
+        }
+        else
+            Debug.LogWarning("_subChunkManagerForChunkDataGeneration is null");
+    }
+
+    [SerializeField] TextAsset _chunkDataForChunkGeneration;
+    [SerializeField] ChunkManager _chunkManagerForChunkGeneration;
+    public void GenerateChunk()
+    {
+        if (_chunkDataForChunkGeneration != null && _chunkManagerForChunkGeneration != null)
+        {
+            InitAsSingleton();
+            _chunkManagerForChunkGeneration.SetChunkPos(_targetChunkPos);
+            _chunkManagerForChunkGeneration.ApplyChunkData(EditFile.JsonToJObject(_chunkDataForChunkGeneration.text));
+        }
+        else
+            Debug.LogWarning("_chunkDataForChunkGeneration or _chunkManagerForChunkGeneration is null");
+    }
+
+    [SerializeField] TextAsset _subChunkDataForSubChunkGeneration;
+    [SerializeField] SubChunkGenerator _subChunkHandlerForSubChunkGeneration;
+    public void GenerateSubChunk()
+    {
+        if (_subChunkHandlerForSubChunkGeneration != null && _subChunkDataForSubChunkGeneration != null)
+        {
+            InitAsSingleton();
+            _subChunkHandlerForSubChunkGeneration.SetChunkPos(_targetChunkPos);
+            _subChunkHandlerForSubChunkGeneration.SetSubChunkPos(_targetSubChunkPos);
+            _subChunkHandlerForSubChunkGeneration.ApplySubChunkData(EditFile.JsonToJObject(_subChunkDataForSubChunkGeneration.text));
+        }
+        else
+            Debug.LogWarning("_subChunkDataForSubChunkGeneration or _subChunkHandlerForSubChunkGeneration is null");
     }
 }

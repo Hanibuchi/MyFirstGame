@@ -20,5 +20,5 @@ public interface IResourceManager
 	void ReleaseOther(IPoolableResourceComponent poolable);
 	void ClearOtherPool(string id);
 	string GetChunkData(string id);
-	BaseTile GetTile(string id);
+	MyTile GetTile(string id);
 }

@@ -8,7 +8,5 @@ public class TestClass2 : MonoBehaviour
     void Start()
     {
         TestClass.Instance.SpawnItem();
-        TestClass.Instance.SpawnMob();
-        TestClass.Instance.SpawnMob();
     }
 }

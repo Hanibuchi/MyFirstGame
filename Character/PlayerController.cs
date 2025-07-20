@@ -11,7 +11,7 @@ using System;
 [RequireComponent(typeof(NPCManager))]
 public class PlayerController : MonoBehaviour
 {
-    NPCManager m_npcManager;
+    Attack m_attack;
     DeathHandler m_deathHandler;
     Rigidbody2D m_rb;
     public bool CanAttack => !IsEquipmentMenuOpen && !DragSystem.Instance.IsDragging; // アタックできるかを表す。使ってないが，例えばFireの返り値から次打てる時までfalseにすることで処理を軽くできたり，敵の攻撃でfalseにすることで攻撃ができなくさせたりできる。
@@ -34,10 +34,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float m_initJumpSpeed;
     [SerializeField] float m_maxJumpSpeed;
 
-    // [SerializeField] bool IsGrounded;
-
-    Vector2 m_mousePosition;
-    List<Item> m_items;
 
     // GameManagerでインスタンス化された.inputActionsでwasd, 矢印キーなどを観測する。子のコンポネントがEnableされたときにinputeActions.Player.Move.performedと.canceledが起きたときにOnMoveが実行されるよう登録され，Disableされたときにそれらの登録を取り消す。OnMoveでは移動キーの入力がmovementInputに入れられる。movementInputを使用して操作を定義する。
     SpeedHandler m_speedHandler;
@@ -51,8 +47,8 @@ public class PlayerController : MonoBehaviour
         RegisterInput(true);
 
         m_rb = GetComponent<Rigidbody2D>();
-        m_npcManager = GetComponent<NPCManager>();
         m_deathHandler = GetComponent<DeathHandler>();
+        m_attack = GetComponent<Attack>();
 
         if (TryGetComponent(out m_speedHandler))
         {
@@ -198,7 +194,7 @@ public class PlayerController : MonoBehaviour
     {
         if (context.performed)
         {
-            Fire(); // 応答性に差が出るらしいからここでもFire()する。（というか普通にこれないとクリックしただけじゃFire()されない可能性がある。
+            // Fire(); // 応答性に差が出るらしいからここでもFire()する。（というか普通にこれないとクリックしただけじゃFire()されない可能性がある。
             m_autoFire = true;
         }
         else if (context.canceled)
@@ -307,24 +303,12 @@ public class PlayerController : MonoBehaviour
         if (!CanAttack)
             return;
 
-        m_mousePosition = GameManager.Utility.GetMousePos();
-        // m_items = (List<Item>)m_npcManager.GetComp;
-        if (m_items != null && m_items.Count > 0)
-        {
-            // m_npcManager.SetSelectedSlotNumber(0);
-            // m_npcManager.Fire(m_mousePosition);
-            // transform.GetChild(0).GetComponent<Animator>().SetTrigger("Attack");
-        }
-        else
-        {
-            // Debug.LogWarning("npcManager.Items is null or empty");
-        }
+        m_attack?.Fire(GameManager.Utility.GetMousePos());
     }
 
     public void Throw()
     {
-        m_mousePosition = GameManager.Utility.GetMousePos();
-        // m_npcManager.ThrowItem(m_mousePosition);
+        m_attack?.ThrowItem(GameManager.Utility.GetMousePos());
     }
 
     /// <summary>
@@ -341,7 +325,7 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void InteractNPC()
     {
-        m_npcManager.InteractNPC();
+        // m_npcManager.InteractNPC();
     }
 
     public static Action OnEquipmentMenuOpenEventHandler;

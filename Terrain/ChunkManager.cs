@@ -11,6 +11,7 @@ using UnityEditor;
 using Zenject;
 using UnityEditor.SearchService;
 using Newtonsoft.Json.Linq;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(SerializeManager))]
 [RequireComponent(typeof(PoolableResourceComponent))]
@@ -35,53 +36,16 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
         m_poolableResourceComponent.ReleaseCallback += OnRelease;
     }
 
-    public static string GetChunkDataPath(string areaDirectoryPath, Vector2Int chunkPos)
-    {
-        return Path.Combine(areaDirectoryPath, $"Chunk_{chunkPos.x}x{chunkPos.y}");
-    }
-
 
     /// <summary>
     /// ChunkPosをセットし，対応する場所へこのオブジェクトを移動させる。
     /// </summary>
-    /// <param name="chunkPos"></param>
-    void SetChunkPos()
+    void SetTransformPosition()
     {
         transform.position = new(ChunkSize.x * ChunkPos.x, ChunkSize.y * ChunkPos.y, 0);
     }
 
-    /// <summary>
-    /// tileをセットするときは必ずしもこれを使わないといけないわけではない。ただし，baseTileを継承したtileしか設置しちゃダメ。
-    /// </summary>
-    /// <param name="pos"></param>
-    /// <param name="baseTile"></param>
-    public void SetTile(Vector3Int pos, BaseTile baseTile)
-    {
-        TerrainManager.Instance.TerrainTilemap.SetTile(pos, baseTile);
-    }
 
-    /// <summary>
-    /// tileを消すときは必ずこれを使用しなければならない
-    /// </summary>
-    /// <param name="tm"></param>
-    public void DeleteTile(TileObjManager tm)
-    {
-        tm.GetComponent<PoolableResourceComponent>().Release();
-        TerrainManager.Instance.TerrainTilemap.SetTile(tm.Position, null);
-        Handlers.Remove(tm.GetComponent<ChunkHandler>());
-    }
-
-
-
-    /// <summary>
-    /// ChunkPosに対応するBoundsIntを返す。
-    /// </summary>
-    /// <returns></returns>
-    public BoundsInt GetBoundsInt()
-    {
-        Vector3Int pos = new((int)(ChunkSize.x * (ChunkPos.x - 0.5f)), (int)(ChunkSize.y * (ChunkPos.y - 0.5f)), 0);
-        return new(pos, ChunkSize);
-    }
 
 
     /// <summary>
@@ -124,37 +88,15 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
         }
     }
 
-    [SerializeField] string chunkAssetsDirectoryPath = "Assets/ChunkAssets";
-    [SerializeField] string chunkAssetName = "ChunkAssetName.asset";
-    /// <summary>
-    /// マップ作製用メソッド。子オブジェクトをChunkDataに記録しjsonファイルを作る。
-    /// </summary>
-    public void CreateChunkAsset()
-    {
-        var handlers = GetComponentsInChildren<ChunkHandler>();
-        Handlers.AddRange(handlers);
-        string path = Path.Combine(chunkAssetsDirectoryPath, chunkAssetName);
-
-        EditFile.SaveJson(path, MakeChunkData().ToString());
-
-        // ScriptableObjectとして保存してた時の処理
-        // var asset = ScriptableObject.CreateInstance<ChunkAsset>();
-        // asset.chunkData = MakeChunkData();
-
-        // AssetDatabase.CreateAsset(asset, path);
-
-        // AssetDatabase.SaveAssets();
-        // AssetDatabase.Refresh();
-
-        // EditorUtility.FocusProjectWindow();
-        // Selection.activeObject = asset;
-    }
-
     public void OnRelease()
     {
         Handlers.Clear();
     }
-
+    public void OnBeforeCreateChunkAsset()
+    {
+        var handlers = GetComponentsInChildren<ChunkHandler>();
+        Handlers.AddRange(handlers);
+    }
 
 
 
@@ -173,6 +115,10 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
 
     [SerializeField] Vector2Int _chunkPos;
     public Vector2Int ChunkPos { get => _chunkPos; private set => _chunkPos = value; }
+    public void SetChunkPos(Vector2Int chunkPos)
+    {
+        ChunkPos = chunkPos;
+    }
 
     /// <summary>
     /// チャンクが生成されたときに呼ばれます。
@@ -182,7 +128,7 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
         _areaManager = (AreaManager)areaManager;
         this.ChunkPos = chunkPos;
         this.gameObject.name = $"Chunk_{chunkPos.x}_{chunkPos.y}";
-        SetChunkPos();
+        SetTransformPosition();
     }
 
     /// <summary>
@@ -197,6 +143,8 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
         return currentChunkData;
     }
 
+    [JsonProperty] int sizex;
+    [JsonProperty] int sizey;
     // ここからデータ保存用。名前勝手に変えるとJsonふぁいるを直接編集してるところが使えなくなるからやめる。
     [JsonProperty] string[] tileIDs;
     [JsonProperty] List<(ResourceType type, string id, JObject objData)> objects = new();
@@ -210,13 +158,15 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
 
     public void OnBeforeSerializeData()
     {
+        sizex = TerrainManager.Instance.ChunkSize.x;
+        sizey = TerrainManager.Instance.ChunkSize.y;
         var tiles = TerrainManager.Instance.GetTiles(ChunkPos);
         tileIDs = new string[tiles.Length];
         Debug.Log($"tiles.Length: {tiles.Length}");
         for (int i = 0; i < tiles.Length; i++)
         {
             var tile = tiles[i];
-            if (tile is BaseTile baseTile)
+            if (tile is MyTile baseTile)
             {
                 tileIDs[i] = baseTile.ID;
             }
@@ -227,10 +177,7 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
         {
             if (handler != null && handler.TryGetComponent(out SerializeManager serializable) && handler.TryGetComponent(out PoolableResourceComponent poolable))
             {
-                if (!handler.TryGetComponent(out TileObjManager tileObjManager))
-                {
-                    objects.Add((poolable.Type, poolable.ID, serializable.SaveState()));
-                }
+                objects.Add((poolable.Type, poolable.ID, serializable.SaveState()));
             }
         }
     }
@@ -241,12 +188,13 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
     /// <param name="chunkData"></param>
     public void ApplyChunkData(JObject chunkData)
     {
+        objects.Clear();
         GetComponent<SerializeManager>().LoadState(chunkData);
     }
 
     public void OnAfterDeserializeData()
     {
-        BaseTile[] tiles = new BaseTile[tileIDs.Length];
+        MyTile[] tiles = new MyTile[tileIDs.Length];
         for (int i = 0; i < tileIDs.Length; i++)
         {
             var tileID = tileIDs[i];
@@ -255,7 +203,7 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
             else
                 tiles[i] = ResourceManager.Instance.GetTile(tileID);
         }
-        TerrainManager.Instance.TerrainTilemap.SetTilesBlock(GetBoundsInt(), tiles);
+        TerrainManager.Instance.TerrainTilemap.SetTilesBlock(TerrainManager.Instance.GetBoundsInt(ChunkPos), tiles);
 
         foreach (var obj in objects)
         {
@@ -281,15 +229,14 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
         {
             if (handler == null)
                 continue;
-            if (handler.TryGetComponent(out TileObjManager tileObjManager))
-            {
-                DeleteTile(tileObjManager);
-            }
-            else
-            {
-                handler.GetComponent<PoolableResourceComponent>().Release();
-            }
+            handler.GetComponent<PoolableResourceComponent>().Release();
         }
+        var bounds = TerrainManager.Instance.GetBoundsInt(ChunkPos);
+
+        int total = bounds.size.x * bounds.size.y * bounds.size.z;
+        TileBase[] nullTiles = new TileBase[total];
+
+        TerrainManager.Instance.TerrainTilemap.SetTilesBlock(bounds, nullTiles);
     }
 
 
@@ -301,4 +248,3 @@ public class ChunkManager : MonoBehaviour, IChunkManager, ISerializableComponent
         return Path.Combine(TerrainManager.Instance.TerrainDataDirectoryPath, "Chunk", $"chunk_{chunkPos.x}_{chunkPos.y}.json");
     }
 }
-

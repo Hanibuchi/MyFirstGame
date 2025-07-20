@@ -10,7 +10,7 @@ public class HomingItem : ProjectileModifierItem
         foreach (GameObject projectile in shot.projectiles)
         {
             Modif_Homing homing = projectile.AddComponent<Modif_Homing>();
-            homing.Init(new(shot));
+            homing.Init(shot);
             Destroy(homing, shot.duration); // 一定時間後削除される。Projectileは再利用されるため，コンポネントは消さないといけない。
         }
         Debug.Log($"HomingItem, EditProjectilesCore, shot: {shot}, projectile: {shot.projectiles}");

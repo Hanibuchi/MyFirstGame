@@ -40,22 +40,23 @@ public class Projectile : MonoBehaviour
     /// ダメージ処理以外の処理を行う。ダメージ処理はMob側で行う。
     /// </summary>
     /// <param name="collider"></param>
-    public void Hit(Health health)
+    public void Hit(IDamageable damageable)
     {
-        if (health is MonoBehaviour damageableObj)
+        Debug.Log($"Shot: {shot} @projectile");
+        if ((shot.targetLayer & (1 << damageable.GetLayer())) == 0)
         {
-            if ((shot.targetLayer & (1 << damageableObj.gameObject.layer)) == 0)
-            {
-                Debug.Log("layer do not match");
-                return;
-            }
-
-            Vector2 direction = damageableObj.transform.position - transform.position;
-            health.TakeDamage(shot.damage.CalculateDamageWithDamageRates(shot.userDamageRate), shot?.user.GetComponent<Attack>(), direction);
-            Destroyed();
-            shot.referenceObject = gameObject;
-            shot.NextAttack?.Invoke(shot);
+            Debug.Log("layer do not match");
+            return;
         }
+        Vector2 direction = Vector2.zero;
+        if (damageable is MonoBehaviour mono)
+        {
+            direction = mono.transform.position - transform.position;
+        }
+        damageable.TakeDamage(shot.damage.Multiple(shot.userDamageModifier), shot?.user.GetComponent<Attack>(), direction);
+        Destroyed();
+        shot.referenceObject = gameObject;
+        shot.NextAttack?.Invoke(shot);
     }
 
     public void Destroyed()

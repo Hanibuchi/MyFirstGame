@@ -85,7 +85,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     readonly Dictionary<string, GameObjectPool> otherPools = new();
 
     readonly Dictionary<string, string> chunkDatas = new();
-    readonly Dictionary<string, BaseTile> baseTiles = new();
+    readonly Dictionary<string, MyTile> baseTiles = new();
     readonly ShotPool shotPool = new(30, 50);
 
     public static IResourceManager Instance { get; private set; }
@@ -249,6 +249,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
                 {
                     var textAsset = handle.Result;
                     chunkDatas[textAsset.name] = textAsset.text;
+                    Debug.Log($"chunkname: {textAsset.name}");
                 }
                 else
                 {
@@ -265,7 +266,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
     async Task LoadTile(string groupName)
     {
         List<string> labels = new() { groupName, ResourceType.Tile.ToString() };
-        var locationHandle = Addressables.LoadResourceLocationsAsync(labels, Addressables.MergeMode.Intersection, typeof(BaseTile));
+        var locationHandle = Addressables.LoadResourceLocationsAsync(labels, Addressables.MergeMode.Intersection, typeof(MyTile));
         await locationHandle.Task;
 
         if (locationHandle.Status != AsyncOperationStatus.Succeeded || locationHandle.Result.Count == 0)
@@ -277,7 +278,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
         var loadTasks = new List<Task>();
         foreach (var location in locationHandle.Result)
         {
-            var loadHandle = Addressables.LoadAssetAsync<BaseTile>(location);
+            var loadHandle = Addressables.LoadAssetAsync<MyTile>(location);
             loadHandle.Completed += (handle) =>
             {
                 if (handle.Status == AsyncOperationStatus.Succeeded)
@@ -376,7 +377,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
         return chunkData;
     }
 
-    public BaseTile GetTile(string id)
+    public MyTile GetTile(string id)
     {
         if (id == null)
         {
