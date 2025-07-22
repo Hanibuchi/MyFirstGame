@@ -45,6 +45,10 @@ public class PartyMember : MonoBehaviour
             {
                 gameObject.AddComponent<PlayerController>();
             }
+            if (GetComponent<LightPlacer>() == null)
+            {
+                gameObject.AddComponent<LightPlacer>();
+            }
             UIManager.Instance.GetPlayerStatusUI()?.RegisterStatus(gameObject);
             GameManager.Instance.SetPlayer(gameObject);
         }
@@ -54,6 +58,8 @@ public class PartyMember : MonoBehaviour
         IsLeader = false;
         if (TryGetComponent(out PlayerController playerController))
             Destroy(playerController);
+        if (TryGetComponent(out LightPlacer lightPlacer))
+            Destroy(lightPlacer);
     }
 
 

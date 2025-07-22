@@ -198,7 +198,7 @@ public class GameManager : MonoBehaviour, IInitializableGameManager
         Item,
         Chunk,
         Ground,
-        GroundHitDetection,
+        Light,
     }
 
     public void SetPlayer(GameObject player)

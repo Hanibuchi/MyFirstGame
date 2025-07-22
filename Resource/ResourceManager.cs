@@ -67,6 +67,7 @@ public class ResourceManager : MonoBehaviour, IInitializableResourceManager, IRe
         TerrainGrid,
         Party,
         ChunkManager,
+        Light,
     }
 
     public enum ChunkID
